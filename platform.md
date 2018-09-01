@@ -84,6 +84,11 @@ buildpacks = [
 
 1. Suitable build and run base images are located.
 
+User-provided environment variables intended for build and launch SHOULD NOT come from the same list.
+The user SHOULD be encouraged to define them separately.
+Platform operators MAY determine the initial build-time and runtime environment.
+
+The lifecycle MUST NOT assume that all platforms provide an identical environment.
 
 ## formats
 
@@ -95,6 +100,15 @@ buildpacks = [
 build-image = "<build image reference>"
 run-image = "<run image reference>"
 buildpacks = [{id = "<buildpack ID>", version = "<buildpack version>", optional = <:bool>}]
+```
+
+### Build Metadata (TOML)
+```toml
+buildpacks = ["<buildpack ID>"]
+
+[[processes]]
+type = "<process type>"
+command = "<command>"
 ```
 
 ### Image Layers: Sluglet (SLUG + dropLET, final name TBD)
