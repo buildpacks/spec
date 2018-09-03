@@ -20,6 +20,34 @@ This is accomplished in two phases:
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
 2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment. 
 
+## Table of Contents
+
+1. [Buildpack Interface](#buildpack-interface)
+   1. [Key](#key)
+   2. [Detection](#detection)
+   3. [Build](#build)
+   4. [Development](#development)
+2. [App Interface](#app-interface)
+3. [Phase #1: Detection](#phase-1-detection)
+4. [Phase #2: Analysis](#phase-2-analysis)
+5. [Phase #3: Build](#phase-3-build)
+6. [Phase #4: Export](#phase-4-export)
+7. [Launch](#launch)
+8. [Development Setup](#development-setup)
+9. [Environment](#environment)
+   1. [Provided by the Lifecycle](#provided-by-the-lifecycle)
+   2. [Provided by the Platform](#provided-by-the-platform)
+   3. [Provided by the Buildpacks](#provided-by-the-buildpacks)
+10. [Security Considerations](#security-considerations)
+   1. [Assumptions of Trust](#assumptions-of-trust)
+   2. [Requirements](#requirements)
+11. [Artifact Format](#artifact-format)
+   1. [Buildpack Package](#buildpack-package)
+12. [Data Format](#data-format)
+   1. [buildpack.toml (TOML)](#buildpack.toml-(toml))
+   2. [launch.toml (TOML)](#launch.toml-(toml))
+   3. [develop.toml (TOML)](#develop.toml-(toml))
+   4. [Build Plan (TOML)](#build-plan-(toml))
 
 ## Buildpack Interface
 
@@ -96,12 +124,12 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
   `/dev/stdout`                | Logs (info)
   `/dev/stderr`                | Logs (warnings, errors)
   `<cache>/develop.toml`       | Development metadata (see File: develop.toml)
-  `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks
-  `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks
+  `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks & app
+  `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks & app
   `<cache>/<layer>/include/`   | C/C++ headers for subsequent buildpacks
   `<cache>/<layer>/pkgconfig/` | Search path for pkg-config
-  `<cache>/<layer>/env/`       | Env vars for subsequent buildpacks and app
-  `<cache>/<layer>/*`          | Other cached content
+  `<cache>/<layer>/env/`       | Env vars for subsequent buildpacks & app
+  `<cache>/<layer>/*`          | Other content for subsequent buildpacks & app
 
 
 ## App Interface
@@ -468,6 +496,31 @@ If the environment variable file name ends in `.override`, then the value of the
 For that environment variable value
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically by associated layer name) MUST override file contents that are earlier.
+
+## Security Considerations
+
+A lifecycle may be used by a multi-tenant platform.
+On such a platform,
+- Buildpacks may be provided by both operators and users.
+- OCI image storage credentials may not be owned or managed by application developers.
+
+### Assumptions of Trust
+
+Allowed:
+
+- The lifecycle MAY have access to credentials for reading and writing to OCI image stores.
+- Buildpacks MAY have access a copy of the application source code.
+- Buildpacks MAY execute application source code during the detection and build phases.
+
+Prohibited:
+
+- The application source code MUST NOT have access to credentials for reading and writing to OCI image stores.
+- Buildpacks MUST NOT have access to credentials for reading and writing to OCI image stores.
+
+### Requirements
+
+The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
+The lifecycle SHOULD be implemented so that each phase may run in a different container in order to minimize  
 
 ## Artifact Format
 
