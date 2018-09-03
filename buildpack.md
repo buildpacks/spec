@@ -4,17 +4,22 @@ This document specifies the interface between a single lifecycle and one or more
 
 A lifecycle is a program that uses buildpacks to transform application source code into an OCI image containing the compiled application.
 
-This is accomplished in four steps:
+This is accomplished in four phases:
+
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
 2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
 3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
 4. **Export,** where the remote layers are replaced by the generated layers.
 
-Additionally, a lifecycle MAY use buildpacks to create a containerized environment for developing or testing application source code.
+The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase. 
 
-This is accomplished in two steps:
+Additionally, a lifecycle can use buildpacks to create a containerized environment for developing or testing application source code.
+
+This is accomplished in two phases:
+
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
 2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment. 
+
 
 ## Buildpack Interface
 
@@ -31,7 +36,7 @@ This is accomplished in two steps:
  #    | Platform-specific content
 
 The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Process section.
+The lifecycle MUST invoke these executables as described in the Phases section.
 
 ### Detection
 
@@ -80,7 +85,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 
  Input                        | Description
-------------------------------|----------------------------------------------
+------------------------------|-----------------------------------------------
  [exit status]			      | Success (0) or failure (1+)
  `/dev/stdin`                 | Build plan from detection (TOML)
  `/dev/stdout`                | Logs (info)
@@ -92,7 +97,7 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
  `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks
  `<cache>/<layer>/include/`   | C/C++ headers for subsequent buildpacks
  `<cache>/<layer>/pkgconfig/` | Search path for pkg-config
- `<cache>/<layer>/env/`       | Append env vars for subsequent buildpacks
+ `<cache>/<layer>/env/`       | Append env vars for subsequent buildpacks, app
  `<cache>/<layer>/*`          | Other cached content
 
 ## App Interface
@@ -101,12 +106,16 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 ------------------|----------------------------------------------
  `<app>/.profile` | Script sourced by bash before launch
 
-## Process
+## Phases
 
 ### Detection
 
-The purpose of detection is to find an ordered group of buildpacks to use during the build step.
+#### Purpose
+
+The purpose of detection is to find an ordered group of buildpacks to use during the build phase.
 These buildpacks must be compatible with the app.
+
+#### Process
 
 **GIVEN:**
 - An ordered list of ordered buildpack groups and
@@ -126,13 +135,18 @@ For each buildpack in each group in order, the lifecycle MUST execute `/bin/dete
          **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
      
       2. **IF** at least one exit status from `/bin/detect` in the group is zero \
-         **THEN** the group MUST be provided to the analysis and build steps with buildpacks that did not return exit status zero removed.
-         
+         **THEN** the lifecycle MUST select this group and proceed to the analysis phase.
+      
+The selected group MUST be filtered to only include buildpacks with exit status zero.
+The order of the buildpacks in the group MUST otherwise be preserved.
+   
 The `/bin/detect` executable in each buildpack, when executed:
 
-1. MAY examine the app directory.
-2. MAY receive a TOML-formatted map called a Build Plan on `stdin`.
-3. MAY output changes to the Build Plan on `stdout`.
+1. MAY examine the app directory and environment variables.
+2. MAY emit error, warning, or debug messages to `stderr`.
+3. MAY receive a TOML-formatted map called a Build Plan on `stdin`.
+4. MAY output changes to the Build Plan on `stdout`.
+5. MUST set an exit status code as described in the Buildpack Interface section.
  
 For each `/bin/detect`, the Build Plan received on `stdin` MUST be a combined map derived from the output of all previous `/bin/detect` executables.
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks. 
@@ -140,20 +154,29 @@ The lifecycle MUST NOT include any changes in this map that are output by option
 The final Build Plan is the complete combined map that includes the output of the final `/bin/detect` executable.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
-Therefore, reading from `stdin` in `/bin/detect` blocks until the previous `/bin/detect` in the group closes `stdout`.
+Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` in the group closes `stdout`.
 
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group on a common stack.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
 
 ### Analysis
 
+#### Purpose
+
+The purpose of analysis is to retrieve `<launch>/<layer>.toml` files that buildpacks may use to optimize the build and export phases.
+
+Each `<launch>/<layer>.toml` file represents a remote filesystem layer that the buildpack may keep, replace, or remove during the build phase.
+
+#### Process 
+
 The lifecycle SHOULD attempt to locate a reference to an OCI image from a previous build that:
+
 - Was created using some version of the same application source code.
 - Is readable by the lifecycle.
 - Was created using the lifecycle.
 - Is as recent as possible.
 
-The lifecycle MAY skip analysis if no such image can be located.
+The lifecycle MUST skip analysis and proceed to the build phase if no such image can be located.
 
 **GIVEN:**
 - A reference to the previously created OCI image described above and
@@ -161,20 +184,34 @@ The lifecycle MAY skip analysis if no such image can be located.
 
 For each buildpack in the group,
 
-1. Any `<launch>/<layer>.toml` files that were present at the end of the previous OCI image build are retrieved.
-2. Those `<layer>.toml` files are placed on the filesystem so that they appear in the buildpack's `<launch>/` directory during the build step.
+1. Any `<launch>/<layer>.toml` files that were present at the end of the build of the previously created OCI image are retrieved.
+2. Those `<layer>.toml` files are placed on the filesystem so that they appear in the buildpack's `<launch>/` directory during the build phase.
 
 The lifecycle MUST NOT download any filesystem layers from the previous OCI image.
 
-After analysis, the lifecycle proceeds to the build step.
+After analysis, the lifecycle MUST proceed to the build phase.
 
 ### Build
 
+#### Purpose
+
+The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container.
+
+During the build phase, typical buildpacks might:
+
+1. Provide the application with dependencies for launch in `<launch>/<layer>`.
+2. Provide subsequent buildpacks with dependencies in `<cache>/<layer>`.
+3. Compile the application source code into object code.
+4. Remove application source code that is not necessary for launch.
+5. Provide start command in `<launch>/launch.toml`.
+
+#### Process
+
 **GIVEN:**
-- The final ordered group of buildpacks determined during detection and
-- A directory containing application source code and
-- The final Build Plan and
-- Any `<launch>/<layer>.toml` files placed on the filesystem during the analysis step and
+- The final ordered group of buildpacks determined during detection,
+- A directory containing application source code,
+- The final Build Plan,
+- Any `<launch>/<layer>.toml` files placed on the filesystem during the analysis phase, and
 - The most recent local `<cache>` directories from a build of a version of the application source code,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
@@ -187,7 +224,7 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
       **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
       
    2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the export step.
+      **THEN** the lifecycle MUST proceed to the export phase.
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
@@ -208,8 +245,8 @@ Correspondingly, each `/bin/build` executable:
 
 The buildpack SHOULD use the contents of a given pre-existing `<launch>/<layer>.toml` file to decide:
 
-1. Whether to create a `<launch>/<layer>` directory that will replace a remote layer during the export step.
-2. Whether to remove the `<launch>/<layer>.toml` file to delete a remote layer during the export step.
+1. Whether to create a `<launch>/<layer>` directory that will replace a remote layer during the export phase.
+2. Whether to remove the `<launch>/<layer>.toml` file to delete a remote layer during the export phase.
 3. Whether to modify the `<launch>/<layer>.toml` file for the next build.
 
 To make this decision, the buildpack should consider:
@@ -221,16 +258,103 @@ To make this decision, the buildpack should consider:
 
 ### Export
 
-The lifecycle MUST NOT download any filesystem layers from the previous OCI image.
+#### Purpose
+
+The purpose of export is to create an new OCI image using a combination of remote layers, local `<launch>/<layer>` layers, and the processed `<app>` directory.
+
+#### Process
+
+**GIVEN:**
+- The `<launch>` directories provided to each buildpack during the build phase,
+- The `<app>` directory processed by the buildpacks during the build phase,
+- A reference to the old OCI image associated with the `<launch>/<layer>.toml` files that were retrieved during the analysis phase and
+- A tag for a new OCI image,
+
+For each `<launch>/<layer>.toml` file,
+
+1. **IF** a corresponding `<launch>/<layer>` directory is present locally, \
+   **THEN** the lifecycle MUST
+   1. Convert this directory to a layer.
+   2. Transfer the layer to the same image store as the old OCI image.
+   3. Ensure the absolute path of `<launch>/<layer>` is preserved in the transferred layer.
+   4. Collect a reference to the transferred layer.
+2. **IF** a corresponding `<launch>/<layer>` directory is not present locally, \
+   **THEN** the lifecycle MUST
+   1. Attempt to locate the corresponding layer in the old OCI image. 
+   2. Collect a reference to the located layer or fail export if no such layer can be found.
+3. The lifecycle MUST store the `<launch>/<layer>.toml` file so that
+   - It is associated with or contained within new OCI image,
+   - It is associated with the buildpack ID of the buildpack that created it, and
+   - It is associated with the collected layer reference. 
+   
+Subsequently,
+   
+1. For `<app>`, the lifecycle MUST
+   1. Convert the directory into one or more layers,
+   2. Transfer the layers to the same image store as the old OCI image.
+   3. Ensure absolute path of the directory is preserved in the transferred layer(s).
+   4. Collect references to the transferred layers.
+2. The lifecycle MUST construct the new OCI image in the same image store as the old OCI image, such that the image is composed of
+   - All new `<launch>/<layer>` filesystem layers transferred by the lifecycle,
+   - All old `<launch>/<layer>` filesystem layers from the old OCI image,
+   - All `<app>` filesystem layers, and
+   - An `ENTRYPOINT` set to an executable component of the lifecycle that implements the launch phase.
+   
+The lifecycle MUST NOT access the contents of any filesystem layers from the previous OCI image.
 
 ### Launch
 
-### Development Setup
+#### Purpose
+
+The purpose of launch is to modify the running app environment using app-provided or buildpack-provided logic and start a user-provided or buildpack-provided process.
+
+#### Process
 
 **GIVEN:**
-- The final ordered group of buildpacks determined during detection and
-- A directory containing application source code and
-- The final Build Plan and
+- An OCI image exported by the lifecycle and
+- An optional process type specified by `PACK_PROCESS_TYPE`,
+
+1. The lifecycle MUST source each file in each `<launch>/<layer>/profile.d` directory with Bash 3+,
+   1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+   2. Secondly, in alphabetical order by layer directory name.
+   3. Thirdly, in alphabetical order by file name.
+
+2. The lifecycle MUST then source `<app>/.profile` if present with Bash 3+.
+
+3. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
+   1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<launch>/launch.toml`, \
+      **THEN** the corresponding command is executed in the container using Bash 3+.
+      
+   2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<launch>/launch.toml`, \
+      **THEN** launch fails.
+
+4. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
+   1. **IF** there is a process with a `web` process type in `<launch>/launch.toml`, \
+      **THEN** the corresponding command is executed in the container using Bash 3+.
+      
+   2. **IF** there is not a process with a `web` process type in `<launch>/launch.toml`, \
+      **THEN** launch fails.
+      
+When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible. 
+
+### Development Setup
+
+#### Purpose
+
+The purpose of development setup is to create a containerized environment for developing or testing application source code.
+
+During the development setup phase, typical buildpacks might:
+
+1. Provide the app as well as subsequent buildpacks with dependencies in `<cache>/<layer>`.
+2. Provide a command to start a development server in `<cache>/develop.toml`.
+2. Provide a command to run a test suite in `<cache>/develop.toml`.
+
+#### Process
+
+**GIVEN:**
+- The final ordered group of buildpacks determined during detection,
+- A directory containing application source code,
+- The final Build Plan, and
 - The most recent local `<cache>` directories from a development setup of a version of the application source code,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/develop`.
@@ -261,20 +385,39 @@ Correspondingly, each `/bin/develop` executable:
 - MAY name any new `<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
+After the last `/bin/develop` finishes executing,
+
+1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
+   1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<cache>/develop.toml`, \
+      **THEN** the corresponding command is executed in the container using Bash 3+.
+      
+   2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<cache>/develop.toml`, \
+      **THEN** development setup fails.
+
+2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
+   1. **IF** there is a process with a `web` process type in `<cache>/develop.toml`, \
+      **THEN** the corresponding command is executed in the container using Bash 3+.
+      
+   2. **IF** there is not a process with a `web` process type in `<cache>/develop.toml`, \
+      **THEN** development setup fails.
+      
+When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
+      
 ## Environment
+
+### Provided by the Lifecycle
 
 The following environment variables MUST be set by the lifecycle in order to make buildpack dependencies accessible.
 
-During the build process, each variable MUST contain absolute paths of all previous buildpacks’ `<cache>/<layer>` directories.
+During the build phase, each variable designated for build MUST contain absolute paths of all previous buildpacks’ `<cache>/<layer>` directories.
 
-When the output image is launched, each variable MUST contain absolute paths of all buildpacks’ `<launch>/<layer>` directories.
+When the exported OCI image is launched, each variable designated for launch MUST contain absolute paths of all buildpacks’ `<launch>/<layer>` directories.
 
 In either case,
 
 - The lifecycle MUST order all `<layer>` paths to reflect the order of the buildpack group.
-- The lifecycle MAY order all `<layer>` paths provided by a given buildpack alphabetically.
-- The lifecycle MUST separate each path with the OS path separator (e.g., `:` on Linux).
-- Buildpacks MUST NOT depend on the order of layer paths provided by a given buildpack.
+- The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically.
+- The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
 
  Env Variable      | Layer Path   | Contents         | Build | Launch
 -------------------|--------------|------------------|-------|--------
@@ -284,7 +427,9 @@ In either case,
  `CPATH`           | `/include`   | header files     | [x]   |
  `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
 
-The following additional environment variables MAY be read by the buildpacks and MUST NOT be overridden by the lifecycle.
+### Provided by the Platform
+
+The following additional environment variables MUST NOT be overridden by the lifecycle.
 
  Env Variable    | Description                            | Detect | Build | Launch
 -----------------|----------------------------------------|--------|-------|--------
@@ -294,18 +439,26 @@ The following additional environment variables MAY be read by the buildpacks and
  `BP_*`          | User-specified variable for buildpack  | [x]    | [x]   |
  `BPL_*`		 | User-specified variable for profile.d  |        |       | [x]
 
-During the build process, buildpacks MAY write files to `<cache>/<layer>/env/` directories.
-These files MUST contain filesystem paths delimited by the operating-system-specific path separator.
+The lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
-For each file written to `<cache>/<layer>/env/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build` such that
-
-- The name of an environment variable MUST be identical to the name of the file.
-- The value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the operating-system-specific path separator.
-- Within the environment variable value, earlier buildpacks' file contents MUST proceed later buildpacks' file contents.
-- Within the environment variable value, file contents originating from the same buildpack MAY be sorted alphabetically by associated layer name.
-
-The lifecycle MUST place any user-provided environment variables into files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/build` directly.
+
+### Provided by the Buildpacks
+
+During the build phase, buildpacks MAY write environment variable files to `<cache>/<layer>/env/` directories.
+
+For each file written to `<cache>/<layer>/env/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build`.
+The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) if present.
+
+If the environment variable file name ends in `.append` or has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
+Within that environment variable value,
+- Earlier buildpacks' environment variable file contents MUST proceed later buildpacks' environment variable file contents.
+- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically by associated layer name.
+
+If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents or the contents of another identically named file in another `<cache>/<layer>/env/` directory.
+For that environment variable value
+- Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
+- For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically by associated layer name) override file contents that are earlier.
 
 ## Artifact Format
 
@@ -359,25 +512,3 @@ version = "<dependency version or *>"
 [<dependency name>.metadata]
 <buildpack-specific data>
 ```
-
-## Layer Caching
-
-The purpose of layer caching is to
-1. Minimize the execution time of the build process.
-2. Minimize persistent disk usage. 
-
-This is achieved by
-1. Reducing the number of build operations.
-2. Reducing data transfer. 
-3. Enabling de-duplication of stored image layers.
-
-
-If the buildpack creates a <launch>/<layer>.toml file, the contents of that file are stored as a LABEL on the resulting image and recovered on the next build at the same location.
-
-If <launch>/<layer>.toml is modified, the changes are persisted to the image metadata.
-
-If a <launch>/<layer>.toml file exists and a <launch>/<layer>/ directory exists, the contents of <launch>/<layer>/ will replace the remote layer.
-
-If a <launch>/<layer>.toml file exists and no <launch>/<layer>/ directory exists, then the contents of <launch>/<layer>/ are recovered from the previous build.
-
-If no <launch>/<layer>.toml exists after the build, no corresponding remote layer is included in the updated image.

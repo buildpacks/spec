@@ -160,3 +160,14 @@ Runtime layer rebasing allows for O(CF) or O(Heroku) performance when updating O
 ## Security Model
 
 Implementations of this specification SHOULD run detection steps as well as the inner execution steps (2-5, which do not require reading or writing to an image repository) in a separate container (or at least a separate process space) that does not include credentials for access to any of the resources defined in this document. Neither buildpack code nor app code SHOULD be trusted with these types of credentials.
+
+## Layer Caching
+
+The purpose of layer caching is to
+1. Minimize the execution time of the build phase.
+2. Minimize persistent disk usage. 
+
+This is achieved by
+1. Reducing the number of build operations.
+2. Reducing data transfer. 
+3. Enabling de-duplication of stored image layers.
