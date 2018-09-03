@@ -25,15 +25,15 @@ This is accomplished in two phases:
 
 ### Key
 
- Mark | Meaning                                   
-------|-------------------------------------------
- A    | Single copy provided for all buildpacks
- E    | Different copy provided for each buildpack
- I    | Image repository for storage
- C    | Cache for storage
- R    | Read-only
- *    | Buildpack-specific content
- #    | Platform-specific content
+| Mark | Meaning                                   
+|------|-------------------------------------------
+| A    | Single copy provided for all buildpacks
+| E    | Different copy provided for each buildpack
+| I    | Image repository for storage
+| C    | Cache for storage
+| R    | Read-only
+| *    | Buildpack-specific content
+| #    | Platform-specific content
 
 The following specifies the interface implemented by executables in each buildpack.
 The lifecycle MUST invoke these executables as described in the Phases section.
@@ -311,30 +311,36 @@ The purpose of launch is to modify the running app environment using app-provide
 #### Process
 
 **GIVEN:**
-- An OCI image exported by the lifecycle and
-- An optional process type specified by `PACK_PROCESS_TYPE`,
+- An OCI image exported by the lifecycle,
+- An optional process type specified by `PACK_PROCESS_TYPE`, and
+- Bash version 3 or greater.
 
-1. The lifecycle MUST source each file in each `<launch>/<layer>/profile.d` directory with Bash 3+,
+When the OCI image is launched,
+
+1. The lifecycle MUST source each file in each `<launch>/<layer>/profile.d` directory using the same Bash shell process,
    1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
    2. Secondly, in alphabetical order by layer directory name.
    3. Thirdly, in alphabetical order by file name.
 
-2. The lifecycle MUST then source `<app>/.profile` if present with Bash 3+.
+2. In the same shell process as the previous step, the lifecycle MUST then source `<app>/.profile` if present.
 
-3. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
-   1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<launch>/launch.toml`, \
-      **THEN** the corresponding command is executed in the container using Bash 3+.
-      
-   2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<launch>/launch.toml`, \
-      **THEN** launch fails.
+3. If `CMD` in the container configuration contains a command, the lifecycle must execute the command in the container using the same shell process. 
 
-4. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
-   1. **IF** there is a process with a `web` process type in `<launch>/launch.toml`, \
-      **THEN** the corresponding command is executed in the container using Bash 3+.
+4. If `CMD` in the container configuration does not contain a command,
+   1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
+      1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<launch>/launch.toml`, \
+         **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
       
-   2. **IF** there is not a process with a `web` process type in `<launch>/launch.toml`, \
-      **THEN** launch fails.
+      2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<launch>/launch.toml`, \
+         **THEN** launch fails.
+ 
+   2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
+      1. **IF** there is a process with a `web` process type in `<launch>/launch.toml`, \
+         **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
       
+      2. **IF** there is not a process with a `web` process type in `<launch>/launch.toml`, \
+         **THEN** launch fails.
+    
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible. 
 
 ### Development Setup
@@ -354,8 +360,9 @@ During the development setup phase, typical buildpacks might:
 **GIVEN:**
 - The final ordered group of buildpacks determined during detection,
 - A directory containing application source code,
-- The final Build Plan, and
+- The final Build Plan,
 - The most recent local `<cache>` directories from a development setup of a version of the application source code,
+- Bash version 3 or greater.
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/develop`.
 
@@ -389,17 +396,17 @@ After the last `/bin/develop` finishes executing,
 
 1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
    1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<cache>/develop.toml`, \
-      **THEN** the corresponding command is executed in the container using Bash 3+.
+      **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
       
    2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<cache>/develop.toml`, \
-      **THEN** development setup fails.
+      **THEN** the lifecycle MUST fail development setup.
 
 2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
    1. **IF** there is a process with a `web` process type in `<cache>/develop.toml`, \
-      **THEN** the corresponding command is executed in the container using Bash 3+.
+      **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
       
    2. **IF** there is not a process with a `web` process type in `<cache>/develop.toml`, \
-      **THEN** development setup fails.
+      **THEN** the lifecycle MUST fail development setup.
       
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
       
@@ -458,7 +465,7 @@ Within that environment variable value,
 If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents or the contents of another identically named file in another `<cache>/<layer>/env/` directory.
 For that environment variable value
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
-- For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically by associated layer name) override file contents that are earlier.
+- For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically by associated layer name) MUST override file contents that are earlier.
 
 ## Artifact Format
 
