@@ -39,15 +39,15 @@ This is accomplished in two phases:
    2. [Provided by the Platform](#provided-by-the-platform)
    3. [Provided by the Buildpacks](#provided-by-the-buildpacks)
 10. [Security Considerations](#security-considerations)
-   1. [Assumptions of Trust](#assumptions-of-trust)
-   2. [Requirements](#requirements)
+    1. [Assumptions of Trust](#assumptions-of-trust)
+    2. [Requirements](#requirements)
 11. [Artifact Format](#artifact-format)
-   1. [Buildpack Package](#buildpack-package)
+    1. [Buildpack Package](#buildpack-package)
 12. [Data Format](#data-format)
-   1. [buildpack.toml (TOML)](#buildpack.toml-(toml))
-   2. [launch.toml (TOML)](#launch.toml-(toml))
-   3. [develop.toml (TOML)](#develop.toml-(toml))
-   4. [Build Plan (TOML)](#build-plan-(toml))
+    1. [buildpack.toml (TOML)](#buildpack.toml-(toml))
+    2. [launch.toml (TOML)](#launch.toml-(toml))
+    3. [develop.toml (TOML)](#develop.toml-(toml))
+    4. [Build Plan (TOML)](#build-plan-(toml))
 
 ## Buildpack Interface
 
