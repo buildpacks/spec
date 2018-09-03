@@ -133,10 +133,10 @@ For each buildpack in each group in order, the lifecycle MUST execute `/bin/dete
    2. **IF** the buildpack is the last buildpack in the group,
       1. **IF** no exit statuses from `/bin/detect` in the group are zero \
          **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
-     
+
       2. **IF** at least one exit status from `/bin/detect` in the group is zero \
          **THEN** the lifecycle MUST select this group and proceed to the analysis phase.
-      
+
 The selected group MUST be filtered to only include buildpacks with exit status zero.
 The order of the buildpacks in the group MUST otherwise be preserved.
    
