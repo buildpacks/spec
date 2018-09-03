@@ -1,4 +1,4 @@
-# Buildpack API v3 Specification
+# Buildpack API v3 - Specification
 
 This specification defines interactions between a platform, a lifecycle, a number of buildpacks, and an application
 1. For the purpose of transforming that application into a runnable artifact and
