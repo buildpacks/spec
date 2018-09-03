@@ -1,16 +1,8 @@
-## Storage
-
-This entire specification may be implemented with:
-
-1. One or more v2 Docker image registries AND/OR
-
-2. One or more Docker daemons supporting v2 Docker images AND
-
-3. An additional datastore containing the locations and credentials for registries, daemons, and VCS repositories.
 
 ## Stacks
 
-A stack consists of a build image and a run image. Apps are built on the build image, and the resulting artifact (the sluglet) is launched on the run image. Stack images must not contain these directories:
+A stack MUST consist of a build image and a run image.
+Apps are built on the build image, and the resulting layers are launched on the run image. Stack images must not contain these directories:
 
 * /launch
 
@@ -20,7 +12,7 @@ A stack consists of a build image and a run image. Apps are built on the build i
 
 * /buildpacks
 
-Updated versions of the run image must maintain [ABI](https://en.wikipedia.org/wiki/Application_binary_interface)[-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions. If a sluglet launches on one version of the run image, it should launch on all future versions. Updated versions of the build image should maintain ABI-compatibility with previous versions as well, although violating this requirement will not change the behavior of existing sluglets.
+Updated versions of the run image must maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions. If a sluglet launches on one version of the run image, it should launch on all future versions. Updated versions of the build image should maintain ABI-compatibility with previous versions as well, although violating this requirement will not change the behavior of existing sluglets.
 
 A buildpack should support one or more stacks explicitly by stack ID. A buildpack should use this ID to determine what dependencies it installs into the sluglet and cache.
 

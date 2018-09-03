@@ -1,4 +1,4 @@
-# Summary
+# Buildpack Interface Specification
 
 This document specifies the interface between a single lifecycle and one or more buildpacks.
 
@@ -21,9 +21,12 @@ This is accomplished in two phases:
 2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment. 
 
 
-# Buildpack Interface
+## Buildpack Interface
 
-## Key
+The following specifies the interface implemented by executables in each buildpack.
+The lifecycle MUST invoke these executables as described in the Phases section.
+
+### Key
 
 | Mark | Meaning                                   
 |------|-------------------------------------------
@@ -35,10 +38,7 @@ This is accomplished in two phases:
 | *    | Buildpack-specific content
 | #    | Platform-specific content
 
-The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Phases section.
-
-## Detection
+### Detection
 
 Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
@@ -52,7 +52,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
  `/dev/stdout` | Updated plan for subsequent detections (TOML)
  `/dev/stderr` | Detection logs (all)
 
-##  Build
+###  Build
 
 Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
 
@@ -80,7 +80,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
  `<launch>/<layer>/profile.d/` | Scripts sourced by bash before launch
  `<launch>/<layer>/*`          | Other content for launch
 
-## Development
+### Development
 
 Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 
@@ -100,15 +100,13 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
  `<cache>/<layer>/env/`       | Append env vars for subsequent buildpacks, app
  `<cache>/<layer>/*`          | Other cached content
 
-# App Interface
+## App Interface
 
  Output           | Description
 ------------------|----------------------------------------------
  `<app>/.profile` | Script sourced by bash before launch
 
-# Phases
-
-## Detection
+## Phase #1: Detection
 
 ### Purpose
 
@@ -159,7 +157,7 @@ Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group on a common stack.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
 
-## Analysis
+## Phase #2: Analysis
 
 ### Purpose
 
@@ -191,7 +189,7 @@ The lifecycle MUST NOT download any filesystem layers from the previous OCI imag
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
-## Build
+## Phase #3: Build
 
 ### Purpose
 
@@ -256,7 +254,7 @@ To make this decision, the buildpack should consider:
 3. Whether files in `<cache>` directories are sufficiently similar to the previous build.
 4. Whether the buildpack version has changed since the previous build.
 
-## Export
+## Phase #4: Export
 
 ### Purpose
 
@@ -410,9 +408,9 @@ After the last `/bin/develop` finishes executing,
       
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
       
-# Environment
+## Environment
 
-## Provided by the Lifecycle
+### Provided by the Lifecycle
 
 The following environment variables MUST be set by the lifecycle in order to make buildpack dependencies accessible.
 
@@ -434,7 +432,7 @@ In either case,
  `CPATH`           | `/include`   | header files     | [x]   |
  `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
 
-## Provided by the Platform
+### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
@@ -450,7 +448,7 @@ The lifecycle MUST provide any user-provided environment variables as files in `
 
 The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/build` directly.
 
-## Provided by the Buildpacks
+### Provided by the Buildpacks
 
 During the build phase, buildpacks MAY write environment variable files to `<cache>/<layer>/env/` directories.
 
@@ -467,9 +465,9 @@ For that environment variable value
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically by associated layer name) MUST override file contents that are earlier.
 
-# Artifact Format
+## Artifact Format
 
-## Buildpack Package
+### Buildpack Package
 
 Buildpacks SHOULD be stored as gzip-compressed tarballs with extension `.tgz`.
 
@@ -477,9 +475,9 @@ Buildpacks MUST contain `/buildpack.toml` and `/bin/detect`.
 
 Buildpacks MUST contain one or both of `/bin/build` and `/bin/develop`.
 
-# Data Format
+## Data Format
 
-## buildpack.toml (TOML)
+### buildpack.toml (TOML)
 
 ```toml
 [buildpack]
@@ -494,7 +492,7 @@ id = "<stack ID, globally unique, ex. io.buildpacks.stack>"
 <buildpack-specific data>
 ```
 
-## launch.toml (TOML)
+### launch.toml (TOML)
 
 ```toml
 [[processes]]
@@ -502,7 +500,7 @@ type = "<process type>"
 command = "<command>"
 ```
 
-## develop.toml (TOML)
+### develop.toml (TOML)
 
 ```toml
 [[processes]]
@@ -510,7 +508,7 @@ type = "<process type>"
 command = "<command>"
 ```
 
-## Build Plan (TOML)
+### Build Plan (TOML)
 
 ```toml
 [<dependency name>]
