@@ -11,14 +11,14 @@ This is accomplished in four phases:
 3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
 4. **Export,** where the remote layers are replaced by the generated layers.
 
-The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase. 
+The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
 Additionally, a lifecycle can use buildpacks to create a containerized environment for developing or testing application source code.
 
 This is accomplished in two phases:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment. 
+2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
 
 ## Table of Contents
 
@@ -56,7 +56,7 @@ The lifecycle MUST invoke these executables as described in the Phases section.
 
 ### Key
 
-| Mark | Meaning                                   
+| Mark | Meaning
 |------|-------------------------------------------
 | A    | Single copy provided for all buildpacks
 | E    | Different copy provided for each buildpack
@@ -111,13 +111,13 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 ### Development
 
 Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
- 
+
   Input                        | Description
  ------------------------------|----------------------------------------------
   `/dev/stdin`                 | Build plan from detection (TOML)
   `<platform>/env/`            | User-provided environment variables for build
   `<platform>/#`               | Platform-specific extensions
- 
+
   Output                       | Description
  ------------------------------|----------------------------------------------
   [exit status]                | Success (0) or failure (1+)
@@ -150,16 +150,16 @@ These buildpacks must be compatible with the app.
 **GIVEN:**
 - An ordered list of ordered buildpack groups and
 - A directory containing application source code,
- 
+
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
 1. **IF** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
    **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
-   
+
 2. **IF** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
    1. **IF** the buildpack is not the last buildpack in the group, \
       **THEN** the lifecycle MUST proceed to the next buildpack in the group.
-      
+
    2. **IF** the buildpack is the last buildpack in the group,
       1. **IF** no exit statuses from `/bin/detect` in the group are zero \
          **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
@@ -169,7 +169,7 @@ For each buildpack in each group in order, the lifecycle MUST execute `/bin/dete
 
 The selected group MUST be filtered to only include buildpacks with exit status zero.
 The order of the buildpacks in the group MUST otherwise be preserved.
-   
+
 The `/bin/detect` executable in each buildpack, when executed:
 
 1. MAY examine the app directory and environment variables.
@@ -177,10 +177,10 @@ The `/bin/detect` executable in each buildpack, when executed:
 3. MAY receive a TOML-formatted map called a Build Plan on `stdin`.
 4. MAY output changes to the Build Plan on `stdout`.
 5. MUST set an exit status code as described in the Buildpack Interface section.
- 
+
 For each `/bin/detect`, the Build Plan received on `stdin` MUST be a combined map derived from the output of all previous `/bin/detect` executables.
-The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks. 
-The lifecycle MUST NOT include any changes in this map that are output by optional buildpacks that returned non-zero exit statuses. 
+The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
+The lifecycle MUST NOT include any changes in this map that are output by optional buildpacks that returned non-zero exit statuses.
 The final Build Plan is the complete combined map that includes the output of the final `/bin/detect` executable.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
@@ -197,7 +197,7 @@ The purpose of analysis is to retrieve `<launch>/<layer>.toml` files that buildp
 
 Each `<launch>/<layer>.toml` file represents a remote filesystem layer that the buildpack may keep, replace, or remove during the build phase.
 
-### Process 
+### Process
 
 The lifecycle SHOULD attempt to locate a reference to an OCI image from a previous build that:
 
@@ -248,11 +248,11 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
 
 1. **IF** the exit status of `/bin/build` is non-zero, \
    **THEN** the lifecycle MUST fail the build.
-   
+
 2. **IF** the exit status of `/bin/build` is zero,
    1. **IF** there are additional buildpacks in the group, \
       **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
-      
+
    2. **IF** there are no additional buildpacks in the group, \
       **THEN** the lifecycle MUST proceed to the export phase.
 
@@ -261,7 +261,7 @@ For each `/bin/build` executable in each buildpack, the lifecycle:
 - MUST provide a Build Plan to `stdin` of `/bin/build`.
 - MUST configure the build environment as defined in the Environment section.
 - MUST provide path arguments to `/bin/build` as defined in the Buildpack Interface section.
-- MAY provide an empty `<cache>` directory if the platform does not make it available.  
+- MAY provide an empty `<cache>` directory if the platform does not make it available.
 
 Correspondingly, each `/bin/build` executable:
 
@@ -310,15 +310,15 @@ For each `<launch>/<layer>.toml` file,
    4. Collect a reference to the transferred layer.
 2. **IF** a corresponding `<launch>/<layer>` directory is not present locally, \
    **THEN** the lifecycle MUST
-   1. Attempt to locate the corresponding layer in the old OCI image. 
+   1. Attempt to locate the corresponding layer in the old OCI image.
    2. Collect a reference to the located layer or fail export if no such layer can be found.
 3. The lifecycle MUST store the `<launch>/<layer>.toml` file so that
    - It is associated with or contained within new OCI image,
    - It is associated with the buildpack ID of the buildpack that created it, and
-   - It is associated with the collected layer reference. 
-   
+   - It is associated with the collected layer reference.
+
 Subsequently,
-   
+
 1. For `<app>`, the lifecycle MUST
    1. Convert the directory into one or more layers,
    2. Transfer the layers to the same image store as the old OCI image.
@@ -329,7 +329,7 @@ Subsequently,
    - All old `<launch>/<layer>` filesystem layers from the old OCI image,
    - All `<app>` filesystem layers, and
    - An `ENTRYPOINT` set to an executable component of the lifecycle that implements the launch phase.
-   
+
 The lifecycle MUST NOT access the contents of any filesystem layers from the previous OCI image.
 
 ## Launch
@@ -354,24 +354,24 @@ When the OCI image is launched,
 
 2. In the same shell process as the previous step, the lifecycle MUST then source `<app>/.profile` if present.
 
-3. If `CMD` in the container configuration contains a command, the lifecycle must execute the command in the container using the same shell process. 
+3. If `CMD` in the container configuration contains a command, the lifecycle must execute the command in the container using the same shell process.
 
 4. If `CMD` in the container configuration does not contain a command,
    1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
       1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<launch>/launch.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
-      
+
       2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<launch>/launch.toml`, \
          **THEN** launch fails.
- 
+
    2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
       1. **IF** there is a process with a `web` process type in `<launch>/launch.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
-      
+
       2. **IF** there is not a process with a `web` process type in `<launch>/launch.toml`, \
          **THEN** launch fails.
-    
-When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible. 
+
+When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
 
 ## Development Setup
 
@@ -398,11 +398,11 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
 
 1. **IF** the exit status of `/bin/develop` is non-zero, \
    **THEN** the lifecycle MUST fail the development setup.
-   
+
 2. **IF** the exit status of `/bin/develop` is zero,
    1. **IF** there are additional buildpacks in the group, \
       **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/develop`.
-      
+
    2. **IF** there are no additional buildpacks in the group, \
       **THEN** the lifecycle MUST launch the process type specified by `PACK_PROCESS_TYPE`.
 
@@ -411,7 +411,7 @@ For each `/bin/develop` executable in each buildpack, the lifecycle:
 - MUST provide a Build Plan to `stdin` of `/bin/develop`.
 - MUST configure the build environment as defined in the Environment section.
 - MUST provide path arguments to `/bin/develop` as defined in the Buildpack Interface section.
-- MAY provide an empty `<cache>` directory if the platform does not make it available.  
+- MAY provide an empty `<cache>` directory if the platform does not make it available.
 
 Correspondingly, each `/bin/develop` executable:
 
@@ -427,19 +427,19 @@ After the last `/bin/develop` finishes executing,
 1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
    1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<cache>/develop.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
-      
+
    2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<cache>/develop.toml`, \
       **THEN** the lifecycle MUST fail development setup.
 
 2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
    1. **IF** there is a process with a `web` process type in `<cache>/develop.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
-      
+
    2. **IF** there is not a process with a `web` process type in `<cache>/develop.toml`, \
       **THEN** the lifecycle MUST fail development setup.
-      
+
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
-      
+
 ## Environment
 
 ### Provided by the Lifecycle
