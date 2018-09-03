@@ -71,7 +71,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
  `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks
  `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
  `<cache>/<layer>/pkgconfig/`  | Search path for pkg-config
- `<cache>/<layer>/env/`        | Appended env vars for subsequent buildpacks
+ `<cache>/<layer>/env/`        | Env vars for subsequent buildpacks
  `<cache>/<layer>/*`           | Other cached content
  `<launch>/launch.toml`        | Launch metadata (see File: launch.toml)
  `<launch>/<layer>.toml`       | Layer content metadata (see Layer Caching)
@@ -83,22 +83,26 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 ### Development
 
 Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
+ 
+  Input                        | Description
+ ------------------------------|----------------------------------------------
+  `/dev/stdin`                 | Build plan from detection (TOML)
+  `<platform>/env/`            | User-provided environment variables for build
+  `<platform>/#`               | Platform-specific extensions
+ 
+  Output                       | Description
+ ------------------------------|----------------------------------------------
+  [exit status]                | Success (0) or failure (1+)
+  `/dev/stdout`                | Logs (info)
+  `/dev/stderr`                | Logs (warnings, errors)
+  `<cache>/develop.toml`       | Development metadata (see File: develop.toml)
+  `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks
+  `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks
+  `<cache>/<layer>/include/`   | C/C++ headers for subsequent buildpacks
+  `<cache>/<layer>/pkgconfig/` | Search path for pkg-config
+  `<cache>/<layer>/env/`       | Env vars for subsequent buildpacks and app
+  `<cache>/<layer>/*`          | Other cached content
 
- Input                        | Description
-------------------------------|-----------------------------------------------
- [exit status]			      | Success (0) or failure (1+)
- `/dev/stdin`                 | Build plan from detection (TOML)
- `/dev/stdout`                | Logs (info)
- `/dev/stderr`                | Logs (warnings, errors)
- `<platform>/env/`            | User-provided environment variables for build
- `<platform>/#`               | Platform-specific extensions
- `<cache>/develop.toml`       | Development metadata (see File: develop.toml)
- `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks
- `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks
- `<cache>/<layer>/include/`   | C/C++ headers for subsequent buildpacks
- `<cache>/<layer>/pkgconfig/` | Search path for pkg-config
- `<cache>/<layer>/env/`       | Append env vars for subsequent buildpacks, app
- `<cache>/<layer>/*`          | Other cached content
 
 ## App Interface
 
