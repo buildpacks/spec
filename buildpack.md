@@ -504,6 +504,8 @@ On such a platform,
 - Buildpacks may be provided by both operators and users.
 - OCI image storage credentials may not be owned or managed by application developers.
 
+Therefore, the following assumptions and requirements exist to prevent malicious buildpacks or applications from gaining unauthorized access to external resources.
+
 ### Assumptions of Trust
 
 Allowed:
@@ -520,7 +522,7 @@ Prohibited:
 ### Requirements
 
 The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
-The lifecycle SHOULD be implemented so that each phase may run in a different container in order to minimize  
+The lifecycle SHOULD be implemented so that each phase may run in a different container.
 
 ## Artifact Format
 
