@@ -235,6 +235,17 @@ During the build phase, typical buildpacks might:
 4. Remove application source code that is not necessary for launch.
 5. Provide start command in `<launch>/launch.toml`.
 
+The purpose of separate `<layer>` directories is to:
+
+1. Minimize the execution time of the build phase.
+2. Minimize persistent disk usage.
+
+This is achieved by:
+
+1. Reducing the number of necessary build operations during the build phase.
+2. Reducing data transfer during the export phase.
+3. Enabling de-duplication of stored image layers.
+
 ### Process
 
 **GIVEN:**
@@ -267,11 +278,12 @@ Correspondingly, each `/bin/build` executable:
 
 - MAY read or write to the `<app>` directory.
 - MAY read a Build Plan from `stdin`.
+- MAY write a list of possible commands for launch to `<launch>/launch.toml` in `launch.toml` format.
 - MAY supply dependencies in `<cache>/<layer>` directories.
 - MAY supply dependencies in new `<launch>/<layer>` directories and create corresponding `<launch>/<layer>.toml` files.
 - MAY name any new `<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
-- MUST NOT provide paths for `<launch>/<layer>` directories to other buildpack.
+- MUST NOT provide paths for `<launch>/<layer>` directories to other buildpacks.
 
 The buildpack SHOULD use the contents of a given pre-existing `<launch>/<layer>.toml` file to decide:
 
@@ -297,6 +309,7 @@ The purpose of export is to create an new OCI image using a combination of remot
 **GIVEN:**
 - The `<launch>` directories provided to each buildpack during the build phase,
 - The `<app>` directory processed by the buildpacks during the build phase,
+- The buildpack IDs associated with the buildpacks used during the build phase, in order of execution,
 - A reference to the most recent version of the run image associated with the stack,
 - A reference to the old OCI image associated with the `<launch>/<layer>.toml` files that were retrieved during the analysis phase, and
 - A tag for a new OCI image,
@@ -332,6 +345,9 @@ Subsequently,
    - All new `<launch>/<layer>` filesystem layers transferred by the lifecycle,
    - All old `<launch>/<layer>` filesystem layers from the old OCI image,
    - All `<app>` filesystem layers,
+   - One or more filesystem layers containing
+     - The ordered buildpack IDs and
+     - A combined processes list derived from all `launch.toml` files such that process types from later buildpacks override identical process types from earlier buildpacks,
    - The run image filesystem layers, and
    - An `ENTRYPOINT` set to an executable component of the lifecycle that implements the launch phase.
 
@@ -348,7 +364,7 @@ The purpose of launch is to modify the running app environment using app-provide
 **GIVEN:**
 - An OCI image exported by the lifecycle,
 - An optional process type specified by `PACK_PROCESS_TYPE`, and
-- Bash version 3 or greater.
+- Bash version 3 or greater,
 
 When the OCI image is launched,
 
@@ -357,21 +373,21 @@ When the OCI image is launched,
    2. Secondly, in alphabetically ascending order by layer directory name.
    3. Thirdly, in alphabetically ascending order by file name.
 
-2. In the same shell process as the previous step, the lifecycle MUST then source `<app>/.profile` if present.
+2. In the Bash shell process used to source the `profile.d` scripts, the lifecycle MUST source `<app>/.profile` if it is present.
 
-3. If `CMD` in the container configuration contains a command, the lifecycle must execute the command in the container using the same shell process.
+3. If `CMD` in the container configuration is not empty, the lifecycle MUST join each argument with a space and execute the resulting command in the container using the Bash shell process used to source the `profile.d` scripts.
 
-4. If `CMD` in the container configuration does not contain a command,
+4. If `CMD` in the container configuration is empty,
    1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
       1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<launch>/launch.toml`, \
-         **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
+         **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
       2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<launch>/launch.toml`, \
          **THEN** launch fails.
 
    2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
       1. **IF** there is a process with a `web` process type in `<launch>/launch.toml`, \
-         **THEN** the lifecycle MUST execute the corresponding command in the container using the same shell process.
+         **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
       2. **IF** there is not a process with a `web` process type in `<launch>/launch.toml`, \
          **THEN** launch fails.
@@ -396,8 +412,8 @@ During the development setup phase, typical buildpacks might:
 - The final ordered group of buildpacks determined during detection,
 - A directory containing application source code,
 - The final Build Plan,
-- The most recent local `<cache>` directories from a development setup of a version of the application source code,
-- Bash version 3 or greater.
+- The most recent local `<cache>` directories from a development setup of a version of the application source code, and
+- Bash version 3 or greater,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/develop`.
 
@@ -483,6 +499,8 @@ The following additional environment variables MUST NOT be overridden by the lif
 The lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
 The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/build` directly.
+
+Buildpacks MAY use the value of `PACK_STACK_ID` to modify their behavior when executed on different stacks.
 
 The environment variable prefix `PACK_` is reserved.
 It MUST NOT be used for environment variables that are not defined in this specification or approved extensions.
@@ -582,7 +600,8 @@ command = "<command>"
 ```
 
 Buildpacks MUST specify:
-- A unique process type for each entry within a launch.toml file.
+
+- A unique process type for each entry within a `launch.toml` file.
 - A command that is valid when executed using the Bash 3+ shell.
 
 ### develop.toml (TOML)
@@ -594,7 +613,8 @@ command = "<command>"
 ```
 
 Buildpacks MUST specify:
-- A unique process type for each entry within a develop.toml file.
+
+- A unique process type for each entry within a `develop.toml` file.
 - A command that is valid when executed using the Bash 3+ shell.
 
 ### Build Plan (TOML)
@@ -609,5 +629,6 @@ provider = "<buildpack ID>"
 ```
 
 For a given dependency, the buildpack MAY specify:
+
 - The dependency version. If a version range is needed, semver notation SHOULD be used to specify the range.
 - The ID of the buildpack that will provide the dependency.
