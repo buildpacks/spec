@@ -461,39 +461,45 @@ In either case,
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
 - The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
 
- Env Variable      | Layer Path   | Contents         | Build | Launch
--------------------|--------------|------------------|-------|--------
- `PATH`            | `/bin`       | binaries         | [x]   | [x]
- `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]
- `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |
- `CPATH`           | `/include`   | header files     | [x]   |
- `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
+| Env Variable      | Layer Path   | Contents         | Build | Launch
+|-------------------|--------------|------------------|-------|--------
+| `PATH`            | `/bin`       | binaries         | [x]   | [x]
+| `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]
+| `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |
+| `CPATH`           | `/include`   | header files     | [x]   |
+| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
 
 ### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
- Env Variable    | Description                            | Detect | Build | Launch
------------------|----------------------------------------|--------|-------|--------
- `PACK_SERVICES` | OSBAPI service bindings                |        |       | [x]
- `PACK_SERVICES` | OSBAPI service bindings (restricted)   | [x]    | [x]   |
- `PACK_STACK_ID` | Chosen stack ID                        | [x]    | [x]   |
- `BP_*`          | User-specified variable for buildpack  | [x]    | [x]   |
- `BPL_*`		 | User-specified variable for profile.d  |        |       | [x]
- `HOME`          | Current user's home directory          | [x]    | [x]   | [x]
+| Env Variable    | Description                            | Detect | Build | Launch
+|-----------------|----------------------------------------|--------|-------|--------
+| `PACK_STACK_ID` | Chosen stack ID                        | [x]    | [x]   |
+| `BP_*`          | User-specified variable for buildpack  | [x]    | [x]   |
+| `BPL_*`		  | User-specified variable for profile.d  |        |       | [x]
+| `HOME`          | Current user's home directory          | [x]    | [x]   | [x]
 
 The lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
 The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/build` directly.
+
+The environment variable prefix `PACK_` is reserved.
+It MUST NOT be used for environment variables that are not defined in this specification or approved extensions.
 
 ### Provided by the Buildpacks
 
 During the build phase, buildpacks MAY write environment variable files to `<cache>/<layer>/env/` directories.
 
 For each file written to `<cache>/<layer>/env/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build`.
-The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) if present.
+The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) or to the end of name if no periods are present.
 
-If the environment variable file name ends in `.append` or has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
+If the environment variable has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
+Within that environment variable value,
+- Earlier buildpacks' environment variable file contents MUST proceed later buildpacks' environment variable file contents.
+- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
+
+If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories without any delimitation.
 Within that environment variable value,
 - Earlier buildpacks' environment variable file contents MUST proceed later buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
