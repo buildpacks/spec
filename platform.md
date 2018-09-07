@@ -63,7 +63,7 @@ The build image MUST ensure that:
 - The image config's `Env` field has the environment variable `PACK_STACK_ID` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 
-The build image MUST initiate the detection phase when the `/lifecycle/detector` executable is invoked.
+To initiate the detection phase, the platform MUST invoke the `/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
@@ -77,7 +77,7 @@ Where:
 - `-group` MUST specify output to a `group.toml` file path as defined in the [Data Format](#data-format) section.
 - `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](#buildpacks-directory-layout).
 
-The build image MUST initiate the build phase when the `/lifecycle/builder` executable is invoked.
+To initiate the build phase, the platform MUST invoke the `/lifecycle/builder` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
@@ -96,7 +96,7 @@ The platform MUST provide the lifecycle with a reference to the run image during
 
 The run image MUST ensure that:
 
-- The image config's `User` field is set to a non-root user with a writable home directory.
+- The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 
 ## Buildpacks
