@@ -52,7 +52,7 @@ This is accomplished in two phases:
 ## Buildpack Interface
 
 The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Phases section.
+The lifecycle MUST invoke these executables as described in the Phase sections.
 
 ### Key
 
@@ -176,7 +176,7 @@ The `/bin/detect` executable in each buildpack, when executed:
 2. MAY emit error, warning, or debug messages to `stderr`.
 3. MAY receive a TOML-formatted map called a Build Plan on `stdin`.
 4. MAY output changes to the Build Plan on `stdout`.
-5. MUST set an exit status code as described in the Buildpack Interface section.
+5. MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 For each `/bin/detect`, the Build Plan received on `stdin` MUST be a combined map derived from the output of all previous `/bin/detect` executables.
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
@@ -270,8 +270,8 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
 - MUST provide a Build Plan to `stdin` of `/bin/build`.
-- MUST configure the build environment as defined in the Environment section.
-- MUST provide path arguments to `/bin/build` as defined in the Buildpack Interface section.
+- MUST configure the build environment as defined in the [Environment](#environment) section.
+- MUST provide path arguments to `/bin/build` as defined in the [Buildpack Interface](#buildpack-interface) section.
 - MAY provide an empty `<cache>` directory if the platform does not make it available.
 
 Correspondingly, each `/bin/build` executable:
@@ -430,8 +430,8 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
 For each `/bin/develop` executable in each buildpack, the lifecycle:
 
 - MUST provide a Build Plan to `stdin` of `/bin/develop`.
-- MUST configure the build environment as defined in the Environment section.
-- MUST provide path arguments to `/bin/develop` as defined in the Buildpack Interface section.
+- MUST configure the build environment as defined in the [Environment](#environment) section.
+- MUST provide path arguments to `/bin/develop` as defined in the [Buildpack Interface](#buildpack-interface) section.
 - MAY provide an empty `<cache>` directory if the platform does not make it available.
 
 Correspondingly, each `/bin/develop` executable:

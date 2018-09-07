@@ -20,8 +20,9 @@ Examples of a platform might include:
    1. [Buildpacks Directory Layout](#buildpacks-directory-layout)
 3. [Security Considerations](#security-considerations)
 4. [Additional Guidance](#additional-guidance)
-   1. [Run Layer Rebasing](#run-layer-rebasing)
-   2. [Caching](#caching)
+   1. [Environment](#environment)
+   2. [Run Image Rebasing](#run-image-rebasing)
+   3. [Caching](#caching)
 5. [Data Format](#data-format)
    1. [order.toml (TOML)](#order.toml-(toml))
    2. [group.toml (TOML)](#group.toml-(toml))
@@ -31,8 +32,8 @@ Examples of a platform might include:
 A "stack" refers to:
 
 - A globally unique ID containing at least one period (`.`),
-- A set of fully-qualified OCI image tags of build images, and
-- A set of fully-qualified OCI image tags of run images.
+- A set of fully-qualified OCI image tags referring to the same build image, and
+- A set of fully-qualified OCI image tags referring to the same run image.
 
 A "stack version" refers to:
 
@@ -40,6 +41,10 @@ A "stack version" refers to:
 - A version identifier,
 - The image SHA of a build OCI image, and
 - The image SHA of a run OCI image.
+
+A "launch layer" refers to a layer created from a  `<launch>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
+
+An "app layer" refers to a layer created from the `<app>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
 ### Compatibility Guarantees
 
@@ -52,12 +57,14 @@ Stack authors MUST ensure that app and launch layers do not change behavior when
 
 The platform MUST execute the detection and build phases of the lifecycle on the build image.
 
-The build image MUST specify a non-root user with an empty home directory at `$HOME` during the build phase.
+The build image MUST ensure that:
 
-The build image MUST have the stack ID set in the environment variable `PACK_STACK_ID` as well as using the label `io.buildpacks.stack.id`.
+- The image config's `User` field is set to a non-root user with a writable home directory.
+- The image config's `Env` field has the environment variable `PACK_STACK_ID` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 
 The build image MUST initiate the detection phase when the `/lifecycle/detector` executable is invoked.
-Invoking this executable with no flags is equivalent to invoking it with all accepted flags and their default values, as such:
+Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
 /lifecycle/detector -buildpacks /buildpacks -order /buildpacks/order.toml -group ./group.toml -plan ./plan.toml
@@ -65,13 +72,13 @@ Invoking this executable with no flags is equivalent to invoking it with all acc
 
 Where:
 
-- `-buildpacks` MUST specify input from a buildpacks directory as defined in the Buildpacks Directory Layout section.
-- `-order` MUST specify input from an overriding `order.toml` file path as defined in the Data Format section.
-- `-group` MUST specify output to a `group.toml` file path as defined in the Data Format section.
-- `-plan` MUST specify output to a Build Plan as defined in the Buildpack Interface Specification.
+- `-buildpacks` MUST specify input from a buildpacks directory as defined in the [Buildpacks Directory Layout](#buildpacks-directory-layout) section.
+- `-order` MUST specify input from an overriding `order.toml` file path as defined in the [Data Format](#data-format) section.
+- `-group` MUST specify output to a `group.toml` file path as defined in the [Data Format](#data-format) section.
+- `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](#buildpacks-directory-layout).
 
 The build image MUST initiate the build phase when the `/lifecycle/builder` executable is invoked.
-Invoking this executable with no flags is equivalent to invoking it with all accepted flags and their default values, as such:
+Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
 /lifecycle/builder -buildpacks /buildpacks -group ./group.toml -plan ./plan.toml
@@ -79,17 +86,18 @@ Invoking this executable with no flags is equivalent to invoking it with all acc
 
 Where:
 
-- `-buildpacks` MUST specify input from a buildpacks directory as defined in the Buildpacks Directory Layout section.
-- `-group` MUST specify input from a `group.toml` file path as defined in the Detection Order section.
-- `-plan` MUST specify input from a Build Plan as defined in the Buildpack Interface Specification.
+- `-buildpacks` MUST specify input from a buildpacks directory as defined in the [Buildpacks Directory Layout](#buildpacks-directory-layout) section.
+- `-group` MUST specify input from a `group.toml` file path as defined in the [Data Format](#data-format) section.
+- `-plan` MUST specify input from a Build Plan as defined in the [Buildpack Interface Specification](buildpack.md).
 
 ### Run Image
 
 The platform MUST provide the lifecycle with a reference to the run image during the export phase.
 
-The run image MUST use a non-root user with an empty home directory at `$HOME` to execute the application process.
+The run image MUST ensure that:
 
-The build image MUST have the stack ID set using the label `io.buildpacks.stack.id`.
+- The image config's `User` field is set to a non-root user with a writable home directory.
+- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 
 ## Buildpacks
 
@@ -98,27 +106,30 @@ The build image MUST have the stack ID set using the label `io.buildpacks.stack.
 The buildpacks directory MUST contain unpackaged buildpacks such that:
 
 - Each top-level directory is a buildpack ID.
-- Each second-level directory is a buildpack version.
-- Each top-level directory contains a `latest` symbolic link, which MUST point to the latest buildpack version.
+- Each second-level directory is a buildpack version and contains the corresponding unpackaged buildpack.
+- Each top-level directory contains a `latest` symbolic link, which MUST point to the latest buildpack version directory.
 
-Additionally, there MUST be an `order.toml` file at the root containing a list of buildpacks groups to use during the detection phase.
+Additionally, there MUST be an [`order.toml`](#order.toml-(toml)) file at the root containing a list of buildpacks groups to use during the detection phase.
 
 ## Security Considerations
 
 The platform SHOULD run each phase of the lifecycle in an isolated container to prevent untrusted app and buildpack code from accessing storage credentials needed during the export and analysis phases.
-A more thorough explanation is provided in the Buildpack Interface Specification.
+A more thorough explanation is provided in the [Buildpack Interface Specification](buildpack.md).
 
 ## Additional Guidance
 
+### Environment
+
 User-provided environment variables intended for build and launch SHOULD NOT come from the same list.
 The end-user SHOULD be encouraged to define them separately.
-The platform MAY determine the initial build-time and runtime environment.
+The platform MAY determine the initial environment of the build phase, detection phase, and launch.
 The lifecycle MUST NOT assume that all platforms provide an identical environment.
 
 ### Run Image Rebasing
 
-Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer.
-When a new stack version is available, the app and launch layers SHOULD be rebased on the new run image with remote OCI image metadata manipulation.
+Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
+When a new stack version is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
+Once the new run image is present on the registry, no filesystem layers should be uploaded or downloaded.
 
 ### Caching
 
@@ -130,10 +141,9 @@ Each platform SHOULD implement caching so as to appropriately optimize performan
 
 ```toml
 [[groups]]
-
 buildpacks = [
-  {id = "<buildpack ID>", version = "<buildpack version>", optional = <bool>, source = "<URI>" }
- ]
+  { id = "<buildpack ID>", version = "<buildpack version>", optional = <bool>, source = "<URI>" }
+]
 ```
 
 Where:

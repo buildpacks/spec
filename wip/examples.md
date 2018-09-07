@@ -28,6 +28,6 @@ The buildpack provides gems that are dependencies of the app in <launch>/gems/.
 
 In <launch>/ruby.toml, the buildpack notes the installed version of ruby.
 
-In <launch>/gems.toml, the buildpack notes a checksum of Gemfile.lock.
+In <launch>/gems.toml, the buildpack notes a checksum of <app>/Gemfile.lock.
 
 In launch.toml, the buildpack writes a web process type that runs the app.
