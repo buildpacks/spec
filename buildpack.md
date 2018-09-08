@@ -510,7 +510,7 @@ It MUST NOT be used for environment variables that are not defined in this speci
 During the build phase, buildpacks MAY write environment variable files to `<cache>/<layer>/env/` directories.
 
 For each file written to `<cache>/<layer>/env/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build`.
-The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) or to the end of name if no periods are present.
+The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) or to the end of the name if no periods are present.
 
 If the environment variable has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
 Within that environment variable value,
@@ -526,6 +526,8 @@ If the environment variable file name ends in `.override`, then the value of the
 For that environment variable value
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
+
+In all cases, file contents MUST NOT be evaluated by a shell or otherwise modified before inclusion in environment variable values.
 
 ## Security Considerations
 
