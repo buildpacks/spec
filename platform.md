@@ -131,6 +131,8 @@ Run image rebasing allows for fast stack updates for already-exported OCI images
 When a new stack version is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
 Once the new run image is present on the registry, no filesystem layers should be uploaded or downloaded.
 
+![Launch](img/launch.svg)
+
 ### Caching
 
 Each platform SHOULD implement caching so as to appropriately optimize performance. Cache locality and availability MAY vary between platforms.
