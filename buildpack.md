@@ -140,6 +140,8 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 
 ## Phase #1: Detection
 
+![Detection](img/detection.svg)
+
 ### Purpose
 
 The purpose of detection is to find an ordered group of buildpacks to use during the build phase.
@@ -191,6 +193,8 @@ The lifecycle MUST fail detection if any of those buildpacks does not list that 
 
 ## Phase #2: Analysis
 
+![Analysis](img/analysis.svg)
+
 ### Purpose
 
 The purpose of analysis is to retrieve `<launch>/<layer>.toml` files that buildpacks may use to optimize the build and export phases.
@@ -222,6 +226,8 @@ The lifecycle MUST NOT download any filesystem layers from the previous OCI imag
 After analysis, the lifecycle MUST proceed to the build phase.
 
 ## Phase #3: Build
+
+![Build](img/build.svg)
 
 ### Purpose
 
@@ -299,6 +305,8 @@ To make this decision, the buildpack should consider:
 4. Whether the buildpack version has changed since the previous build.
 
 ## Phase #4: Export
+
+![Export](img/export.svg)
 
 ### Purpose
 
