@@ -143,8 +143,9 @@ Each platform SHOULD implement caching so as to appropriately optimize performan
 
 ```toml
 [[groups]]
+labels = ["<label name>"]
 buildpacks = [
-  { id = "<buildpack ID>", version = "<buildpack version>", optional = <bool>, source = "<URI>" }
+  { id = "<buildpack ID>", version = "<buildpack version>", optional = <bool> }
 ]
 ```
 
@@ -153,27 +154,30 @@ Where:
 - The buildpack ID MUST be present for each buildpack object in a group.
 - The buildpack version MUST default to "latest" if not provided.
 - Each buildpack MUST default to not optional if not specified in the object.
-- Each buildpack object MAY specify a URI as optional metadata for the platform.
+- Group labels MAY be present to enable the platform to consider a subset of groups for detection.
 
 Example:
 
 ```toml
 [[groups]]
+labels = ["custom-dotnet"]
 buildpacks = [
-  { id = "sh.packs.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "sh.packs.buildpacks.dotnet-core", version = “latest” }
+  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
+  { id = "io.buildpacks.dotnet-core", version = “latest” }
 ]
 
 [[groups]]
+labels = ["custom-ruby", "ruby"]
 buildpacks = [
-  { id = "sh.packs.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "sh.packs.buildpacks.ruby", version = “latest” }
+  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
+  { id = "io.buildpacks.ruby", version = “latest” }
 ]
 
 [[groups]]
+labels = ["ruby-datascience", "ruby"]
 buildpacks = [
-  { id = "sh.packs.buildpacks.python", version = “latest” },
-  { id = "sh.packs.buildpacks.ruby", version = “latest”, source = "https://example.com/ruby.tgz" }
+  { id = "io.buildpacks.python", version = “latest” },
+  { id = "io.buildpacks.ruby", version = “latest” }
 ]
 ```
 
@@ -182,7 +186,7 @@ buildpacks = [
 ```toml
 buildpacks = [
   { id = "<buildpack ID>", version = "<buildpack version>" }
- ]
+]
 ```
 
 Where:
