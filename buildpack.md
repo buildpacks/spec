@@ -594,10 +594,17 @@ run-images = ["<run image tag>"]
 ```
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
-The buildpack ID MUST contain at least one period (`.`).
+
+The buildpack ID:
+- MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
+- MUST NOT be `config` or `app`.
+- MOST NOT be identical to any other buildpack ID when letters in each ID are coverted to lowercase.
 
 Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
-The stack ID MUST contain at least one period (`.`).
+
+The stack ID:
+- MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
+- MOST NOT be identical to any other stack ID when letters in each ID are coverted to lowercase.
 
 The stack `build-images` and `run-images` are suggested sources of the image for platforms that are unaware of the stack ID.
 
