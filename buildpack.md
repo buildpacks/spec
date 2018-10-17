@@ -604,7 +604,7 @@ Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.myst
 
 The stack ID:
 - MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
-- MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
+- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
 
 The stack `build-images` and `run-images` are suggested sources of the image for platforms that are unaware of the stack ID.
 
