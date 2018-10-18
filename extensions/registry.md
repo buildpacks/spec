@@ -5,7 +5,7 @@ The following additional elements extend the [`buildpack.toml` data format](../b
 ```toml
 [buildpack]
 
-  [publish.Ignore]
+  [publish.ignore]
   files = ["<files to ignore>"]
 
   [[publish.vendor]]
