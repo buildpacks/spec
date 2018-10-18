@@ -8,7 +8,7 @@ The following additional elements extend the [`buildpack.toml` data format](../b
   [publish.Ignore]
   files = ["<files to ignore>"]
 
-  [[publish.Vendor]]
+  [[publish.vendor]]
   url = "<url to download>"
   dir = "<directory to download>"
   files = ["<files to keep>"]
