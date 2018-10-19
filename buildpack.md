@@ -95,18 +95,22 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 | [exit status]                 | Success (0) or failure (1+)
 | `/dev/stdout`                 | Logs (info)
 | `/dev/stderr`                 | Logs (warnings, errors)
-| `<cache>/<layer>/bin/`        | Binaries for subsequent buildpacks
-| `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks
-| `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
-| `<cache>/<layer>/pkgconfig/`  | Search path for pkg-config
+| `<cache>/<layer>/bin/`        | Binaries for subsequent buildpacks (added to `PATH` in build phase)
+| `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks (added to `LD_LIBRARY_PATH` and `LIBRARY_PATH` in build phase)
+| `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks (added to `CPATH` in build phase)
+| `<cache>/<layer>/pkgconfig/`  | Search path for pkg-config (added to `PKG_CONFIG_PATH` in build phase)
 | `<cache>/<layer>/env/`        | Env vars for subsequent buildpacks
 | `<cache>/<layer>/*`           | Other cached content
 | `<launch>/launch.toml`        | Launch metadata (see File: launch.toml)
-| `<launch>/<layer>.toml`       | Layer content metadata (see Layer Caching)
-| `<launch>/<layer>/bin/`       | Binaries for launch
-| `<launch>/<layer>/lib/`       | Shared libraries for launch
+| `<launch>/<layer>.toml`       | Layer content metadata (see Layer Caching), can be empty
+| `<launch>/<layer>/bin/`       | Binaries for launch (added to `PATH` in launch phase)
+| `<launch>/<layer>/lib/`       | Shared libraries for launch (added to `LD_LIBRARY_PATH` and `LIBRARY_PATH` in launch phase)
 | `<launch>/<layer>/profile.d/` | Scripts sourced by bash before launch
 | `<launch>/<layer>/*`          | Other content for launch
+
+The `<layer>` label in `<launch>` and `<cache>` is arbitrary: buildpack authors can create as many as they need, and each one is shipped as a separate filesystem layer. The `<cache>` layers will be present in subsequent builds of the same target image. The `<launch>` layers will be present in the target image and usually will contain content needed by the launch commands specified in `launch.toml`.
+
+> NOTE: During the build phase a buildpack can access its own content, including tools needed to complete the build, using native libraries or techniques to locate the running executable (e.g. `$0` in a `bash` script).
 
 ### Development
 
