@@ -61,8 +61,8 @@ The build image MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
 - The image config's `Env` field has the environment variable `PACK_STACK_ID` set to the stack ID.
-- The image config's `Env` field has the environment variable `PACK_USER_ID` set to the uid of the `User`.
-- The image config's `Env` field has the environment variable `PACK_GROUP_ID` set to the primary gid of the `User`.
+- The image config's `Env` field has the environment variable `PACK_USER_ID` set to the UID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `PACK_GROUP_ID` set to the primary GID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 
 To initiate the detection phase, the platform MUST invoke the `/lifecycle/detector` executable with the user and environment defined in the build image config.
