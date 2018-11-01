@@ -101,8 +101,8 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 | `<cache>/<layer>/pkgconfig/`  | Search path for pkg-config
 | `<cache>/<layer>/env/`        | Env vars for subsequent buildpacks
 | `<cache>/<layer>/*`           | Other cached content
-| `<launch>/launch.toml`        | Launch metadata (see File: launch.toml)
-| `<launch>/<layer>.toml`       | Layer content metadata (see Layer Caching)
+| `<launch>/launch.toml`        | Launch metadata (see [launch.toml](#launch.toml-(toml)))
+| `<launch>/<layer>.toml`       | Layer content metadata
 | `<launch>/<layer>/bin/`       | Binaries for launch
 | `<launch>/<layer>/lib/`       | Shared libraries for launch
 | `<launch>/<layer>/profile.d/` | Scripts sourced by bash before launch
@@ -123,7 +123,7 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 | [exit status]                | Success (0) or failure (1+)
 | `/dev/stdout`                | Logs (info)
 | `/dev/stderr`                | Logs (warnings, errors)
-| `<cache>/develop.toml`       | Development metadata (see File: develop.toml)
+| `<cache>/develop.toml`       | Development metadata (see [develop.toml](#develop.toml-(toml)))
 | `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks & app
 | `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks & app
 | `<cache>/<layer>/include/`   | C/C++ headers for subsequent buildpacks
@@ -501,7 +501,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 |-----------------|----------------------------------------|--------|-------|--------
 | `PACK_STACK_ID` | Chosen stack ID                        | [x]    | [x]   |
 | `BP_*`          | User-specified variable for buildpack  | [x]    | [x]   |
-| `BPL_*`		  | User-specified variable for profile.d  |        |       | [x]
+| `BPL_*`         | User-specified variable for profile.d  |        |       | [x]
 | `HOME`          | Current user's home directory          | [x]    | [x]   | [x]
 
 The lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
@@ -606,7 +606,7 @@ The stack ID:
 - MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
 - MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
 
-The stack `build-images` and `run-images` are suggested sources of the image for platforms that are unaware of the stack ID.
+The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID.
 
 ### launch.toml (TOML)
 
