@@ -188,9 +188,9 @@ The final Build Plan is the complete combined map that includes the output of th
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` in the group closes `stdout`.
 
-The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
+The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of additional operating system packages.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is unavailable in the container.
+The lifecycle MUST fail detection if any of those buildpacks specifies an additional operating system package associated with that stack in `buildpack.toml` that is unavailable in the container.
 
 ## Phase #2: Analysis
 
@@ -319,7 +319,7 @@ The purpose of export is to create an new OCI image using a combination of remot
 - The `<launch>` directories provided to each buildpack during the build phase,
 - The `<app>` directory processed by the buildpacks during the build phase,
 - The buildpack IDs associated with the buildpacks used during the build phase, in order of execution,
-- A reference to the most recent version of the run image associated with the stack and mixins,
+- A reference to the most recent version of the run image associated with the stack and additional operating system packages,
 - A reference to the old OCI image associated with the `<launch>/<layer>.toml` files that were retrieved during the analysis phase, and
 - A tag for a new OCI image,
 
@@ -587,7 +587,8 @@ version = "<buildpack version>"
 
 [[stacks]]
 id = "<stack ID>"
-mixins = ["<mixin name>"]
+build-packages = ["<package name>"]
+run-packages = ["<package name>"]
 build-images = ["<build image tag>"]
 run-images = ["<run image tag>"]
 
@@ -608,7 +609,9 @@ The stack ID:
 - MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
 - MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
 
-The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID. Buildpack authors MUST ensure that these images include all mixins specified in `mixins`.
+The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID.
+Buildpack authors MUST ensure that build images include all packages specified in `build-packages`.
+Buildpack authors MUST ensure that run images include all packages specified in `run-packages`.
 
 ### launch.toml (TOML)
 
