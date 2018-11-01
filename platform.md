@@ -31,7 +31,7 @@ Examples of a platform might include:
 
 A **stack** is defined by a base run OCI image and a base build OCI image that are only updated with security patches. Stack images can be modified with mixins. For a given stack, a single stack ID designates the base run image, base build image, and all images derived from these images using mixins.
 
-A **mixin** is a named set of changes that may be applied to a stack.
+A **mixin** is a named set of modifications that may be applied to a stack.
 
 A **launch layer** refers to a layer created from a  `<launch>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
@@ -46,7 +46,7 @@ Stack authors MUST ensure that app and launch layers do not change behavior when
 
 Mixin authors MUST ensure that applying a mixin is an additive, idempotent operation that does not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images.
 
-To build an OCI image, platforms MUST use the same set of mixins for the run image as were used in the base image.
+To build an OCI image, platforms MUST use the same set of mixins for the run image as were used in the build image.
 
 ### Build Image
 
@@ -100,12 +100,12 @@ The run image MUST ensure that:
 
 ### Mixins
 
-A mixin name MUST be unique to a given stack. A mixin MUST be stored in a directory with an identical name to the mixin. The directory MUST contain either of both of the following Dockerfiles that take a single `stack` build argument and begin with `FROM $stack`:
+A mixin name MUST only be defined by a stack author and MUST be unique to a given stack.
 
-- `build.Dockerfile`, which contains changes for the stack build image, and
-- `run.Dockerfile`, which contains changes for the stack run image.
+A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
-A platform MAY support mixins in order to support application code or buildpacks that require modifications to a particular stack.
+Mixin modifications SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
+However, mixin modifications MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
 
 ## Buildpacks
 
