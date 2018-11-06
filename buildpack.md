@@ -68,7 +68,7 @@ The lifecycle MUST invoke these executables as described in the Phase sections.
 
 ### Detection
 
-Executable: `/bin/detect <platform[A]>`, Working Dir: `<app[AR]>`
+Executable: `/bin/detect <platform[AR]>`, Working Dir: `<app[AR]>`
 
 | Input              | Description
 |--------------------|----------------------------------------------
@@ -81,25 +81,25 @@ Executable: `/bin/detect <platform[A]>`, Working Dir: `<app[AR]>`
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<platform>/plan/` | Contributions to the build plan
+| `<platform>/plan/` | Entries for the build plan (writable)
 
 
 ###  Build
 
-Executable: `/bin/build <platform[A]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
 
 | Input                         | Description
-|-------------------------------|----------------------------------------------
+|-------------------------------|-----------------------------------------------
 | `/dev/stdin`                  | Build plan from detection (TOML)
 | `<platform>/env/`             | User-provided environment variables for build
 | `<platform>/#`                | Platform-specific extensions
 
 | Output                        | Description
-|-------------------------------|----------------------------------------------
+|-------------------------------|-----------------------------------------------
 | [exit status]                 | Success (0) or failure (1+)
 | `/dev/stdout`                 | Logs (info)
 | `/dev/stderr`                 | Logs (warnings, errors)
-| `<platform>/plan/`            | Resolved contributions to the build plan
+| `<platform>/plan/`            | Claimed entries from the build plan (writable)
 | `<cache>/<layer>/bin/`        | Binaries for subsequent buildpacks
 | `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks
 | `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
