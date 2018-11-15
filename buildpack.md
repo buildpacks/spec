@@ -68,7 +68,7 @@ The lifecycle MUST invoke these executables as described in the Phase sections.
 
 ### Detection
 
-Executable: `/bin/detect <platform[AR]>`, Working Dir: `<app[AR]>`
+Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
 | Input              | Description
 |--------------------|----------------------------------------------
@@ -81,12 +81,12 @@ Executable: `/bin/detect <platform[AR]>`, Working Dir: `<app[AR]>`
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<platform>/plan/` | Entries for the build plan (writable)
+| `<plan>`           | Entries for the build plan
 
 
 ###  Build
 
-Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]> <plan[E]>`, Working Dir: `<app[AI]>`
 
 | Input                         | Description
 |-------------------------------|-----------------------------------------------
@@ -99,7 +99,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 | [exit status]                 | Success (0) or failure (1+)
 | `/dev/stdout`                 | Logs (info)
 | `/dev/stderr`                 | Logs (warnings, errors)
-| `<platform>/plan/`            | Claimed entries from the build plan (writable)
+| `<plan>`                      | Claimed entries from the build plan
 | `<cache>/<layer>/bin/`        | Binaries for subsequent buildpacks
 | `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks
 | `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
@@ -115,7 +115,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 
 ### Development
 
-Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
+Executable: `/bin/develop <platform[AR]> <cache[EC]>`, Working Dir: `<app[A]>`
 
 | Input                        | Description
 |------------------------------|----------------------------------------------
@@ -128,7 +128,7 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 | [exit status]                | Success (0) or failure (1+)
 | `/dev/stdout`                | Logs (info)
 | `/dev/stderr`                | Logs (warnings, errors)
-| `<platform>/plan/`           | Resolved contributions to the build plan
+| `<plan>`                     | Claimed entries from the build plan
 | `<cache>/develop.toml`       | Development metadata (see [develop.toml](#develop.toml-(toml)))
 | `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks & app
 | `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks & app
@@ -184,11 +184,11 @@ The `/bin/detect` executable in each buildpack, when executed:
 - MAY read the detect environment as defined in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY receive a TOML-formatted [Build Plan](#build-plan-(toml)) on `stdin`.
-- MAY contribute to the Build Plan by writing zero or more files to `<platform>/plan/`.
+- MAY contribute to the Build Plan by writing zero or more files to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 For each `/bin/detect`, the Build Plan received on `stdin` MUST be a map derived from the combined Build Plan contributions of all previous `/bin/detect` executables.
-In order to make an individual contribution to the Build Plan, a `/bin/detect` executable MUST write a file to `<platform>/plan/<name>` such that `<name>` is the desired top-level key and the file contents are the desired top-level value.
+In order to make an individual contribution to the Build Plan, a `/bin/detect` executable MUST write a file to `<plan>/<name>` such that `<name>` is the desired top-level key and the file contents are the desired top-level value.
 
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
 The lifecycle MUST NOT include any changes in this map that are contributed by optional buildpacks that returned non-zero exit statuses.
@@ -308,7 +308,7 @@ Correspondingly, each `/bin/build` executable:
 
 #### Build Plan Entry Claims
 
-In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<platform>/plan/<name>` such that `<name>` matches the name of the desired Build Plan entry.
+In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
 When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/build` executables.
 
 A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
@@ -489,7 +489,7 @@ Correspondingly, each `/bin/develop` executable:
 
 #### Build Plan Entry Claims
 
-In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<platform>/plan/<name>` such that `<name>` matches the name of the desired Build Plan entry.
+In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
 When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/develop` executables.
 
 A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
@@ -533,7 +533,7 @@ When the exported OCI image is launched, each variable designated for launch MUS
 
 In either case,
 
-- The lifecycle MUST order all `<layer>` paths to reflect the order of the buildpack group.
+- The lifecycle MUST order all `<layer>` paths to reflect the reversed order of the buildpack group.
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
 - The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
 
@@ -574,12 +574,12 @@ The lifecycle MUST set the name of the environment variable to the name of the f
 
 If the environment variable has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
 Within that environment variable value,
-- Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
+- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
 
 If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories without any delimitation.
 Within that environment variable value,
-- Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
+- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
 
 If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents or the contents of another identically named file in another `<cache>/<layer>/env/` directory.
