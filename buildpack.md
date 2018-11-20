@@ -68,33 +68,38 @@ The lifecycle MUST invoke these executables as described in the Phase sections.
 
 ### Detection
 
-Executable: `/bin/detect`, Working Dir: `<app[AR]>`
+Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
-| Input         | Description
-|---------------|----------------------------------------------
-| `/dev/stdin`  | Merged plan from previous detections (TOML)
+| Input              | Description
+|--------------------|----------------------------------------------
+| `/dev/stdin`       | Merged plan from previous detections (TOML)
+| `<platform>/env/`  | User-provided environment variables for build
+| `<platform>/#`     | Platform-specific extensions
 
-| Output        | Description
-|---------------|----------------------------------------------
-| [exit status] | Pass (0), fail (100), or error (1-99, 101+)
-| `/dev/stdout` | Updated plan for subsequent detections (TOML)
-| `/dev/stderr` | Detection logs (all)
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
+| `/dev/stdout`      | Logs (info)
+| `/dev/stderr`      | Logs (warnings, errors)
+| `<plan>`           | Entries for the build plan
+
 
 ###  Build
 
-Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <platform[AR]> <plan[E]> <cache[EC]> <launch[EI]>`, Working Dir: `<app[AI]>`
 
 | Input                         | Description
-|-------------------------------|----------------------------------------------
+|-------------------------------|-----------------------------------------------
 | `/dev/stdin`                  | Build plan from detection (TOML)
 | `<platform>/env/`             | User-provided environment variables for build
 | `<platform>/#`                | Platform-specific extensions
 
 | Output                        | Description
-|-------------------------------|----------------------------------------------
+|-------------------------------|-----------------------------------------------
 | [exit status]                 | Success (0) or failure (1+)
 | `/dev/stdout`                 | Logs (info)
 | `/dev/stderr`                 | Logs (warnings, errors)
+| `<plan>`                      | Claimed entries from the build plan
 | `<cache>/<layer>/bin/`        | Binaries for subsequent buildpacks
 | `<cache>/<layer>/lib/`        | Libraries for subsequent buildpacks
 | `<cache>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
@@ -110,7 +115,7 @@ Executable: `/bin/build <platform[AR]> <cache[EC]> <launch[EI]>`, Working Dir: `
 
 ### Development
 
-Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
+Executable: `/bin/develop <platform[AR]> <plan[E]> <cache[EC]>`, Working Dir: `<app[A]>`
 
 | Input                        | Description
 |------------------------------|----------------------------------------------
@@ -123,6 +128,7 @@ Executable: `/bin/develop <platform[A]> <cache[EC]>`, Working Dir: `<app[A]>`
 | [exit status]                | Success (0) or failure (1+)
 | `/dev/stdout`                | Logs (info)
 | `/dev/stderr`                | Logs (warnings, errors)
+| `<plan>`                     | Claimed entries from the build plan
 | `<cache>/develop.toml`       | Development metadata (see [develop.toml](#develop.toml-(toml)))
 | `<cache>/<layer>/bin/`       | Binaries for subsequent buildpacks & app
 | `<cache>/<layer>/lib/`       | Libraries for subsequent buildpacks & app
@@ -174,19 +180,22 @@ The order of the buildpacks in the group MUST otherwise be preserved.
 
 The `/bin/detect` executable in each buildpack, when executed:
 
-1. MAY examine the app directory and environment variables.
-2. MAY emit error, warning, or debug messages to `stderr`.
-3. MAY receive a TOML-formatted map called a Build Plan on `stdin`.
-4. MAY output changes to the Build Plan on `stdout`.
-5. MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
+- MAY read the app directory.
+- MAY read the detect environment as defined in the [Environment](#environment) section.
+- MAY emit error, warning, or debug messages to `stderr`.
+- MAY receive a TOML-formatted [Build Plan](#build-plan-(toml)) on `stdin`.
+- MAY contribute to the Build Plan by writing zero or more files to `<plan>`.
+- MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
-For each `/bin/detect`, the Build Plan received on `stdin` MUST be a combined map derived from the output of all previous `/bin/detect` executables.
+For each `/bin/detect`, the Build Plan received on `stdin` MUST be a map derived from the combined Build Plan contributions of all previous `/bin/detect` executables.
+In order to make an individual contribution to the Build Plan, a `/bin/detect` executable MUST write a file to `<plan>/<name>` such that `<name>` is the desired top-level key and the file contents are the desired top-level value.
+
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
-The lifecycle MUST NOT include any changes in this map that are output by optional buildpacks that returned non-zero exit statuses.
-The final Build Plan is the complete combined map that includes the output of the final `/bin/detect` executable.
+The lifecycle MUST NOT include any changes in this map that are contributed by optional buildpacks that returned non-zero exit statuses.
+The final Build Plan is the fully-merged map that includes the contributions of the final `/bin/detect` executable.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
-Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` in the group closes `stdout`.
+Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` finishes executing.
 
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group on a common stack.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
@@ -235,31 +244,33 @@ The purpose of build is to transform application source code into runnable artif
 
 During the build phase, typical buildpacks might:
 
-1. Provide the application with dependencies for launch in `<launch>/<layer>`.
-2. Provide subsequent buildpacks with dependencies in `<cache>/<layer>`.
-3. Compile the application source code into object code.
-4. Remove application source code that is not necessary for launch.
-5. Provide start command in `<launch>/launch.toml`.
+1. Read the Build Plan to determine what dependencies to provide.
+2. Provide the application with dependencies for launch in `<launch>/<layer>`.
+3. Provide subsequent buildpacks with dependencies in `<cache>/<layer>`.
+4. Compile the application source code into object code.
+5. Remove application source code that is not necessary for launch.
+6. Provide start command in `<launch>/launch.toml`.
 
 The purpose of separate `<layer>` directories is to:
 
-1. Minimize the execution time of the build phase.
-2. Minimize persistent disk usage.
+- Minimize the execution time of the build phase.
+- Minimize persistent disk usage.
 
 This is achieved by:
 
-1. Reducing the number of necessary build operations during the build phase.
-2. Reducing data transfer during the export phase.
-3. Enabling de-duplication of stored image layers.
+- Reducing the number of necessary build operations during the build phase.
+- Reducing data transfer during the export phase.
+- Enabling de-duplication of stored image layers.
 
 ### Process
 
 **GIVEN:**
 - The final ordered group of buildpacks determined during detection,
 - A directory containing application source code,
-- The final Build Plan,
+- A Build Plan processed by previous `/bin/detect` and `/bin/build` executions.
 - Any `<launch>/<layer>.toml` files placed on the filesystem during the analysis phase, and
 - The most recent local `<cache>` directories from a build of a version of the application source code,
+- Bash version 3 or greater,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
@@ -275,7 +286,7 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
-- MUST provide a Build Plan to `stdin` of `/bin/build`.
+- MUST provide a Build Plan to `stdin` of `/bin/build` that is the final Build Plan from the detection phase without any top-level entries that were claimed by previous `/bin/build` executables during the build phase.
 - MUST configure the build environment as defined in the [Environment](#environment) section.
 - MUST provide path arguments to `/bin/build` as defined in the [Buildpack Interface](#buildpack-interface) section.
 - MAY provide an empty `<cache>` directory if the platform does not make it available.
@@ -283,7 +294,11 @@ For each `/bin/build` executable in each buildpack, the lifecycle:
 Correspondingly, each `/bin/build` executable:
 
 - MAY read or write to the `<app>` directory.
+- MAY read the build environment as defined in the [Environment](#environment) section.
 - MAY read a Build Plan from `stdin`.
+- MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/build` executables during the build phase.
+- MAY log output from the build process to `stdout`.
+- MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<launch>/launch.toml` in `launch.toml` format.
 - MAY supply dependencies in `<cache>/<layer>` directories.
 - MAY supply dependencies in new `<launch>/<layer>` directories and create corresponding `<launch>/<layer>.toml` files.
@@ -291,18 +306,34 @@ Correspondingly, each `/bin/build` executable:
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 - MUST NOT provide paths for `<launch>/<layer>` directories to other buildpacks.
 
+#### Build Plan Entry Claims
+
+In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
+When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/build` executables.
+
+A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
+However, the lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+
+When the build is complete, a BOM (bill-of-materials) MAY be generated for auditing purposes.
+If generated, this BOM MUST contain
+- All entries from the original build plan generated during the detection phase and
+- All non-empty entry claim files created by `/bin/build` executables
+such that the non-empty entry claims override the original build plan entries from the detection phase.
+
+#### Launch Layer Metadata
+
 The buildpack SHOULD use the contents of a given pre-existing `<launch>/<layer>.toml` file to decide:
 
-1. Whether to create a `<launch>/<layer>` directory that will replace a remote layer during the export phase.
-2. Whether to remove the `<launch>/<layer>.toml` file to delete a remote layer during the export phase.
-3. Whether to modify the `<launch>/<layer>.toml` file for the next build.
+- Whether to create a `<launch>/<layer>` directory that will replace a remote layer during the export phase.
+- Whether to remove the `<launch>/<layer>.toml` file to delete a remote layer during the export phase.
+- Whether to modify the `<launch>/<layer>.toml` file for the next build.
 
 To make this decision, the buildpack should consider:
 
-1. Whether files in the `<app>` directory are sufficiently similar to the previous build.
-2. Whether the environment is sufficiently similar to the previous build.
-3. Whether files in `<cache>` directories are sufficiently similar to the previous build.
-4. Whether the buildpack version has changed since the previous build.
+- Whether files in the `<app>` directory are sufficiently similar to the previous build.
+- Whether the environment is sufficiently similar to the previous build.
+- Whether files in `<cache>` directories are sufficiently similar to the previous build.
+- Whether the buildpack version has changed since the previous build.
 
 ## Phase #4: Export
 
@@ -410,16 +441,17 @@ The purpose of development setup is to create a containerized environment for de
 
 During the development setup phase, typical buildpacks might:
 
-1. Provide the app as well as subsequent buildpacks with dependencies in `<cache>/<layer>`.
-2. Provide a command to start a development server in `<cache>/develop.toml`.
-2. Provide a command to run a test suite in `<cache>/develop.toml`.
+1. Read the Build Plan to determine what dependencies to provide.
+2. Provide dependencies in `<cache>/<layer>` for the app and for subsequent buildpacks.
+3. Provide a command to start a development server in `<cache>/develop.toml`.
+4. Provide a command to run a test suite in `<cache>/develop.toml`.
 
 ### Process
 
 **GIVEN:**
 - The final ordered group of buildpacks determined during detection,
 - A directory containing application source code,
-- The final Build Plan,
+- A Build Plan processed by previous `/bin/detect` and `/bin/develop` executions,
 - The most recent local `<cache>` directories from a development setup of a version of the application source code, and
 - Bash version 3 or greater,
 
@@ -437,7 +469,7 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
 
 For each `/bin/develop` executable in each buildpack, the lifecycle:
 
-- MUST provide a Build Plan to `stdin` of `/bin/develop`.
+- MUST provide a Build Plan to `stdin` of `/bin/develop` that is the final Build Plan from the detection phase without any top-level entries that were claimed by previous `/bin/develop` executables during the build phase.
 - MUST configure the build environment as defined in the [Environment](#environment) section.
 - MUST provide path arguments to `/bin/develop` as defined in the [Buildpack Interface](#buildpack-interface) section.
 - MAY provide an empty `<cache>` directory if the platform does not make it available.
@@ -446,10 +478,30 @@ Correspondingly, each `/bin/develop` executable:
 
 - MAY read from the app directory.
 - MAY write files to the app directory in an idempotent manner.
+- MAY read the build environment as defined in the [Environment](#environment) section.
 - MAY read a Build Plan from `stdin`.
+- MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/build` executables during the build phase.
+- MAY log output from the build process to `stdout`.
+- MAY emit error, warning, or debug messages to `stderr`.
 - MAY supply dependencies in `<cache>/<layer>` directories.
 - MAY name any new `<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
+
+#### Build Plan Entry Claims
+
+In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
+When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/develop` executables.
+
+A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
+However, the lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+
+When the build is complete, a BOM (bill-of-materials) MAY be generated for auditing purposes.
+If generated, this BOM MUST contain
+- All entries from the original build plan generated during the detection phase and
+- All non-empty entry claim files created by `/bin/develop` executables
+such that the non-empty entry claims override the original build plan entries from the detection phase.
+
+#### Execution
 
 After the last `/bin/develop` finishes executing,
 
@@ -473,7 +525,7 @@ When executing a process with Bash, the lifecycle SHOULD replace the Bash proces
 
 ### Provided by the Lifecycle
 
-The following environment variables MUST be set by the lifecycle in order to make buildpack dependencies accessible.
+The following environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
 
 During the build phase, each variable designated for build MUST contain absolute paths of all previous buildpacks’ `<cache>/<layer>/` directories.
 
@@ -481,7 +533,7 @@ When the exported OCI image is launched, each variable designated for launch MUS
 
 In either case,
 
-- The lifecycle MUST order all `<layer>` paths to reflect the order of the buildpack group.
+- The lifecycle MUST order all `<layer>` paths to reflect the reversed order of the buildpack group.
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
 - The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
 
@@ -497,16 +549,16 @@ In either case,
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                            | Detect | Build | Launch
-|-----------------|----------------------------------------|--------|-------|--------
-| `PACK_STACK_ID` | Chosen stack ID                        | [x]    | [x]   |
-| `BP_*`          | User-specified variable for buildpack  | [x]    | [x]   |
-| `BPL_*`         | User-specified variable for profile.d  |        |       | [x]
-| `HOME`          | Current user's home directory          | [x]    | [x]   | [x]
+| Env Variable    | Description                          | Detect | Build | Launch
+|-----------------|--------------------------------------|--------|-------|--------
+| `PACK_STACK_ID` | Chosen stack ID                      | [x]    | [x]   |
+| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
+| `BPL_*`         | User-provided variable for profile.d |        |       | [x]
+| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
 
-The lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
+During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
-The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/build` directly.
+The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` directly.
 
 Buildpacks MAY use the value of `PACK_STACK_ID` to modify their behavior when executed on different stacks.
 
@@ -522,12 +574,12 @@ The lifecycle MUST set the name of the environment variable to the name of the f
 
 If the environment variable has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories delimited by the OS path list separator.
 Within that environment variable value,
-- Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
+- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
 
 If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files in other `<cache>/<layer>/env/` directories without any delimitation.
 Within that environment variable value,
-- Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
+- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
 
 If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents or the contents of another identically named file in another `<cache>/<layer>/env/` directory.
@@ -541,8 +593,8 @@ In all cases, file contents MUST NOT be evaluated by a shell or otherwise modifi
 
 A lifecycle may be used by a multi-tenant platform. On such a platform,
 
-- Buildpacks may be provided by both operators and users.
-- OCI image storage credentials may not be owned or managed by application developers.
+- Buildpacks may potentially be provided by both operators and users.
+- OCI image storage credentials may potentially not be owned or managed by application developers.
 
 Therefore, the following assumptions and requirements exist to prevent malicious buildpacks or applications from gaining unauthorized access to external resources.
 
@@ -639,7 +691,6 @@ Buildpacks MUST specify:
 ```toml
 [<dependency name>]
 version = "<dependency version>"
-provider = "<buildpack ID>"
 
 [<dependency name>.metadata]
 # buildpack-specific data
