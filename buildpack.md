@@ -89,7 +89,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
 ###  Build
 
-Executable: `/bin/build <platform[AR]> <plan[E]> <layers[EIC]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[AI]>`
 
 | Input             | Description
 |-------------------|----------------------------------------------
@@ -118,7 +118,7 @@ Executable: `/bin/build <platform[AR]> <plan[E]> <layers[EIC]>`, Working Dir: `<
 
 ### Development
 
-Executable: `/bin/develop <platform[AR]> <plan[E]> <layers[EC]>`, Working Dir: `<app[A]>`
+Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[A]>`
 
 | Input             | Description
 |-------------------|----------------------------------------------
