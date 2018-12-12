@@ -783,12 +783,11 @@ For a given dependency, the buildpack MAY specify:
 ### Layer Content Metadata (TOML)
 
 ```toml
-[<layer name>]
 launch = false
 build = false
 cache = false
 
-[<layer name>.metadata]
+[metadata]
 # buildpack-specific data
 ```
 
