@@ -75,7 +75,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/detect` executable
-| `/dev/stdin`      | Merged plan from previous detections (TOML)
+| `/dev/stdin`      | Merged build plan from previous detections (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -84,7 +84,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<plan>`           | Entries for the build plan
+| `<plan>`           | Contributions to the the build plan (TOML)
 
 
 ###  Build
@@ -103,7 +103,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Claimed entries from the build plan
+| `<plan>`                       | Claims of contributions to the build plan (TOML)
 | `<layers>/launch.toml`         | Launch metadata (see [launch.toml](#launch.toml-(toml)))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-(toml)))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
@@ -132,7 +132,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Claimed entries from the build plan
+| `<plan>`                       | Claims of contributions to the build plan (TOML)
 | `<layers>/develop.toml`        | Development metadata (see [develop.toml](#develop.toml-(toml)))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-(toml)))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
@@ -238,11 +238,11 @@ The `/bin/detect` executable in each buildpack, when executed:
 - MAY read the detect environment as defined in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY receive a TOML-formatted [Build Plan](#build-plan-(toml)) on `stdin`.
-- MAY contribute to the Build Plan by writing zero or more files to `<plan>`.
+- MAY contribute to the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 For each `/bin/detect`, the Build Plan received on `stdin` MUST be a map derived from the combined Build Plan contributions of all previous `/bin/detect` executables.
-In order to make an individual contribution to the Build Plan, a `/bin/detect` executable MUST write a file to `<plan>/<name>` such that `<name>` is the desired top-level key and the file contents are the desired top-level value.
+In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` as top-level, TOML-formatted objects.
 
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
 The lifecycle MUST NOT include any changes in this map that are contributed by optional buildpacks that returned non-zero exit statuses.
@@ -363,17 +363,20 @@ Correspondingly, each `/bin/build` executable:
 
 #### Build Plan Entry Claims
 
-In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
-When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/build` executables.
+A buildpack MAY claim entries in the Build Plan by writing claims to `<plan>` that correspond to entries in the original Build Plan generated during the detection phase.
+When an entry is claimed, the lifecycle MUST remove the entry from the Build Plan that is provided via `stdin` to subsequent `/bin/build` executables.
 
-A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
-However, the lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+A buildpack MAY write replacement TOML metadata in the entry contents that refines the original contents of the Build Plan entry with information that could not be determined during the detection phase.
+The lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+
+A buildpack MAY write a Build Plan claim entry that does not correspond to an entry in the original Build Plan.
+The lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
 
 When the build is complete, a BOM (bill-of-materials) MAY be generated for auditing purposes.
 If generated, this BOM MUST contain
-- All entries from the original build plan generated during the detection phase and
-- All non-empty entry claim files created by `/bin/build` executables
-such that the non-empty entry claims override the original build plan entries from the detection phase.
+- All entries from the original Build Plan generated during the detection phase,
+- All non-empty entry claims created by `/bin/build` executables such that they override corresponding the Build Plan entries from the detection phase, and
+- All entry claims that do not correspond to original Build Plan entries.
 
 #### Layers
 
