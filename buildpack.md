@@ -166,7 +166,7 @@ The lifecycle MUST also store the Layer Content Metadata associated with each la
 
 Before the next re-build:
 - The lifecycle MUST restore each `<layers>/<layer>.toml` file containing Layer Content Metadata from the previous build to the same location.
-- If a layer is cached, the lifecycle MUST also restore the corresponding `<layers>/<layer>/` directory from the previous build to the same location.
+- If a layer is cached, the lifecycle MAY also restore the corresponding `<layers>/<layer>/` directory from the previous build to the same location.
 - If a layer is not cached, the lifecycle MUST NOT restore the corresponding layer contents from any previous build.
 
 After the next re-build:
