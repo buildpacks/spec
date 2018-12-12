@@ -33,7 +33,7 @@ A **stack** is defined by a base run OCI image and a base build OCI image that a
 
 A **mixin** is a named set of modifications that may be applied to a stack.
 
-A **launch layer** refers to a layer created from a  `<launch>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
+A **launch layer** refers to a layer in the app OCI image created from a  `<layers>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
 An **app layer** refers to a layer created from the `<app>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
@@ -52,7 +52,7 @@ To build an OCI image, platforms MUST use the same set of mixins for the run ima
 
 The platform MUST execute the detection and build phases of the lifecycle on the build image.
 
-The build image MUST ensure that:
+The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
 - The image config's `Env` field has the environment variable `PACK_STACK_ID` set to the stack ID.
@@ -92,7 +92,7 @@ Where:
 
 The platform MUST provide the lifecycle with a reference to the run image during the export phase.
 
-The run image MUST ensure that:
+The platform MUST ensure that:
 
 - The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
@@ -136,8 +136,8 @@ The lifecycle MUST NOT assume that all platforms provide an identical environmen
 ### Run Image Rebasing
 
 Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
-When a new stack version is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
-Once the new run image is present on the registry, no filesystem layers should be uploaded or downloaded.
+When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
+Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded.
 
 The new run image MUST have an identical stack ID and MUST include the exact same set of mixins.
 
