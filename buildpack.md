@@ -251,8 +251,9 @@ The final Build Plan is the fully-merged map that includes the contributions of 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` finishes executing.
 
-The lifecycle MUST run `/bin/detect` for all buildpacks in a group on a common stack.
+The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
+The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is unavailable in the container.
 
 ## Phase #2: Analysis
 
@@ -400,7 +401,7 @@ The purpose of export is to create a new OCI image using a combination of remote
 - The `<layers>` directories provided to each buildpack during the build phase,
 - The `<app>` directory processed by the buildpacks during the build phase,
 - The buildpack IDs associated with the buildpacks used during the build phase, in order of execution,
-- A reference to the most recent version of the run image associated with the stack,
+- A reference to the most recent version of the run image associated with the stack and mixins,
 - A reference to the old OCI image processed during the analysis phase, if available, and
 - A tag for a new OCI image,
 
@@ -717,6 +718,7 @@ version = "<buildpack version>"
 
 [[stacks]]
 id = "<stack ID>"
+mixins = ["<mixin name>"]
 build-images = ["<build image tag>"]
 run-images = ["<run image tag>"]
 
@@ -737,7 +739,7 @@ The stack ID:
 - MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
 - MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
 
-The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID.
+The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID. Buildpack authors MUST ensure that these images include all mixins specified in `mixins`.
 
 ### launch.toml (TOML)
 

@@ -29,7 +29,9 @@ Examples of a platform might include:
 
 ## Stacks
 
-A **stack** is is defined by a base run OCI image and a base build OCI image that are only updated with security patches. For a given stack, a single stack ID designates the base run image and base build image.
+A **stack** is defined by a base run OCI image and a base build OCI image that are only updated with security patches. Stack images can be modified with mixins. For a given stack, a single stack ID designates the base run image, base build image, and all images derived from these images using mixins.
+
+A **mixin** is a named set of modifications that may be applied to a stack.
 
 A **launch layer** refers to a layer in the app OCI image created from a  `<layers>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
@@ -42,6 +44,10 @@ Stack authors SHOULD ensure that build image versions maintain [ABI-compatibilit
 Stack authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
 Stack authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
 
+Mixin authors MUST ensure that applying a mixin is an additive, idempotent operation that does not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images.
+
+To build an OCI image, platforms MUST use the same set of mixins for the run image as were used in the build image.
+
 ### Build Image
 
 The platform MUST execute the detection and build phases of the lifecycle on the build image.
@@ -53,6 +59,7 @@ The platform MUST ensure that:
 - The image config's `Env` field has the environment variable `PACK_USER_ID` set to the UID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `PACK_GROUP_ID` set to the primary GID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
 To initiate the detection phase, the platform MUST invoke the `/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
@@ -89,6 +96,16 @@ The platform MUST ensure that:
 
 - The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+
+### Mixins
+
+A mixin name MUST only be defined by a stack author and MUST be unique to a given stack.
+
+A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
+
+Mixin modifications SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
+However, mixin modifications MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
 
 ## Buildpacks
 
@@ -121,6 +138,8 @@ The lifecycle MUST NOT assume that all platforms provide an identical environmen
 Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
 When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
 Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded.
+
+The new run image MUST have an identical stack ID and MUST include the exact same set of mixins.
 
 ![Launch](img/launch.svg)
 
@@ -184,4 +203,3 @@ Where:
 
 - The buildpack ID MUST be present for each buildpack object in a group.
 - The buildpack version MUST default to "latest" if not provided.
-
