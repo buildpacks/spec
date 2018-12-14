@@ -45,11 +45,11 @@ This is accomplished in two phases:
 11. [Artifact Format](#artifact-format)
     1. [Buildpack Package](#buildpack-package)
 12. [Data Format](#data-format)
-    1. [buildpack.toml (TOML)](#buildpack.toml-(toml))
-    2. [launch.toml (TOML)](#launch.toml-(toml))
-    3. [develop.toml (TOML)](#develop.toml-(toml))
-    4. [Build Plan (TOML)](#build-plan-(toml))
-    5. [Layer Content Metadata (TOML)](#layer-content-metadata-(toml))
+    1. [buildpack.toml (TOML)](#buildpack.toml-toml)
+    2. [launch.toml (TOML)](#launch.toml-toml)
+    3. [develop.toml (TOML)](#develop.toml-toml)
+    4. [Build Plan (TOML)](#build-plan-toml)
+    5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
 ## Buildpack Interface
 
@@ -104,8 +104,8 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
 | `<plan>`                       | Claims of contributions to the build plan (TOML)
-| `<layers>/launch.toml`         | Launch metadata (see [launch.toml](#launch.toml-(toml)))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-(toml)))
+| `<layers>/launch.toml`         | Launch metadata (see [launch.toml](#launch.toml-toml))
+| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
