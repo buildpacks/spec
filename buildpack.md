@@ -395,8 +395,7 @@ To decide what layer operations are appropriate, the buildpack should consider:
 - Whether new application dependency versions have been made available since the layer was created.
 
 Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `app.toml`.
-These slices MAY overlap.
-If these sub-paths exist, separate layers MUST be created during the export phase for each path.
+Separate layers MUST be created during the export phase for each slice with one or more files or directories.
 This minimizes data transfer when the app directory contains a known set of files.
 
 ## Phase #4: Export
@@ -440,7 +439,7 @@ For each `<layers>/<layer>.toml` file that specifies `launch = true`,
 Subsequently,
 
 1. For `<app>`, the lifecycle MUST
-   1. Convert the directory into one or more layers using `slices` in each `app.toml`,
+   1. Convert the directory into one or more layers using `slices` in each `app.toml` such that slices from earlier buildpacks are processed before slices from later buildpacks.
    2. Transfer the layers to the same image store as the old OCI image.
    3. Ensure all absolute paths are preserved in the transferred layer(s).
    4. Collect references to the transferred layers.
@@ -762,7 +761,7 @@ type = "<process type>"
 command = "<command>"
 
 [[slices]]
-path = "<app sub-path>"
+paths = ["<app sub-path glob>"]
 ```
 
 The buildpack MAY specify any number of processes or slices.
@@ -772,7 +771,21 @@ For each process, the buildpack MUST specify:
 - A unique process type for each entry within a `app.toml` file.
 - A command that is valid when executed using the Bash 3+ shell.
 
-For each slice, buildpacks MUST specify a path relative to the root of the app directory.
+For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
+
+- Relative to the root of the app directory without traversing outside of the app directory.
+- Absolute, with `/` assumed to be the app directory.
+
+Path globs MUST:
+
+- Follow the pattern syntax defined in the [Go standard library](https://golang.org/pkg/path/filepath/#Match).
+- Match zero or more files or directories.
+
+The lifecycle MUST process each slice as if all files matched in preceding slices no longer exists in the app directory.
+
+The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
+
+The lifecycle MUST include all unmatched files in the app directory in zero or more additional layers in the OCI image.
 
 ### Build Plan (TOML)
 
