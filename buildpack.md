@@ -268,9 +268,7 @@ The lifecycle MUST fail detection if any of those buildpacks specifies a mixin a
 
 ### Purpose
 
-The purpose of analysis is:
-- To restore `<layers>/<layer>.toml` files that buildpacks may use to optimize the build and export phases.
-- To restore `<layers>/<layer>/` directories that are specified as cached launch layers.
+The purpose of analysis is to restore `<layers>/<layer>.toml` files that buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -289,10 +287,9 @@ The lifecycle MUST skip analysis and proceed to the build phase if no such image
 
 For each buildpack in the group,
 
-1. Any `<layers>/<layer>` directories that are cached locally from any previous build are restored to their same filesystem locations.
-2. Each `<layers>/<layer>.toml` file that was present at the end of the build of the previously created OCI image is retrieved.
-3. Each `<layers>/<layer>.toml` file is placed on the filesystem so that it appears in the corresponding buildpack's `<layers>/` directory during the build phase.
-4. Each `<layers>/<layer>.toml` file containing `launch = true` and `cache = true` has the contents of the corresponding `<layers>/<layer>` directory replaced with its contents in the previously created OCI image.
+1. All `<layers>/<layer>.toml` files with `cache = true` and corresponding `<layers>/<layer>` directories from any previous build are restored to their same filesystem locations.
+2. Each `<layers>/<layer>.toml` file with `launch = true` and `cache = false` that was present at the end of the build of the previously created OCI image is retrieved.
+3. A given `<layers>/<layer>.toml` file with `launch = true` and `cache = true` and corresponding  `<layers>/<layer>` directory are both removed if either do not match their contents in the previously created OCI image.
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
