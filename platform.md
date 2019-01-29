@@ -55,9 +55,9 @@ The platform MUST execute the detection and build phases of the lifecycle on the
 The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
-- The image config's `Env` field has the environment variable `PACK_STACK_ID` set to the stack ID.
-- The image config's `Env` field has the environment variable `PACK_USER_ID` set to the UID of the user specified in the `User` field.
-- The image config's `Env` field has the environment variable `PACK_GROUP_ID` set to the primary GID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
+- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the UID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary GID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 

@@ -460,7 +460,7 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- An optional process type specified by `PACK_PROCESS_TYPE`, and
+- An optional process type specified by `CNB_PROCESS_TYPE`, and
 - Bash version 3 or greater,
 
 When the OCI image is launched,
@@ -475,14 +475,14 @@ When the OCI image is launched,
 3. If `CMD` in the container configuration is not empty, the lifecycle MUST join each argument with a space and execute the resulting command in the container using the Bash shell process used to source the `profile.d` scripts.
 
 4. If `CMD` in the container configuration is empty,
-   1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
-      1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
+   1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
+      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
-      2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
+      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
          **THEN** launch fails.
 
-   2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
+   2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
       1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
@@ -523,7 +523,7 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
       **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/develop`.
 
    2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST launch the process type specified by `PACK_PROCESS_TYPE`.
+      **THEN** the lifecycle MUST launch the process type specified by `CNB_PROCESS_TYPE`.
 
 For each `/bin/develop` executable in each buildpack, the lifecycle:
 
@@ -582,14 +582,14 @@ To decide what layer operations are appropriate, the buildpack should consider:
 
 After the last `/bin/develop` finishes executing,
 
-1. **IF** the `PACK_PROCESS_TYPE` environment variable is set,
-   1. **IF** the value of `PACK_PROCESS_TYPE` corresponds to a process in `<layers>/develop.toml`, \
+1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
+   1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/develop.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
 
-   2. **IF** the value of `PACK_PROCESS_TYPE` does not correspond to a process in `<layers>/develop.toml`, \
+   2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/develop.toml`, \
       **THEN** the lifecycle MUST fail development setup.
 
-2. **IF** the `PACK_PROCESS_TYPE` environment variable is not set,
+2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
    1. **IF** there is a process with a `web` process type in `<layers>/develop.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
 
@@ -628,7 +628,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 
 | Env Variable    | Description                          | Detect | Build | Launch
 |-----------------|--------------------------------------|--------|-------|--------
-| `PACK_STACK_ID` | Chosen stack ID                      | [x]    | [x]   |
+| `CNB_STACK_ID`  | Chosen stack ID                      | [x]    | [x]   |
 | `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
 | `BPL_*`         | User-provided variable for profile.d |        |       | [x]
 | `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
@@ -637,9 +637,9 @@ During the detection and build phases, the lifecycle MUST provide any user-provi
 
 The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` directly.
 
-Buildpacks MAY use the value of `PACK_STACK_ID` to modify their behavior when executed on different stacks.
+Buildpacks MAY use the value of `CNB_STACK_ID` to modify their behavior when executed on different stacks.
 
-The environment variable prefix `PACK_` is reserved.
+The environment variable prefix `CNB_` is reserved.
 It MUST NOT be used for environment variables that are not defined in this specification or approved extensions.
 
 ### Provided by the Buildpacks
