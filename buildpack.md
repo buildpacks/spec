@@ -774,7 +774,7 @@ For each process, the buildpack MUST specify:
 For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
 - Relative to the root of the app directory without traversing outside of the app directory.
-- Absolute, with `/` assumed to be the app directory.
+- Absolute and contained within the app directory.
 
 Path globs MUST:
 
