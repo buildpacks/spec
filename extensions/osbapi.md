@@ -1,8 +1,8 @@
 # Open Service Broker API
 
-The following additional environment variables extend the [Environment - Provided by the Platform](../buildpack.md#provided-by-the-platform) section in the Buildpack Interface Specification.
+The following environment variables extend the [Environment - Provided by the Platform](../buildpack.md#provided-by-the-platform) section in the Buildpack Interface Specification.
 
-| Env Variable    | Description                            | Detect | Build | Launch
+| Env Variable   | Description                            | Detect | Build | Launch
 |----------------|----------------------------------------|--------|-------|--------
 | `CNB_SERVICES` | OSBAPI service bindings                |        |       | [x]
 | `CNB_SERVICES` | OSBAPI service bindings (restricted)   | [x]    | [x]   |
