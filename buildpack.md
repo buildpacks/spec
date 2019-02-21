@@ -785,7 +785,7 @@ The lifecycle MUST process each slice as if all files matched in preceding slice
 
 The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
 
-The lifecycle MUST include all unmatched files in the app directory in zero or more additional layers in the OCI image.
+The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
 ### Build Plan (TOML)
 
