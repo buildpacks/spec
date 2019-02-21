@@ -46,8 +46,7 @@ This is accomplished in two phases:
     1. [Buildpack Package](#buildpack-package)
 12. [Data Format](#data-format)
     1. [buildpack.toml (TOML)](#buildpack.toml-toml)
-    2. [launch.toml (TOML)](#launch.toml-toml)
-    3. [develop.toml (TOML)](#develop.toml-toml)
+    2. [app.toml (TOML)](#app.toml-toml)
     4. [Build Plan (TOML)](#build-plan-toml)
     5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
@@ -104,7 +103,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
 | `<plan>`                       | Claims of contributions to the build plan (TOML)
-| `<layers>/launch.toml`         | Launch metadata (see [launch.toml](#launch.toml-toml))
+| `<layers>/app.toml`            | App metadata (see [app.toml](#app.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
@@ -133,7 +132,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
 | `<plan>`                       | Claims of contributions to the build plan (TOML)
-| `<layers>/develop.toml`        | Development metadata (see [develop.toml](#develop.toml-(toml)))
+| `<layers>/app.toml`            | App metadata (see [app.toml](#app.toml-(toml)))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-(toml)))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
@@ -308,7 +307,7 @@ During the build phase, typical buildpacks might:
 3. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
 4. Compile the application source code into object code.
 5. Remove application source code that is not necessary for launch.
-6. Provide start command in `<layers>/launch.toml`.
+6. Provide start command in `<layers>/app.toml`.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -358,7 +357,8 @@ Correspondingly, each `/bin/build` executable:
 - MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/build` executables during the build phase.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a list of possible commands for launch to `<layers>/launch.toml` in `launch.toml` format.
+- MAY write a list of possible commands for launch to `<layers>/app.toml` .
+- MAY write a list of sub-paths within `<app>` to `<layers>/app.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
@@ -393,6 +393,10 @@ To decide what layer operations are appropriate, the buildpack should consider:
 - Whether the environment has changed since the layer was created.
 - Whether the buildpack version has changed since the layer was created.
 - Whether new application dependency versions have been made available since the layer was created.
+
+Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `app.toml`.
+Separate layers MUST be created during the export phase for each slice with one or more files or directories.
+This minimizes data transfer when the app directory contains a known set of files.
 
 ## Phase #4: Export
 
@@ -435,9 +439,9 @@ For each `<layers>/<layer>.toml` file that specifies `launch = true`,
 Subsequently,
 
 1. For `<app>`, the lifecycle MUST
-   1. Convert the directory into one or more layers,
+   1. Convert the directory into one or more layers using `slices` in each `app.toml` such that slices from earlier buildpacks are processed before slices from later buildpacks.
    2. Transfer the layers to the same image store as the old OCI image.
-   3. Ensure absolute path of the directory is preserved in the transferred layer(s).
+   3. Ensure all absolute paths are preserved in the transferred layer(s).
    4. Collect references to the transferred layers.
 2. The lifecycle MUST construct the new OCI image such that the image is composed of
    - All new `<layers>/<layer>` filesystem layers transferred by the lifecycle,
@@ -445,7 +449,7 @@ Subsequently,
    - All `<app>` filesystem layers,
    - One or more filesystem layers containing
      - The ordered buildpack IDs and
-     - A combined processes list derived from all `launch.toml` files such that process types from later buildpacks override identical process types from earlier buildpacks,
+     - A combined processes list derived from all `app.toml` files such that process types from later buildpacks override identical process types from earlier buildpacks,
    - The run image filesystem layers,
    - The executable component of the lifecycle that implements the launch phase, and
    - An `ENTRYPOINT` set to that component.
@@ -480,17 +484,17 @@ When the OCI image is launched,
 
 4. If `CMD` in the container configuration is empty,
    1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
+      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/app.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
-      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
+      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/app.toml`, \
          **THEN** launch fails.
 
    2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-      1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
+      1. **IF** there is a process with a `web` process type in `<layers>/app.toml`, \
          **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
 
-      2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
+      2. **IF** there is not a process with a `web` process type in `<layers>/app.toml`, \
          **THEN** launch fails.
 
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
@@ -505,8 +509,8 @@ During the development setup phase, typical buildpacks might:
 
 1. Read the Build Plan to determine what dependencies to provide.
 2. Provide dependencies in `<layers>/<layer>` for development commands and for subsequent buildpacks.
-3. Provide a command to start a development server in `<layers>/develop.toml`.
-4. Provide a command to run a test suite in `<layers>/develop.toml`.
+3. Provide a command to start a development server in `<layers>/app.toml`.
+4. Provide a command to run a test suite in `<layers>/app.toml`.
 
 ### Process
 
@@ -544,13 +548,14 @@ Correspondingly, each `/bin/develop` executable:
 - MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/develop` executables during the development setup.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a list of possible commands for launch to `<layers>/develop.toml` in `develop.toml` format.
+- MAY write a list of possible commands for launch to `<layers>/app.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
+- SHOULD NOT specify any slices within `app.toml`, as they are only used to generate OCI image layers.
 
 #### Build Plan Entry Claims
 
@@ -587,17 +592,17 @@ To decide what layer operations are appropriate, the buildpack should consider:
 After the last `/bin/develop` finishes executing,
 
 1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-   1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/develop.toml`, \
+   1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/app.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
 
-   2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/develop.toml`, \
+   2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/app.toml`, \
       **THEN** the lifecycle MUST fail development setup.
 
 2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-   1. **IF** there is a process with a `web` process type in `<layers>/develop.toml`, \
+   1. **IF** there is a process with a `web` process type in `<layers>/app.toml`, \
       **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
 
-   2. **IF** there is not a process with a `web` process type in `<layers>/develop.toml`, \
+   2. **IF** there is not a process with a `web` process type in `<layers>/app.toml`, \
       **THEN** the lifecycle MUST fail development setup.
 
 When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
@@ -748,31 +753,39 @@ The stack ID:
 
 The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID. Buildpack authors MUST ensure that these images include all mixins specified in `mixins`.
 
-### launch.toml (TOML)
+### app.toml (TOML)
 
 ```toml
 [[processes]]
 type = "<process type>"
 command = "<command>"
+
+[[slices]]
+paths = ["<app sub-path glob>"]
 ```
 
-Buildpacks MUST specify:
+The buildpack MAY specify any number of processes or slices.
 
-- A unique process type for each entry within a `launch.toml` file.
+For each process, the buildpack MUST specify:
+
+- A unique process type for each entry within a `app.toml` file.
 - A command that is valid when executed using the Bash 3+ shell.
 
-### develop.toml (TOML)
+For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
-```toml
-[[processes]]
-type = "<process type>"
-command = "<command>"
-```
+- Relative to the root of the app directory without traversing outside of the app directory.
+- Absolute and contained within the app directory.
 
-Buildpacks MUST specify:
+Path globs MUST:
 
-- A unique process type for each entry within a `develop.toml` file.
-- A command that is valid when executed using the Bash 3+ shell.
+- Follow the pattern syntax defined in the [Go standard library](https://golang.org/pkg/path/filepath/#Match).
+- Match zero or more files or directories.
+
+The lifecycle MUST process each slice as if all files matched in preceding slices no longer exists in the app directory.
+
+The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
+
+The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
 ### Build Plan (TOML)
 
