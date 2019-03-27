@@ -104,6 +104,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `/dev/stderr`                  | Logs (warnings, errors)
 | `<plan>`                       | Claims of contributions to the build plan (TOML)
 | `<layers>/app.toml`            | App metadata (see [app.toml](#app.toml-toml))
+| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
@@ -132,8 +133,9 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
 | `<plan>`                       | Claims of contributions to the build plan (TOML)
-| `<layers>/app.toml`            | App metadata (see [app.toml](#app.toml-(toml)))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-(toml)))
+| `<layers>/app.toml`            | App metadata (see [app.toml](#app.toml-toml))
+| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
+| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
@@ -146,7 +148,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 
 ### Layer Types
 
-Using the [Layer Content Metadata](#layer-content-metadata-(toml)) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
+Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
 
 - Whether the layer directory in `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
 - Whether the layer directory in `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
@@ -243,7 +245,7 @@ The `/bin/detect` executable in each buildpack, when executed:
 - MAY read the app directory.
 - MAY read the detect environment as defined in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY receive a TOML-formatted [Build Plan](#build-plan-(toml)) on `stdin`.
+- MAY receive a TOML-formatted [Build Plan](#build-plan-toml) on `stdin`.
 - MAY contribute to the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
@@ -267,7 +269,7 @@ The lifecycle MUST fail detection if any of those buildpacks specifies a mixin a
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml` and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -289,6 +291,8 @@ For each buildpack in the group,
 1. All `<layers>/<layer>.toml` files with `cache = true` and corresponding `<layers>/<layer>` directories from any previous build are restored to their same filesystem locations.
 2. Each `<layers>/<layer>.toml` file with `launch = true` and `cache = false` that was present at the end of the build of the previously created OCI image is retrieved.
 3. A given `<layers>/<layer>.toml` file with `launch = true` and `cache = true` and corresponding  `<layers>/<layer>` directory are both removed if either do not match their contents in the previously created OCI image.
+
+Finally, the contents of `<layers>/store.toml` from the build of the previously created OCI image are restored.
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
@@ -357,8 +361,9 @@ Correspondingly, each `/bin/build` executable:
 - MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/build` executables during the build phase.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a list of possible commands for launch to `<layers>/app.toml` .
+- MAY write a list of possible commands for launch to `<layers>/app.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/app.toml`.
+- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
@@ -432,9 +437,11 @@ For each `<layers>/<layer>.toml` file that specifies `launch = true`,
    1. Attempt to locate the corresponding layer in the old OCI image.
    2. Collect a reference to the located layer or fail export if no such layer can be found.
 3. The lifecycle MUST store the `<layers>/<layer>.toml` file so that
-   - It is associated with or contained within new OCI image,
+   - It is associated with or contained within the new OCI image,
    - It is associated with the buildpack ID of the buildpack that created it, and
    - It is associated with the collected layer reference.
+
+Next, the lifecycle MUST store `<layers>/store.toml` so that it is associated with or contained within the new OCI image.
 
 Subsequently,
 
@@ -549,6 +556,7 @@ Correspondingly, each `/bin/develop` executable:
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/app.toml`.
+- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
@@ -786,6 +794,13 @@ The lifecycle MUST process each slice as if all files matched in preceding slice
 The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
+
+### store.toml (TOML)
+
+```toml
+[metadata]
+# buildpack-specific data
+```
 
 ### Build Plan (TOML)
 
