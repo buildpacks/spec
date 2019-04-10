@@ -754,7 +754,6 @@ The buildpack ID:
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
 The buildpack version:
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `latest`.
 
 Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
