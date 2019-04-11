@@ -331,7 +331,7 @@ This is achieved by:
 - The final ordered group of buildpacks determined during detection,
 - A directory containing application source code,
 - A Build Plan processed by previous `/bin/detect` and `/bin/build` executions,
-- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase, 
+- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
 - Bash version 3 or greater,
 
@@ -749,14 +749,17 @@ run-images = ["<run image tag>"]
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
 The buildpack ID:
-- MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
+
+The buildpack version:
+- MUST NOT be `latest`.
 
 Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
 
 The stack ID:
-- MUST only contain numbers, letters, and the charactors `.`, `/`, and `-`.
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
 
 The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID. Buildpack authors MUST ensure that these images include all mixins specified in `mixins`.
