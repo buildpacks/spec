@@ -663,31 +663,53 @@ It MUST NOT be used for environment variables that are not defined in this speci
 
 During the build phase, buildpacks MAY write environment variable files to `<layers>/<layer>/env/`,  `<layers>/<layer>/env.build/`, and `<layers>/<layer>/env.launch/` directories.
 
-For each `<layers>/<layer>/` designated as a build layer, for each file written to `<layers>/<layer>/env/` or `<layers>/<layer>/env.build/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build`.
+For each `<layers>/<layer>/` designated as a build layer, for each file written to `<layers>/<layer>/env/` or `<layers>/<layer>/env.build/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build` according to the modification rules below.
 
-For each file written to `<layers>/<layer>/env.launch/` by `/bin/build`, the lifecycle MUST modify an environment variable when the OCI image is launched.
+For each file written to `<layers>/<layer>/env.launch/` by `/bin/build`, the lifecycle MUST modify an environment variable when the OCI image is launched according to the modification rules below.
 
-The lifecycle MUST set the name of the environment variable to the name of the file up to the first period (`.`) or to the end of the name if no periods are present.
+#### Environment Variable Modification Rules
 
-If the environment variable file name has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files delimited by the OS path list separator.
-Within that environment variable value,
+The lifecycle MUST consider the name of the environment variable to be the name of the file up to the first period (`.`) or to the end of the name if no periods are present.
+In all cases, file contents MUST NOT be evaluated by a shell or otherwise modified before inclusion in environment variable values.
+
+##### Delimiter
+
+If the environment variable file name ends in `.delim`, then the value of the environment variable MUST be used to delimit any concatenation within the same layer involving that environment variable.
+This delimiter MUST override the delimiters below.
+If multiple operations apply to the same environment variable, all operations for a given layer containing environment variable files MUST be applied before subsequent layers are considered.
+
+##### Prepend
+
+If the environment variable file name has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable delimited by the OS path list separator.
+If the environment variable file name ends in `.prepend`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
+In either case, within that environment variable value,
 - Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
 - Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` precede file contents in `<layers>/<layer>/env/`.
 
-If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other identically named files without any delimitation.
-Within that environment variable value,
-- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
-- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` precede file contents in `<layers>/<layer>/env/`.
+##### Append
 
-If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents or the contents of another identically named file.
-For that environment variable value
+If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
+Within that environment variable value,
+- Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
+- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
+- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+
+##### Override
+
+If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents.
+For that environment variable value,
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
 - Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` override file contents in `<layers>/<layer>/env/`.
 
-In all cases, file contents MUST NOT be evaluated by a shell or otherwise modified before inclusion in environment variable values.
+##### Default
+
+If the environment variable file name ends in `.default`, then the value of the environment variable MUST only be the file contents if the environment variable is empty.
+For that environment variable value,
+- Earlier buildpacks' environment default variable file contents MUST override later buildpacks' environment variable file contents.
+- For default environment variable file contents originating from the same buildpack, file contents that are earlier (when sorted alphabetically ascending by associated layer name) MUST override file contents that are later.
+- Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in  `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
 
 ## Security Considerations
 
