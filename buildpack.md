@@ -537,8 +537,8 @@ Given the start command and execution strategy,
 
 3. The lifecycle MUST invoke the start command with the decided execution strategy.
 
-When executing a process with, the lifecycle SHOULD additionally replace the lifecycle process in memory with the command process.
-When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory with the command process if possible.
+When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
+When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
 
 ## Development Setup
 
