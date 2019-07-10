@@ -160,7 +160,7 @@ This section does not apply to the Development Setup phase, which does not gener
 
 A buildpack MAY specify that a `<layers>/<layer>/` directory is a launch layer by placing `launch = true` in `<layers>/<layer>.toml`.
 
-The lifecycle MUST make all launch layers accessible to the app as defined in the [Environment](#environment) section.
+The lifecycle MUST make all launch layers accessible to the app as described in the [Environment](#environment) section.
 
 The lifecycle MUST include each launch layer in the built OCI image.
 The lifecycle MUST also store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID.
@@ -186,7 +186,7 @@ After a given re-build:
 
 A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by placing `build = true` in `<layers>/<layer>.toml`.
 
-The lifecycle MUST make all build layers accessible to subsequent buildpacks as defined in the [Environment](#environment) section.
+The lifecycle MUST make all build layers accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 Before the next re-build:
 - If the layer is marked `cache = true`, the lifecycle MAY restore the `<layers>/<layer>/` directory and Layer Content Metadata from any previous build to the same path.
@@ -196,7 +196,7 @@ Before the next re-build:
 
 For layers marked `launch = true` and `build = true`, the most strict requirements of each type apply.
 
-Therefore, the lifecycle MUST consider such layers to be launch layers that are also accessible to subsequent buildpacks as defined in the [Environment](#environment) section.
+Therefore, the lifecycle MUST consider such layers to be launch layers that are also accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 The lifecycle MUST consider layers that are marked `launch = false` and `build = false` to be build layers that are not accessible to subsequent buildpacks.
 
@@ -243,7 +243,7 @@ The order of the buildpacks in the group MUST otherwise be preserved.
 The `/bin/detect` executable in each buildpack, when executed:
 
 - MAY read the app directory.
-- MAY read the detect environment as defined in the [Environment](#environment) section.
+- MAY read the detect environment as described in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY augment the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
@@ -341,7 +341,7 @@ This is achieved by:
 - The Build Plan,
 - Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
-- Bash version 3 or greater,
+- Bash version 3 or greater, if needed,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
@@ -357,14 +357,14 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
-- MUST provide path arguments to `/bin/build` as defined in the [Buildpack Interface](#buildpack-interface) section.
-- MUST configure the build environment as defined in the [Environment](#environment) section.
+- MUST provide path arguments to `/bin/build` as described in the [Buildpack Interface](#buildpack-interface) section.
+- MUST configure the build environment as described in the [Environment](#environment) section.
 - MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
 
 Correspondingly, each `/bin/build` executable:
 
 - MAY read or write to the `<app>` directory.
-- MAY read the build environment as defined in the [Environment](#environment) section.
+- MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Build Plan.
 - MAY augment the Build Plan with more refined metadata.
 - MAY remove entries with duplicate names in the Build Plan to refine the metadata.
@@ -483,35 +483,62 @@ The purpose of launch is to modify the running app environment using app-provide
 **GIVEN:**
 - An OCI image exported by the lifecycle,
 - An optional process type specified by `CNB_PROCESS_TYPE`, and
-- Bash version 3 or greater,
+- Bash version 3 or greater, if needed,
 
-When the OCI image is launched,
+First, the lifecycle MUST locate a start command and choose an execution strategy.
 
-1. The lifecycle MUST source each file in each `<layers>/<layer>/profile.d` directory using the same Bash shell process,
-   1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-   2. Secondly, in alphabetically ascending order by layer directory name.
-   3. Thirdly, in alphabetically ascending order by file name.
+To locate a start command,
 
-2. In the Bash shell process used to source the `profile.d` scripts, the lifecycle MUST source `<app>/.profile` if it is present.
+1. **IF** `CMD` in the container configuration is not empty,
+    **THEN** the value of `CMD` is chosen as the start command.
 
-3. If `CMD` in the container configuration is not empty, the lifecycle MUST join each argument with a space and execute the resulting command in the container using the Bash shell process used to source the `profile.d` scripts.
-
-4. If `CMD` in the container configuration is empty,
+2. **IF** `CMD` in the container configuration is empty,
    1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
       1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
+         **THEN** the lifecycle MUST choose the corresponding process as the start command.
 
       2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
          **THEN** launch fails.
 
    2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
       1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST execute the corresponding command in the container using the Bash shell process used to source the `profile.d` scripts.
+         **THEN** the lifecycle MUST choose the corresponding process as the start command.
 
       2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
          **THEN** launch fails.
 
-When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
+To choose an execution strategy,
+
+1. **IF** the value of `CMD` is chosen as the start command,
+   1. **IF** the length of the value of `CMD` is one,
+      **THEN** the lifecycle MUST invoke the value as a command using Bash
+
+   2. **IF** the length of the value of `CMD` is greater than one,
+      **THEN** the lifecycle MUST invoke the first entry using the `execve` syscall with subsequent entries as arguments.
+
+
+2. **IF** a buildpack-provided process type is chosen as the start command,
+   1. **IF** the process type does not have an `args` field,
+      **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash
+
+   2. **IF** the process type does have an `args` field,
+      **THEN** the lifecycle MUST invoke the first entry using the `execve` syscall with subsequent entries as arguments.
+
+Given the start command and execution strategy,
+
+1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
+
+2. If using an execution strategy involving Bash, the lifecycle MUST use a single Bash process to
+   1. source each file in each `<layers>/<layer>/profile.d` directory,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   2. source `<app>/.profile` if it is present.
+
+3. The lifecycle MUST invoke the start command with the decided execution strategy.
+
+When executing a process with, the lifecycle SHOULD additionally replace the lifecycle process in memory with the command process.
+When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory with the command process if possible.
 
 ## Development Setup
 
@@ -545,19 +572,19 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
       **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/develop`.
 
    2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST launch the process type specified by `CNB_PROCESS_TYPE`.
+      **THEN** the lifecycle MUST proceed to executing a process type as specified in the [Launch](#launch) section.
 
 For each `/bin/develop` executable in each buildpack, the lifecycle:
 
-- MUST configure the build environment as defined in the [Environment](#environment) section.
-- MUST provide path arguments to `/bin/develop` as defined in the [Buildpack Interface](#buildpack-interface) section.
+- MUST configure the build environment as described in the [Environment](#environment) section.
+- MUST provide path arguments to `/bin/develop` as described in the [Buildpack Interface](#buildpack-interface) section.
 - MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
 
 Correspondingly, each `/bin/develop` executable:
 
 - MAY read from the app directory.
 - MAY write files to the app directory in an idempotent manner.
-- MAY read the build environment as defined in the [Environment](#environment) section.
+- MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Build Plan.
 - MAY augment the Build Plan with more refined metadata.
 - MAY remove entries with duplicate names in the Build Plan to refine the metadata.
@@ -592,8 +619,8 @@ If generated, this BOM MUST contain all entries in each `<plan>` at the end of e
 
 Layers designated `cache = true` in `<layers>/<layer>.toml` MAY be persisted to the next development setup.
 Layers not designated `cache = true` in `<layers>/<layer>.toml` MUST be deleted before the next development setup.
-Layers designated `launch = true` in `<layers>/<layer>.toml` MUST be made accessible to the development commands as defined in the [Environment](#environment) section.
-Layers designated `build = true` in `<layers>/<layer>.toml` MUST be made accessible to subsequent buildpacks as defined in the [Environment](#environment) section.
+Layers designated `launch = true` in `<layers>/<layer>.toml` MUST be made accessible to the development commands as described in the [Environment](#environment) section.
+Layers designated `build = true` in `<layers>/<layer>.toml` MUST be made accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 A buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files.
 
@@ -603,26 +630,6 @@ To decide what layer operations are appropriate, the buildpack should consider:
 - Whether the environment has changed since the layer was created.
 - Whether the buildpack version has changed since the layer was created.
 - Whether new application dependency versions have been made available since the layer was created.
-
-#### Execution
-
-After the last `/bin/develop` finishes executing,
-
-1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-   1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
-      **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
-
-   2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
-      **THEN** the lifecycle MUST fail development setup.
-
-2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-   1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
-      **THEN** the lifecycle MUST execute the corresponding command in the container using Bash.
-
-   2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
-      **THEN** the lifecycle MUST fail development setup.
-
-When executing a process with Bash, the lifecycle SHOULD replace the Bash process in memory with the resulting command process if possible.
 
 ## Environment
 
@@ -801,6 +808,7 @@ The stack `build-images` and `run-images` are suggested sources of images for pl
 [[processes]]
 type = "<process type>"
 command = "<command>"
+args = ["<arguments>"]
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -808,10 +816,13 @@ paths = ["<app sub-path glob>"]
 
 The buildpack MAY specify any number of processes or slices.
 
-For each process, the buildpack MUST specify:
+For each process, the buildpack:
 
-- A unique process type for each entry within a `launch.toml` file.
-- A command that is valid when executed using the Bash 3+ shell.
+- MUST specify a `type` that is not identical to other process types provided by the same buildpack.
+- MUST specify a `command` that is either:
+  - A command sequence that is valid when executed using the Bash 3+ shell, if `args` is not specified.
+  - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
+- MAY specify an `args` list to be passed directly to the specified executable.
 
 For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
