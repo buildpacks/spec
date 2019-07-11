@@ -83,7 +83,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<plan>`           | Contributions to the the build plan (TOML)
+| `<plan>`           | Contributions to the the Build Plan (TOML)
 
 
 ###  Build
@@ -93,7 +93,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/build` executable
-| `<plan>`          | Relevant build plan entries from detection (TOML)
+| `<plan>`          | Relevant Build Plan entries from detection (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -102,7 +102,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the build plan (TOML)
+| `<plan>`                       | Refinements to the Build Plan (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -132,7 +132,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the build plan (TOML)
+| `<plan>`                       | Refinements to the Build Plan (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -249,28 +249,16 @@ The `/bin/detect` executable in each buildpack, when executed:
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` in two sections: `requires` and `provides`.
-Each section MUST be a list of entries as described in the [Build Plan](#build-plan-toml) format section.
+Each section MUST be a list of entries formatted as described in the [Build Plan](#build-plan-toml) format section.
 
 For a given buildpack group,
-- If a required buildpack provides a dependency that is not required, the group MUST fail to detect.
-- If a required buildpack requires a dependency that is not provided, the group MUST fail to detect.
-- If an optional buildpack provides a dependency that is not required, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the build plan.
-- If an optional buildpack requires a dependency that is not provided, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the build plan.
+- If a required buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the group MUST fail to detect.
+- If a required buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the group MUST fail to detect.
+- If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
 - Multiple buildpacks MAY require or provide the same dependency.
 
-#######
-- `/bin/build`'s build plan argument contains required dependencies that it provides.
-- `/bin/build` may refine its build plan to contain additional dependency metadata. 
-- `/bin/build` may remove all entries for a dependency in its build plan to allow a subsequent buildpack to provide that dependency.
-#######
-
-
-The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
-The lifecycle MUST NOT include any changes in this map that are contributed by optional buildpacks that returned non-zero exit statuses.
-The final Build Plan is the fully-merged map that includes the contributions of the final `/bin/detect` executable.
-
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
-Therefore, reading from `stdin` in `/bin/detect` MUST block until the previous `/bin/detect` finishes executing.
 
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
@@ -297,7 +285,7 @@ The lifecycle MUST skip analysis and proceed to the build phase if no such image
 
 **GIVEN:**
 - A reference to the previously created OCI image described above and
-- The final ordered group of buildpacks determined during detection,
+- The final ordered group of buildpacks determined during the detection phase,
 
 For each buildpack in the group,
 
@@ -319,12 +307,13 @@ The purpose of build is to transform application source code into runnable artif
 
 During the build phase, typical buildpacks might:
 
-1. Read the Build Plan to determine what dependencies to provide.
+1. Read the Build Plan in `<plan>` to determine what dependencies to provide.
 2. Provide the application with dependencies for launch in `<layers>/<layer>`.
 3. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
 4. Compile the application source code into object code.
 5. Remove application source code that is not necessary for launch.
 6. Provide start command in `<layers>/launch.toml`.
+7. Refine the Build Plan in `<plan>` with more exact metadata.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -341,9 +330,9 @@ This is achieved by:
 ### Process
 
 **GIVEN:**
-- The final ordered group of buildpacks determined during detection,
+- The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
-- A Build Plan processed by previous `/bin/detect` and `/bin/build` executions,
+- The Build Plan,
 - Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
 - Bash version 3 or greater,
@@ -362,16 +351,18 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
-- MUST provide a Build Plan to `stdin` of `/bin/build` that is the final Build Plan from the detection phase without any top-level entries that were claimed by previous `/bin/build` executables during the build phase.
-- MUST configure the build environment as defined in the [Environment](#environment) section.
 - MUST provide path arguments to `/bin/build` as defined in the [Buildpack Interface](#buildpack-interface) section.
+- MUST configure the build environment as defined in the [Environment](#environment) section.
+- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
 
 Correspondingly, each `/bin/build` executable:
 
 - MAY read or write to the `<app>` directory.
 - MAY read the build environment as defined in the [Environment](#environment) section.
-- MAY read a Build Plan from `stdin`.
-- MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/build` executables during the build phase.
+- MAY read the Build Plan.
+- MAY augment the Build Plan with more refined metadata.
+- MAY remove entries with duplicate names in the Build Plan to refine the metadata.
+- MAY remove all entries of the same name from the Build Plan to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -384,22 +375,19 @@ Correspondingly, each `/bin/build` executable:
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
-#### Build Plan Entry Claims
+#### Build Plan Entry Refinements
 
-A buildpack MAY claim entries in the Build Plan by writing claims to `<plan>` that correspond to entries in the original Build Plan generated during the detection phase.
-When an entry is claimed, the lifecycle MUST remove the entry from the Build Plan that is provided via `stdin` to subsequent `/bin/build` executables.
+A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
+The single entry MAY include additional metadata that could not be determined during the detection phase.
 
-A buildpack MAY write replacement TOML metadata in the entry contents that refines the original contents of the Build Plan entry with information that could not be determined during the detection phase.
-The lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
 
-A buildpack MAY write a Build Plan claim entry that does not correspond to an entry in the original Build Plan.
-The lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/build` to be available in subsequent buildpacks' `<plan>`s.
 
-When the build is complete, a BOM (bill-of-materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain
-- All entries from the original Build Plan generated during the detection phase,
-- All non-empty entry claims created by `/bin/build` executables such that they override corresponding the Build Plan entries from the detection phase, and
-- All entry claims that do not correspond to original Build Plan entries.
+The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
+
+When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
+If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution.
 
 #### Layers
 
@@ -535,7 +523,7 @@ During the development setup phase, typical buildpacks might:
 ### Process
 
 **GIVEN:**
-- The final ordered group of buildpacks determined during detection,
+- The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
 - A Build Plan processed by previous `/bin/detect` and `/bin/develop` executions,
 - The most recent local cached `<layers>/<layer>/` directories from a development setup of a version of the application source code, and
@@ -555,17 +543,19 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/devel
 
 For each `/bin/develop` executable in each buildpack, the lifecycle:
 
-- MUST provide a Build Plan to `stdin` of `/bin/develop` that is the final Build Plan from the detection phase without any top-level entries that were claimed by previous `/bin/develop` executables during the build phase.
 - MUST configure the build environment as defined in the [Environment](#environment) section.
 - MUST provide path arguments to `/bin/develop` as defined in the [Buildpack Interface](#buildpack-interface) section.
+- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
 
 Correspondingly, each `/bin/develop` executable:
 
 - MAY read from the app directory.
 - MAY write files to the app directory in an idempotent manner.
 - MAY read the build environment as defined in the [Environment](#environment) section.
-- MAY read a Build Plan from `stdin`.
-- MAY claim entries in the Build Plan so that they are not received by subsequent `/bin/develop` executables during the development setup.
+- MAY read the Build Plan.
+- MAY augment the Build Plan with more refined metadata.
+- MAY remove entries with duplicate names in the Build Plan to refine the metadata.
+- MAY remove all entries of the same name from the Build Plan to defer those entries to subsequent `/bin/develop` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -578,19 +568,19 @@ Correspondingly, each `/bin/develop` executable:
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 - SHOULD NOT specify any slices within `launch.toml`, as they are only used to generate OCI image layers.
 
-#### Build Plan Entry Claims
+#### Build Plan Entry Refinements
 
-In order to claim entries in the Build Plan, a buildpack MUST write an entry claim file `<plan>/<name>` such that `<name>` matches the name of the desired Build Plan entry.
-When an entry is claimed, the lifecycle MUST remove the entry from the build plan that is provided via `stdin` to subsequent `/bin/develop` executables.
+A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
+The single entry MAY include additional metadata that could not be determined during the detection phase.
 
-A buildpack MAY write replacement TOML metadata to an entry claim file that refines the original contents of the build plan entry with information that could not be determined during the detection phase.
-However, the lifecycle MUST NOT make this replacement TOML metadata accessible to subsequent buildpacks.
+A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
 
-When the build is complete, a BOM (bill-of-materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain
-- All entries from the original build plan generated during the detection phase and
-- All non-empty entry claim files created by `/bin/develop` executables
-such that the non-empty entry claims override the original build plan entries from the detection phase.
+The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/develop` to be available in subsequent buildpacks' `<plan>`s.
+
+The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
+
+When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
+If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/develop` execution.
 
 #### Layers
 
