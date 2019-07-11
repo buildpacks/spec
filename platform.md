@@ -111,13 +111,10 @@ However, mixin modifications MAY consist of any changes that follow the [Compati
 
 ### Buildpacks Directory Layout
 
-The buildpacks directory MUST contain unpackaged buildpacks such that:
+The buildpacks directory MUST contain unarchived buildpack blobs such that:
 
 - Each top-level directory is a buildpack ID.
-- Each second-level directory is a buildpack version and contains the corresponding unpackaged buildpack.
-- Each top-level directory contains a `latest` symbolic link, which MUST point to the latest buildpack version directory.
-
-Additionally, there MUST be an [`order.toml`](#order.toml-(toml)) file at the root containing a list of buildpacks groups to use during the detection phase.
+- Each second-level directory is a buildpack version which is a symlink to a blob containing that buildpack version.
 
 ## Security Considerations
 
@@ -149,15 +146,30 @@ Each platform SHOULD implement caching so as to appropriately optimize performan
 
 ## Data Format
 
+### order.toml (TOML)
+
+```toml
+[[order]]
+[[order.group]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
+```
+
+Where:
+
+- Both `id` and `version` MUST be present for each buildpack object in a group.
+- The value of `optional` MUST default to false if not specified.
+
 ### group.toml (TOML)
 
 ```toml
-buildpacks = [
-  { id = "<buildpack ID>", version = "<buildpack version>" }
+group = [
+  { id = "<buildpack ID>", version = "<buildpack version>", optional = false }
 ]
 ```
 
 Where:
 
-- The buildpack ID MUST be present for each buildpack object in a group.
-- The buildpack version MUST default to "latest" if not provided.
+- Both `id` and `version` MUST be present for each buildpack object in a group.
+- The value of `optional` MUST default to false if not specified.

@@ -777,7 +777,7 @@ version = "<buildpack version>"
 path = "<path to buildpack>"
 
 [[buildpacks.order]]
-[buildpacks.order.group]
+[[buildpacks.order.group]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
