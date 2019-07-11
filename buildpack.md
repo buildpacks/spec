@@ -510,19 +510,19 @@ To locate a start command,
 To choose an execution strategy,
 
 1. **IF** the value of `CMD` is chosen as the start command,
-   1. **IF** the length of the value of `CMD` is one,
-      **THEN** the lifecycle MUST invoke the value as a command using Bash
+   1. **IF** the first parameter of `CMD` is not `-`,
+      **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
 
-   2. **IF** the length of the value of `CMD` is greater than one,
-      **THEN** the lifecycle MUST invoke the first entry using the `execve` syscall with subsequent entries as arguments.
+   2. **IF** the first parameter of `CMD` is `-` and the length of `CMD` is greater than one,
+      **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
 
 
 2. **IF** a buildpack-provided process type is chosen as the start command,
-   1. **IF** the process type does not have an `args` field,
-      **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash
+   1. **IF** the process type does not have `direct` set to `true`,
+      **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash with values of `args` provided as arguments.
 
-   2. **IF** the process type does have an `args` field,
-      **THEN** the lifecycle MUST invoke the first entry using the `execve` syscall with subsequent entries as arguments.
+   2. **IF** the process type does have `direct` set to `true`,
+      **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
 
 Given the start command and execution strategy,
 
@@ -809,6 +809,7 @@ The stack `build-images` and `run-images` are suggested sources of images for pl
 type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
+direct = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -823,6 +824,7 @@ For each process, the buildpack:
   - A command sequence that is valid when executed using the Bash 3+ shell, if `args` is not specified.
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
 - MAY specify an `args` list to be passed directly to the specified executable.
+- MAY specify a `direct` boolean that bypasses the shell.
 
 For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
