@@ -149,48 +149,6 @@ Each platform SHOULD implement caching so as to appropriately optimize performan
 
 ## Data Format
 
-### order.toml (TOML)
-
-```toml
-[[groups]]
-labels = ["<label name>"]
-buildpacks = [
-  { id = "<buildpack ID>", version = "<buildpack version>", optional = <bool> }
-]
-```
-
-Where:
-
-- The buildpack ID MUST be present for each buildpack object in a group.
-- The buildpack version MUST default to "latest" if not provided.
-- Each buildpack MUST default to not optional if not specified in the object.
-- Group labels MAY be present to enable the platform to consider a subset of groups for detection.
-
-Example:
-
-```toml
-[[groups]]
-labels = ["custom-dotnet"]
-buildpacks = [
-  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "io.buildpacks.dotnet-core", version = “latest” }
-]
-
-[[groups]]
-labels = ["custom-ruby", "ruby"]
-buildpacks = [
-  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "io.buildpacks.ruby", version = “latest” }
-]
-
-[[groups]]
-labels = ["ruby-datascience", "ruby"]
-buildpacks = [
-  { id = "io.buildpacks.python", version = “latest” },
-  { id = "io.buildpacks.ruby", version = “latest” }
-]
-```
-
 ### group.toml (TOML)
 
 ```toml

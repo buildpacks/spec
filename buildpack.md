@@ -43,7 +43,7 @@ This is accomplished in two phases:
     1. [Assumptions of Trust](#assumptions-of-trust)
     2. [Requirements](#requirements)
 11. [Artifact Format](#artifact-format)
-    1. [Buildpack Package](#buildpack-package)
+    1. [Buildpack Blob](#buildpack-blob)
 12. [Data Format](#data-format)
     1. [buildpack.toml (TOML)](#buildpack.toml-toml)
     2. [launch.toml (TOML)](#launch.toml-toml)
@@ -756,13 +756,14 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 
 ## Artifact Format
 
-### Buildpack Package
+### Buildpack Blob
 
-Buildpacks SHOULD be packaged as gzip-compressed tarballs with extension `.tgz`.
+A buildpack blob contains one or more buildpacks.
 
-Buildpacks MUST:
-- Contain `/buildpack.toml` and `/bin/detect`.
-- Contain one or both of `/bin/build` and `/bin/develop`.
+A buildpack blob MUST be packaged as gzip-compressed tarball.
+Its filename should end in `.tgz`.
+
+A buildpack blob MUST contain a `buildpack.toml` file at its root directory.
 
 ## Data Format
 
@@ -792,7 +793,7 @@ run-images = ["<run image tag>"]
 ```
 
 If an order is specified, then `path` and `stacks` MUST not be specified.
-A buildpack path MUST default to `.` when unspecified and when `order` is not specified.
+A buildpack path MUST default to `.` when not specified and when `order` is not specified.
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
