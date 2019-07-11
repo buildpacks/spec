@@ -245,12 +245,25 @@ The `/bin/detect` executable in each buildpack, when executed:
 - MAY read the app directory.
 - MAY read the detect environment as defined in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY receive a TOML-formatted [Build Plan](#build-plan-toml) on `stdin`.
-- MAY contribute to the Build Plan by writing TOML to `<plan>`.
+- MAY augment the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
-For each `/bin/detect`, the Build Plan received on `stdin` MUST be a map derived from the combined Build Plan contributions of all previous `/bin/detect` executables.
-In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` as top-level, TOML-formatted objects.
+In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` in two sections: `requires` and `provides`.
+Each section MUST be a list of entries as described in the [Build Plan](#build-plan-toml) format section.
+
+For a given buildpack group,
+- If a required buildpack provides a dependency that is not required, the group MUST fail to detect.
+- If a required buildpack requires a dependency that is not provided, the group MUST fail to detect.
+- If an optional buildpack provides a dependency that is not required, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the build plan.
+- If an optional buildpack requires a dependency that is not provided, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the build plan.
+- Multiple buildpacks MAY require or provide the same dependency.
+
+#######
+- `/bin/build`'s build plan argument contains required dependencies that it provides.
+- `/bin/build` may refine its build plan to contain additional dependency metadata. 
+- `/bin/build` may remove all entries for a dependency in its build plan to allow a subsequent buildpack to provide that dependency.
+#######
+
 
 The lifecycle MUST construct this map such that the top-level values from later buildpacks override the entire top-level values from earlier buildpacks.
 The lifecycle MUST NOT include any changes in this map that are contributed by optional buildpacks that returned non-zero exit statuses.
