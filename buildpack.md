@@ -769,20 +769,30 @@ Buildpacks MUST:
 ### buildpack.toml (TOML)
 
 ```toml
-[buildpack]
+[[buildpacks]]
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
+path = "<path to buildpack>"
 
-[[stacks]]
+[[buildpacks.order]]
+[buildpacks.order.group]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
+
+[[buildpacks.stacks]]
 id = "<stack ID>"
 mixins = ["<mixin name>"]
 build-images = ["<build image tag>"]
 run-images = ["<run image tag>"]
 
-[metadata]
+[buildpacks.metadata]
 # buildpack-specific data
 ```
+
+If an order is specified, then `path` and `stacks` MUST not be specified.
+A buildpack path MUST default to `.` when unspecified and when `order` is not specified.
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
@@ -790,9 +800,6 @@ The buildpack ID:
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
-
-The buildpack version:
-- MUST NOT be `latest`.
 
 Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
 
