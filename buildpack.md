@@ -48,7 +48,8 @@ This is accomplished in two phases:
     1. [buildpack.toml (TOML)](#buildpack.toml-toml)
     2. [launch.toml (TOML)](#launch.toml-toml)
     4. [Build Plan (TOML)](#build-plan-toml)
-    5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+    5. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
+    6. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
 ## Buildpack Interface
 
@@ -74,7 +75,6 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/detect` executable
-| `/dev/stdin`      | Merged build plan from previous detections (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -93,7 +93,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/build` executable
-| `/dev/stdin`      | Build plan from detection (TOML)
+| `<plan>`          | Relevant build plan entries from detection (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -102,7 +102,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Claims of contributions to the build plan (TOML)
+| `<plan>`                       | Refinements to the build plan (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -123,7 +123,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/detect` executable
-| `/dev/stdin`      | Build plan from detection (TOML)
+| `<plan>`          | Build plan from detection (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -132,7 +132,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Claims of contributions to the build plan (TOML)
+| `<plan>`                       | Refinements to the build plan (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -808,17 +808,35 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 ### Build Plan (TOML)
 
 ```toml
-[<dependency name>]
+[[provides]]
+name = "<dependency name>"
+
+[provides.metadata]
+# buildpack-specific data
+
+[[requires]]
+name = "<dependency name>"
 version = "<dependency version>"
 
-[<dependency name>.metadata]
+[requires.metadata]
 # buildpack-specific data
 ```
 
-For a given dependency, the buildpack MAY specify:
+### Bill-of-Materials (TOML)
 
-- The dependency version. If a version range is needed, semver notation SHOULD be used to specify the range.
-- The ID of the buildpack that will provide the dependency.
+```toml
+[[entries]]
+name = "<dependency name>"
+version = "<dependency version>"
+
+[[entries.buildpacks]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
+
+[entries.metadata]
+# buildpack-specific data
+```
 
 ### Layer Content Metadata (TOML)
 
