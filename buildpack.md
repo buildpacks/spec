@@ -510,10 +510,10 @@ To locate a start command,
 To choose an execution strategy,
 
 1. **IF** the value of `CMD` is chosen as the start command,
-   1. **IF** the first parameter of `CMD` is not `-`,
+   1. **IF** the first parameter of `CMD` is not `--`,
       **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
 
-   2. **IF** the first parameter of `CMD` is `-` and the length of `CMD` is greater than one,
+   2. **IF** the first parameter of `CMD` is `--` and the length of `CMD` is greater than one,
       **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
 
 
