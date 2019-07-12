@@ -42,14 +42,11 @@ This is accomplished in two phases:
 10. [Security Considerations](#security-considerations)
     1. [Assumptions of Trust](#assumptions-of-trust)
     2. [Requirements](#requirements)
-11. [Artifact Format](#artifact-format)
-    1. [Buildpack Blob](#buildpack-blob)
-12. [Data Format](#data-format)
-    1. [buildpack.toml (TOML)](#buildpack.toml-toml)
-    2. [launch.toml (TOML)](#launch.toml-toml)
-    4. [Build Plan (TOML)](#build-plan-toml)
-    5. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
-    6. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+11. [Data Format](#data-format)
+    1. [launch.toml (TOML)](#launch.toml-toml)
+    2. [Build Plan (TOML)](#build-plan-toml)
+    3. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
+    4. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
 ## Buildpack Interface
 
@@ -218,7 +215,7 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of ordered buildpack groups and
+- An ordered list of buildpack groups resolved into buildpack implementations as described in the [Distribution Specification](distribution.md) and
 - A directory containing application source code,
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
@@ -635,7 +632,9 @@ To decide what layer operations are appropriate, the buildpack should consider:
 
 ### Provided by the Lifecycle
 
-The following environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
+#### Layer Paths
+
+The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
 
 During the build phase, each variable designated for build MUST contain absolute paths of all previous buildpacks’ `<layers>/<layer>/` directories that are designated for build.
 
@@ -654,6 +653,18 @@ In either case,
 | `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |
 | `CPATH`           | `/include`   | header files     | [x]   |
 | `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
+
+#### Buildpack Details
+
+The following buildpack detail environment variables MUST be set by the lifecycle during the detect and build phases in order to make buildpack metadata accessible.
+
+| Env Variable | Contents                 | Build | Detect
+|--------------|--------------------------|-------|--------
+| `BP_ID`      | Buildpack ID             | [x]   | [x]
+| `BP_VERSION` | Buildpack version        | [x]   | [x]
+| `BP_DIR`     | Buildpack directory path | [x]   | [x]
+| `BP_TOML`    | Buildpack TOML file path | [x]   | [x]
+
 
 ### Provided by the Platform
 
@@ -753,62 +764,6 @@ Prohibited:
 
 The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
 The lifecycle SHOULD be implemented so that each phase may run in a different container.
-
-## Artifact Format
-
-### Buildpack Blob
-
-A buildpack blob contains one or more buildpacks.
-
-A buildpack blob MUST be packaged as gzip-compressed tarball.
-Its filename should end in `.tgz`.
-
-A buildpack blob MUST contain a `buildpack.toml` file at its root directory.
-
-## Data Format
-
-### buildpack.toml (TOML)
-
-```toml
-[[buildpacks]]
-id = "<buildpack ID>"
-name = "<buildpack name>"
-version = "<buildpack version>"
-path = "<path to buildpack>"
-
-[[buildpacks.order]]
-[[buildpacks.order.group]]
-id = "<buildpack ID>"
-version = "<buildpack version>"
-optional = false
-
-[[buildpacks.stacks]]
-id = "<stack ID>"
-mixins = ["<mixin name>"]
-build-images = ["<build image tag>"]
-run-images = ["<run image tag>"]
-
-[buildpacks.metadata]
-# buildpack-specific data
-```
-
-If an order is specified, then `path` and `stacks` MUST not be specified.
-A buildpack path MUST default to `.` when not specified and when `order` is not specified.
-
-Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
-
-The buildpack ID:
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be `config` or `app`.
-- MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
-
-Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
-
-The stack ID:
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
-
-The stack `build-images` and `run-images` are suggested sources of images for platforms that are unaware of the stack ID. Buildpack authors MUST ensure that these images include all mixins specified in `mixins`.
 
 ### launch.toml (TOML)
 

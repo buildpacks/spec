@@ -61,11 +61,11 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
-To initiate the detection phase, the platform MUST invoke the `/lifecycle/detector` executable with the user and environment defined in the build image config.
+To initiate the detection phase, the platform MUST invoke the `/cnb/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
-/lifecycle/detector -buildpacks /buildpacks -order /buildpacks/order.toml -group ./group.toml -plan ./plan.toml
+/cnb/lifecycle/detector -buildpacks /cnb/by-id -order /cnb/order.toml -group ./group.toml -plan ./plan.toml
 ```
 
 Where:
@@ -73,13 +73,13 @@ Where:
 - `-buildpacks` MUST specify input from a buildpacks directory as defined in the [Buildpacks Directory Layout](#buildpacks-directory-layout) section.
 - `-order` MUST specify input from an overriding `order.toml` file path as defined in the [Data Format](#data-format) section.
 - `-group` MUST specify output to a `group.toml` file path as defined in the [Data Format](#data-format) section.
-- `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](#buildpacks-directory-layout).
+- `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](buildpack.md).
 
-To initiate the build phase, the platform MUST invoke the `/lifecycle/builder` executable with the user and environment defined in the build image config.
+To initiate the build phase, the platform MUST invoke the `/cnb/lifecycle/builder` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
-/lifecycle/builder -buildpacks /buildpacks -group ./group.toml -plan ./plan.toml
+/cnb/lifecycle/builder -buildpacks /cnb/by-id -group ./group.toml -plan ./plan.toml
 ```
 
 Where:
