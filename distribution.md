@@ -81,13 +81,10 @@ A buildpack blob MUST contain a `buildpack.toml` file at its root directory.
 
 A buildpack defined within `buildpack.toml` MUST either be:
 
-1. A buildpack implementation specified by a `path` field or
-2. An buildpack order referencing other buildpack IDs/versions.
+1. A buildpack implementation specified by a `stacks` field and optionally a `path` field or
+2. A buildpack order specyfied by an `order` field referencing other buildpack IDs/versions.
 
-For each buildpack definition:
-
-- Each `path` MUST reference a valid buildpack implementation.
-- Buildpacks defined in `[[buildpacks.order]]` MAY NOT need to be included in the buildpack blob.
+For each buildpack definition, it is OPTIONAL for buildpacks defined in `[[buildpacks.order]]` to be included in the buildpack blob.
 
 ### Buildpackage
 
