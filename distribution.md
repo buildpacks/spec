@@ -14,13 +14,13 @@ This document specifies the artifact format, delivery mechanism, and order resol
 
 ## Order Resolution
 
-During detection, a buildpack ID or buildpack order definition MUST be resolved into individual buildpack implementations that include a `path` field.
+During detection, a buildpack ID or buildpack order definition MUST be resolved into individual buildpack implementations.
 
 The resolution process MUST follow this pattern:
 
 Where:
 - O and P are buildpack orders.
-- A through H are buildpack implementations. 
+- A through H are buildpack implementations.
 
 Given:
 
@@ -81,10 +81,13 @@ A buildpack blob MUST contain a `buildpack.toml` file at its root directory.
 
 A buildpack defined within `buildpack.toml` MUST either be:
 
-1. A buildpack implementation specified by a `stacks` field and optionally a `path` field or
-2. A buildpack order specyfied by an `order` field referencing other buildpack IDs/versions.
+1. A buildpack implementation specified by a `stacks` field or
+2. A buildpack order specified by an `order` field referencing other buildpack IDs/versions.
 
-For each buildpack definition, it is OPTIONAL for buildpacks defined in `[[buildpacks.order]]` to be included in the buildpack blob.
+A buildpack reference in `order` MUST either be:
+
+1. A reference to a buildpack inside of the blob using a `path` field ,
+2. A reference to a buildpack outside of the blob using an `id` and `version` field. 
 
 ### Buildpackage
 
@@ -99,7 +102,7 @@ A symlink MUST be created for each buildpack version that the blob is assembled 
 ```
 /cnb/blobs/<sha256 checksum of buildpack blob tgz>/
 /cnb/by-id/<buildpack ID1>/<buildpack version> -> /cnb/blobs/<sha256 checksum of blob tgz>/
-/cnb/by-id/<buildpack ID2>/<buildpack version> -> /cnb/blobs/<sha256 checksum of blob tgz>/
+/cnb/by-id/<buildpack ID2>/<buildpack version> -> /cnb/blobs/<sha256 checksum of blob tgz>/<subdir>/
 ...
 ```
 
@@ -121,7 +124,7 @@ Label: `io.buildpacks.buildpackage.metadata`
 
 The buildpack ID and version MUST match a buildpack provided by a layer blob.
 
-For a buildpackage to be valid, each buildpack implementation entry in each `buildpack.toml` MUST have all listed stacks.
+For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed stacks.
 
 For each listed stack, all associated buildpacks MUST be a candidate for detection when the entrypoint buildpack ID and version are selected.
 
@@ -135,30 +138,31 @@ Fewer stack entries as well as additional mixins for a stack entry MAY be specif
 ### buildpack.toml (TOML)
 
 ```toml
-[[buildpacks]]
+[buildpack]
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
-path = "<path to buildpack>"
 
-[[buildpacks.order]]
-[[buildpacks.order.group]]
+[[order]]
+[[order.group]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
+path = "<path to buildpack>"
 
-[[buildpacks.stacks]]
+[[stacks]]
 id = "<stack ID>"
 mixins = ["<mixin name>"]
 build-images = ["<build image tag>"]
 run-images = ["<run image tag>"]
 
-[buildpacks.metadata]
+[metadata]
 # buildpack-specific data
 ```
 
-If an order is specified, then `path` and `stacks` MUST not be specified.
-A buildpack path MUST default to `.` when not specified and when `order` is not specified.
+If an order is specified, then `stacks` MUST not be specified.
+
+A buildpack reference inside of a `group` MUST either contain an `id` and `version` or a relative `path`.
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 

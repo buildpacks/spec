@@ -114,7 +114,7 @@ However, mixin modifications MAY consist of any changes that follow the [Compati
 The buildpacks directory MUST contain unarchived buildpack blobs such that:
 
 - Each top-level directory is a buildpack ID.
-- Each second-level directory is a buildpack version which is a symlink to a blob containing that buildpack version.
+- Each second-level directory is a buildpack version which is a symlink to a blob or subdirectory inside of a blob containing that buildpack version.
 
 ## Security Considerations
 

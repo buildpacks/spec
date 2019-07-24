@@ -663,7 +663,6 @@ The following buildpack detail environment variables MUST be set by the lifecycl
 | `BP_ID`      | Buildpack ID             | [x]   | [x]
 | `BP_VERSION` | Buildpack version        | [x]   | [x]
 | `BP_DIR`     | Buildpack directory path | [x]   | [x]
-| `BP_TOML`    | Buildpack TOML file path | [x]   | [x]
 
 
 ### Provided by the Platform
