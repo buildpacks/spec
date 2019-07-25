@@ -165,11 +165,10 @@ Where:
 
 ```toml
 group = [
-  { id = "<buildpack ID>", version = "<buildpack version>", optional = false }
+  { id = "<buildpack ID>", version = "<buildpack version>" }
 ]
 ```
 
 Where:
 
 - Both `id` and `version` MUST be present for each buildpack object in a group.
-- The value of `optional` MUST default to false if not specified.
