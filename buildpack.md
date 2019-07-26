@@ -260,8 +260,8 @@ The group fails to detect if all trials fail to detect.
 For each trial,
 - If a required buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
 - If a required buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the trial MUST fail to detect.
-- If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
-- If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, it MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
 - Multiple buildpacks MAY require or provide the same dependency.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
