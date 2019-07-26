@@ -654,17 +654,6 @@ In either case,
 | `CPATH`           | `/include`   | header files     | [x]   |
 | `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
 
-#### Buildpack Details
-
-The following buildpack detail environment variables MUST be set by the lifecycle during the detect and build phases in order to make buildpack metadata accessible.
-
-| Env Variable | Contents                 | Build | Detect
-|--------------|--------------------------|-------|--------
-| `BP_ID`      | Buildpack ID             | [x]   | [x]
-| `BP_VERSION` | Buildpack version        | [x]   | [x]
-| `BP_DIR`     | Buildpack directory path | [x]   | [x]
-
-
 ### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
