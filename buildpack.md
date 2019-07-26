@@ -674,7 +674,7 @@ In all cases, file contents MUST NOT be evaluated by a shell or otherwise modifi
 
 ##### Delimiter
 
-If the environment variable file name ends in `.delim`, then the value of the environment variable MUST be used to delimit any concatenation within the same layer involving that environment variable.
+If the environment variable file name ends in `.delim`, then the file contents MUST be used to delimit any concatenation within the same layer involving that environment variable.
 This delimiter MUST override the delimiters below.
 If multiple operations apply to the same environment variable, all operations for a given layer containing environment variable files MUST be applied before subsequent layers are considered.
 
