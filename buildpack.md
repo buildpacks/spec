@@ -820,9 +820,6 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 [[provides]]
 name = "<dependency name>"
 
-[provides.metadata]
-# buildpack-specific data
-
 [[requires]]
 name = "<dependency name>"
 version = "<dependency version>"
@@ -834,9 +831,6 @@ version = "<dependency version>"
 
 [[or.provides]]
 name = "<dependency name>"
-
-[or.provides.metadata]
-# buildpack-specific data
 
 [[or.requires]]
 name = "<dependency name>"
