@@ -29,9 +29,10 @@ Examples of a platform might include:
 
 ## Stacks
 
-A **stack** is defined by a base run OCI image and a base build OCI image that are only updated with security patches. Stack images can be modified with mixins. For a given stack, a single stack ID designates the base run image, base build image, and all images derived from these images using mixins.
+A **stack** is a contract defined by a base run OCI image and a base build OCI image that are only updated with security patches.
+Stack images can be modified with mixins in order to make additive changes to the contract.
 
-A **mixin** is a named set of modifications that may be applied to a stack.
+A **mixin** is a named set of additions to a stack that avoid changing the behavior of buildpacks or apps that do not depend on the mixin.
 
 A **launch layer** refers to a layer in the app OCI image created from a  `<layers>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
@@ -39,14 +40,14 @@ An **app layer** refers to a layer created from the `<app>` directory as specifi
 
 ### Compatibility Guarantees
 
-Stack authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
+Stack image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
 
-Stack authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
-Stack authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
+Stack image authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
+Stack image authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
 
-Mixin authors MUST ensure that applying a mixin is an additive, idempotent operation that does not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images.
+Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images without mixins.
 
-To build an OCI image, platforms MUST use the same set of mixins for the run image as were used in the build image.
+During build, platforms MUST use the same set of mixins for the run image as were used in the build image.
 
 ### Build Image
 
@@ -100,21 +101,22 @@ The platform MUST ensure that:
 
 ### Mixins
 
-A mixin name MUST only be defined by a stack author and MUST be unique to a given stack.
+A mixin name MUST only be defined by the author of its corresponding stack.
+A mixin name MUST always be used to specify the same set of changes.
 
 A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
-Mixin modifications SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
-However, mixin modifications MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
+Changes introduced by mixins SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
+However, mixins MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
 
 ## Buildpacks
 
 ### Buildpacks Directory Layout
 
-The buildpacks directory MUST contain unarchived buildpack blobs such that:
+The buildpacks directory MUST contain unarchived buildpacks such that:
 
 - Each top-level directory is a buildpack ID.
-- Each second-level directory is a buildpack version which is a symlink to a blob or subdirectory inside of a blob containing that buildpack version.
+- Each second-level directory is a buildpack version.
 
 ## Security Considerations
 
@@ -142,7 +144,8 @@ The new run image MUST have an identical stack ID and MUST include the exact sam
 
 ### Caching
 
-Each platform SHOULD implement caching so as to appropriately optimize performance. Cache locality and availability MAY vary between platforms.
+Each platform SHOULD implement caching so as to appropriately optimize performance.
+Cache locality and availability MAY vary between platforms.
 
 ## Data Format
 

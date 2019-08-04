@@ -7,7 +7,7 @@ This document specifies the artifact format, delivery mechanism, and order resol
 
 1. [Order Resolution](#order-resolution)
 2. [Artifact Format](#artifact-format)
-   1. [Buildpack Blob](#buildpack-blob)
+   1. [Buildpack](#buildpack)
    2. [Buildpackage](#buildpackage)
 3. [Data Format](#data-format)
    1. [buildpack.toml (TOML)](#buildpack.toml-toml)
@@ -70,24 +70,17 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ## Artifact Format
 
-### Buildpack Blob
+### Buildpack
 
-A buildpack blob MUST contain one or more buildpacks.
-
-A buildpack blob MUST be packaged as gzip-compressed tarball.
+A buildpack MUST be packaged as gzip-compressed tarball.
 Its filename should end in `.tgz`.
 
-A buildpack blob MUST contain a `buildpack.toml` file at its root directory.
+A buildpack MUST contain a `buildpack.toml` file at its root directory.
 
-A buildpack defined within `buildpack.toml` MUST either be:
+`buildpack.toml` MUST either contain:
 
-1. A buildpack implementation specified by a `stacks` field or
+1. A buildpack implementation denoted by the presence of a `stacks` field or
 2. A buildpack order specified by an `order` field referencing other buildpack IDs/versions.
-
-A buildpack reference in `order` MUST either be:
-
-1. A reference to a buildpack inside of the blob using a `path` field ,
-2. A reference to a buildpack outside of the blob using an `id` and `version` field. 
 
 ### Buildpackage
 
@@ -95,15 +88,10 @@ A buildpackage MUST exist as either an OCI image on an image registry, an OCI im
 
 A `.cnb` file MUST be an uncompressed tar archive containing an OCI image. Its file name SHOULD end in `.cnb`.
 
-Each FS layer blob in the buildpackage MUST contain a single buildpack blob and at least one symlink.
-
-A symlink MUST be created for each buildpack version that the blob is assembled to support.
+Each FS layer blob in the buildpackage MUST contain a single buildpack at the following file path:
 
 ```
-/cnb/blobs/<sha256 checksum of buildpack blob tgz>/
-/cnb/by-id/<buildpack ID1>/<buildpack version> -> /cnb/blobs/<sha256 checksum of blob tgz>/
-/cnb/by-id/<buildpack ID2>/<buildpack version> -> /cnb/blobs/<sha256 checksum of blob tgz>/<subdir>/
-...
+/cnb/by-id/<buildpack ID>/<buildpack version>/
 ```
 
 A buildpack ID, buildpack version, and at least one stack MUST be provided in the OCI image config as a Label.
@@ -148,7 +136,6 @@ version = "<buildpack version>"
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
-path = "<path to buildpack>"
 
 [[stacks]]
 id = "<stack ID>"
@@ -162,7 +149,7 @@ run-images = ["<run image tag>"]
 
 If an order is specified, then `stacks` MUST not be specified.
 
-A buildpack reference inside of a `group` MUST either contain an `id` and `version` or a relative `path`.
+A buildpack reference inside of a `group` MUST contain an `id` and `version`.
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 

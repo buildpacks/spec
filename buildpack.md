@@ -45,6 +45,7 @@ This is accomplished in two phases:
 11. [Data Format](#data-format)
     1. [launch.toml (TOML)](#launch.toml-toml)
     2. [Build Plan (TOML)](#build-plan-toml)
+    2. [Buildpack Plan (TOML)](#buildpack-plan-toml)
     3. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
     4. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
@@ -90,7 +91,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/build` executable
-| `<plan>`          | Relevant Build Plan entries from detection (TOML)
+| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -99,7 +100,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the Build Plan (TOML)
+| `<plan>`                       | Refinements to the [Buildpack Plan]((#buildpack-plan-toml)) (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -120,7 +121,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of `/bin/detect` executable
-| `<plan>`          | Build plan from detection (TOML)
+| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
@@ -129,7 +130,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the Build Plan (TOML)
+| `<plan>`                       | Refinements to the [Buildpack Plan]((#buildpack-plan-toml)) (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -310,13 +311,13 @@ The purpose of build is to transform application source code into runnable artif
 
 During the build phase, typical buildpacks might:
 
-1. Read the Build Plan in `<plan>` to determine what dependencies to provide.
+1. Read the Buildpack Plan in `<plan>` to determine what dependencies to provide.
 2. Provide the application with dependencies for launch in `<layers>/<layer>`.
 3. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
 4. Compile the application source code into object code.
 5. Remove application source code that is not necessary for launch.
 6. Provide start command in `<layers>/launch.toml`.
-7. Refine the Build Plan in `<plan>` with more exact metadata.
+7. Refine the Buildpack Plan in `<plan>` with more exact metadata.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -335,7 +336,7 @@ This is achieved by:
 **GIVEN:**
 - The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
-- The Build Plan,
+- The Buildpack Plan,
 - Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
 - Bash version 3 or greater, if needed,
@@ -362,10 +363,10 @@ Correspondingly, each `/bin/build` executable:
 
 - MAY read or write to the `<app>` directory.
 - MAY read the build environment as described in the [Environment](#environment) section.
-- MAY read the Build Plan.
-- MAY augment the Build Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Build Plan to refine the metadata.
-- MAY remove all entries of the same name from the Build Plan to defer those entries to subsequent `/bin/build` executables.
+- MAY read the Buildpack Plan.
+- MAY augment the Buildpack Plan with more refined metadata.
+- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
+- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -378,7 +379,7 @@ Correspondingly, each `/bin/build` executable:
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
-#### Build Plan Entry Refinements
+#### Buildpack Plan Entry Refinements
 
 A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
 The single entry MAY include additional metadata that could not be determined during the detection phase.
@@ -545,7 +546,7 @@ The purpose of development setup is to create a containerized environment for de
 
 During the development setup phase, typical buildpacks might:
 
-1. Read the Build Plan to determine what dependencies to provide.
+1. Read the Buildpack Plan to determine what dependencies to provide.
 2. Provide dependencies in `<layers>/<layer>` for development commands and for subsequent buildpacks.
 3. Provide a command to start a development server in `<layers>/launch.toml`.
 4. Provide a command to run a test suite in `<layers>/launch.toml`.
@@ -555,7 +556,7 @@ During the development setup phase, typical buildpacks might:
 **GIVEN:**
 - The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
-- A Build Plan processed by previous `/bin/detect` and `/bin/develop` executions,
+- The Buildpack Plan,
 - The most recent local cached `<layers>/<layer>/` directories from a development setup of a version of the application source code, and
 - Bash version 3 or greater,
 
@@ -582,10 +583,10 @@ Correspondingly, each `/bin/develop` executable:
 - MAY read from the app directory.
 - MAY write files to the app directory in an idempotent manner.
 - MAY read the build environment as described in the [Environment](#environment) section.
-- MAY read the Build Plan.
-- MAY augment the Build Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Build Plan to refine the metadata.
-- MAY remove all entries of the same name from the Build Plan to defer those entries to subsequent `/bin/develop` executables.
+- MAY read the Buildpack Plan.
+- MAY augment the Buildpack Plan with more refined metadata.
+- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
+- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/develop` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -598,7 +599,7 @@ Correspondingly, each `/bin/develop` executable:
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 - SHOULD NOT specify any slices within `launch.toml`, as they are only used to generate OCI image layers.
 
-#### Build Plan Entry Refinements
+#### Buildpack Plan Entry Refinements
 
 A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
 The single entry MAY include additional metadata that could not be determined during the detection phase.
@@ -827,6 +828,17 @@ version = "<dependency version>"
 
 ```
 
+### Buildpack Plan (TOML)
+
+```toml
+[[entries]]
+name = "<dependency name>"
+version = "<dependency version>"
+
+[entries.metadata]
+# buildpack-specific data
+```
+
 ### Bill-of-Materials (TOML)
 
 ```toml
@@ -837,7 +849,6 @@ version = "<dependency version>"
 [[entries.buildpacks]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
-optional = false
 
 [entries.metadata]
 # buildpack-specific data
