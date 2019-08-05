@@ -72,9 +72,6 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Buildpack
 
-A buildpack MUST be packaged as gzip-compressed tarball.
-Its filename should end in `.tgz`.
-
 A buildpack MUST contain a `buildpack.toml` file at its root directory.
 
 `buildpack.toml` MUST either contain:
