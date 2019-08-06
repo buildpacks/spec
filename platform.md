@@ -29,9 +29,10 @@ Examples of a platform might include:
 
 ## Stacks
 
-A **stack** is defined by a base run OCI image and a base build OCI image that are only updated with security patches. Stack images can be modified with mixins. For a given stack, a single stack ID designates the base run image, base build image, and all images derived from these images using mixins.
+A **stack** is a contract defined by a base run OCI image and a base build OCI image that are only updated with security patches.
+Stack images can be modified with mixins in order to make additive changes to the contract.
 
-A **mixin** is a named set of modifications that may be applied to a stack.
+A **mixin** is a named set of additions to a stack that avoid changing the behavior of buildpacks or apps that do not depend on the mixin.
 
 A **launch layer** refers to a layer in the app OCI image created from a  `<layers>/<layer>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
@@ -39,14 +40,14 @@ An **app layer** refers to a layer created from the `<app>` directory as specifi
 
 ### Compatibility Guarantees
 
-Stack authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
+Stack image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
 
-Stack authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
-Stack authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
+Stack image authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
+Stack image authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
 
-Mixin authors MUST ensure that applying a mixin is an additive, idempotent operation that does not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images.
+Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images without mixins.
 
-To build an OCI image, platforms MUST use the same set of mixins for the run image as were used in the build image.
+During build, platforms MUST use the same set of mixins for the run image as were used in the build image.
 
 ### Build Image
 
@@ -61,11 +62,11 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
-To initiate the detection phase, the platform MUST invoke the `/lifecycle/detector` executable with the user and environment defined in the build image config.
+To initiate the detection phase, the platform MUST invoke the `/cnb/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
-/lifecycle/detector -buildpacks /buildpacks -order /buildpacks/order.toml -group ./group.toml -plan ./plan.toml
+/cnb/lifecycle/detector -buildpacks /cnb/by-id -order /cnb/order.toml -group ./group.toml -plan ./plan.toml
 ```
 
 Where:
@@ -73,13 +74,13 @@ Where:
 - `-buildpacks` MUST specify input from a buildpacks directory as defined in the [Buildpacks Directory Layout](#buildpacks-directory-layout) section.
 - `-order` MUST specify input from an overriding `order.toml` file path as defined in the [Data Format](#data-format) section.
 - `-group` MUST specify output to a `group.toml` file path as defined in the [Data Format](#data-format) section.
-- `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](#buildpacks-directory-layout).
+- `-plan` MUST specify output to a Build Plan as defined in the [Buildpack Interface Specification](buildpack.md).
 
-To initiate the build phase, the platform MUST invoke the `/lifecycle/builder` executable with the user and environment defined in the build image config.
+To initiate the build phase, the platform MUST invoke the `/cnb/lifecycle/builder` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
 ```bash
-/lifecycle/builder -buildpacks /buildpacks -group ./group.toml -plan ./plan.toml
+/cnb/lifecycle/builder -buildpacks /cnb/by-id -group ./group.toml -plan ./plan.toml
 ```
 
 Where:
@@ -100,24 +101,22 @@ The platform MUST ensure that:
 
 ### Mixins
 
-A mixin name MUST only be defined by a stack author and MUST be unique to a given stack.
+A mixin name MUST only be defined by the author of its corresponding stack.
+A mixin name MUST always be used to specify the same set of changes.
 
 A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
-Mixin modifications SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
-However, mixin modifications MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
+Changes introduced by mixins SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
+However, mixins MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
 
 ## Buildpacks
 
 ### Buildpacks Directory Layout
 
-The buildpacks directory MUST contain unpackaged buildpacks such that:
+The buildpacks directory MUST contain unarchived buildpacks such that:
 
 - Each top-level directory is a buildpack ID.
-- Each second-level directory is a buildpack version and contains the corresponding unpackaged buildpack.
-- Each top-level directory contains a `latest` symbolic link, which MUST point to the latest buildpack version directory.
-
-Additionally, there MUST be an [`order.toml`](#order.toml-(toml)) file at the root containing a list of buildpacks groups to use during the detection phase.
+- Each second-level directory is a buildpack version.
 
 ## Security Considerations
 
@@ -145,61 +144,34 @@ The new run image MUST have an identical stack ID and MUST include the exact sam
 
 ### Caching
 
-Each platform SHOULD implement caching so as to appropriately optimize performance. Cache locality and availability MAY vary between platforms.
+Each platform SHOULD implement caching so as to appropriately optimize performance.
+Cache locality and availability MAY vary between platforms.
 
 ## Data Format
 
 ### order.toml (TOML)
 
 ```toml
-[[groups]]
-labels = ["<label name>"]
-buildpacks = [
-  { id = "<buildpack ID>", version = "<buildpack version>", optional = <bool> }
-]
+[[order]]
+[[order.group]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
 ```
 
 Where:
 
-- The buildpack ID MUST be present for each buildpack object in a group.
-- The buildpack version MUST default to "latest" if not provided.
-- Each buildpack MUST default to not optional if not specified in the object.
-- Group labels MAY be present to enable the platform to consider a subset of groups for detection.
-
-Example:
-
-```toml
-[[groups]]
-labels = ["custom-dotnet"]
-buildpacks = [
-  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "io.buildpacks.dotnet-core", version = “latest” }
-]
-
-[[groups]]
-labels = ["custom-ruby", "ruby"]
-buildpacks = [
-  { id = "io.buildpacks.nodejs", version = “latest”, optional = true },
-  { id = "io.buildpacks.ruby", version = “latest” }
-]
-
-[[groups]]
-labels = ["ruby-datascience", "ruby"]
-buildpacks = [
-  { id = "io.buildpacks.python", version = “latest” },
-  { id = "io.buildpacks.ruby", version = “latest” }
-]
-```
+- Both `id` and `version` MUST be present for each buildpack object in a group.
+- The value of `optional` MUST default to false if not specified.
 
 ### group.toml (TOML)
 
 ```toml
-buildpacks = [
+group = [
   { id = "<buildpack ID>", version = "<buildpack version>" }
 ]
 ```
 
 Where:
 
-- The buildpack ID MUST be present for each buildpack object in a group.
-- The buildpack version MUST default to "latest" if not provided.
+- Both `id` and `version` MUST be present for each buildpack object in a group.
