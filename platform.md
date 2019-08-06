@@ -47,7 +47,7 @@ Stack image authors MUST ensure that app and launch layers do not change behavio
 
 Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images without mixins.
 
-During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
+During build, platforms MUST use the same set of mixins for the run image as were used in the build image.
 
 ### Build Image
 
@@ -103,10 +103,6 @@ The platform MUST ensure that:
 
 A mixin name MUST only be defined by the author of its corresponding stack.
 A mixin name MUST always be used to specify the same set of changes.
-A mixin name MUST only contain a `:` character as part of an optional stage specifier.
-
-A mixin prefixed with the `build:` stage specifier only affects the build image and does not need to be specified on the run image.
-A mixin prefixed with the `run:` stage specifier only affects the run image and does not need to be specified on the build image.
 
 A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
