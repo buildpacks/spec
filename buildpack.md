@@ -45,9 +45,9 @@ This is accomplished in two phases:
 11. [Data Format](#data-format)
     1. [launch.toml (TOML)](#launch.toml-toml)
     2. [Build Plan (TOML)](#build-plan-toml)
-    2. [Buildpack Plan (TOML)](#buildpack-plan-toml)
-    3. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
-    4. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+    3. [Buildpack Plan (TOML)](#buildpack-plan-toml)
+    4. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
+    5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
 
 ## Buildpack Interface
 
