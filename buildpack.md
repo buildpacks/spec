@@ -668,7 +668,11 @@ The following additional environment variables MUST NOT be overridden by the lif
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
-The lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` directly.
+When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`.
+
+When `clear-env` in `buildpack.toml` is not set to `true` for a given buildpack, the lifecycle MUST set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` such that:
+1. For layer path environment variables, user-provided values are prepended before any existing values and are delimited by the OS path list separator.
+2. For all other environment variables, user-provided values override any existing values.
 
 Buildpacks MAY use the value of `CNB_STACK_ID` to modify their behavior when executed on different stacks.
 
