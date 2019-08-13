@@ -127,6 +127,7 @@ Fewer stack entries as well as additional mixins for a stack entry MAY be specif
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
+clear-env = false
 
 [[order]]
 [[order.group]]
