@@ -26,7 +26,7 @@ A `.cnb` file MUST be an uncompressed tar archive containing an OCI image. Its f
 Each FS layer blob in the buildpackage MUST contain a single buildpack at the following file path:
 
 ```
-/cnb/by-id/<buildpack ID>/<buildpack version>/
+/cnb/buildpacks/<buildpack ID>/<buildpack version>/
 ```
 
 A buildpack ID, buildpack version, and at least one stack MUST be provided in the OCI image config as a Label.
