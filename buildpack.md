@@ -43,11 +43,12 @@ This is accomplished in two phases:
     1. [Assumptions of Trust](#assumptions-of-trust)
     2. [Requirements](#requirements)
 11. [Data Format](#data-format)
-    1. [launch.toml (TOML)](#launch.toml-toml)
+    1. [launch.toml (TOML)](#launchtoml-toml)
     2. [Build Plan (TOML)](#build-plan-toml)
     3. [Buildpack Plan (TOML)](#buildpack-plan-toml)
     4. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
     5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+    6. [buildpack.toml (TOML)](#buildpacktoml-toml)
 
 ## Buildpack Interface
 
@@ -216,7 +217,7 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in the [Distribution Specification](distribution.md) and
+- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution) and
 - A directory containing application source code,
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
@@ -267,6 +268,62 @@ The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
 The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is unavailable in the container.
+
+#### Order Resolution
+
+During detection, an order definition MUST be resolved into individual buildpack implementations.
+
+The resolution process MUST follow this pattern:
+
+Where:
+- O and P are buildpack orders.
+- A through H are buildpack implementations.
+
+Given:
+
+<img src="http://tex.s2cms.ru/svg/%0AO%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%20%5C%5C%0AC%2C%20%26%20D%0A%5Cend%7Bbmatrix%7D%0A" alt="
+O =
+\begin{bmatrix}
+A, &amp; B \\
+C, &amp; D
+\end{bmatrix}
+" />
+
+<img src="http://tex.s2cms.ru/svg/%0AP%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20F%20%5C%5C%0AG%2C%20%26%20H%0A%5Cend%7Bbmatrix%7D%0A" alt="
+P =
+\begin{bmatrix}
+E, &amp; F \\
+G, &amp; H
+\end{bmatrix}
+" />
+
+We propose:
+
+<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20O%2C%20%26%20F%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20A%2C%20%26%20B%2C%20%26%20F%20%5C%5C%0AE%2C%20%26%20C%2C%20%26%20D%2C%20%26%20F%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+\begin{bmatrix}
+E, &amp; O, &amp; F
+\end{bmatrix} = 
+\begin{bmatrix}
+E, &amp; A, &amp; B, &amp; F \\
+E, &amp; C, &amp; D, &amp; F \\
+\end{bmatrix}
+" />
+
+<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AO%2C%20%26%20P%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AA%2C%20%26%20B%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+\begin{bmatrix}
+O, &amp; P
+\end{bmatrix} = 
+\begin{bmatrix}
+A, &amp; B, &amp; E, &amp; F \\
+A, &amp; B, &amp; G, &amp; H \\
+C, &amp; D, &amp; E, &amp; F \\
+C, &amp; D, &amp; G, &amp; H \\
+\end{bmatrix}
+" />
+
+Note that buildpack IDs are expanded depth-first in left-to-right order.
+
+If a buildpack order entry within a group has the parameter `optional = true`, then a copy of the group without the entry MUST be repeated after the original group.
 
 ## Phase #2: Analysis
 
@@ -758,6 +815,8 @@ Prohibited:
 The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
 The lifecycle SHOULD be implemented so that each phase may run in a different container.
 
+## Data Format
+
 ### launch.toml (TOML)
 
 ```toml
@@ -873,3 +932,54 @@ For a given layer, the buildpack MAY specify:
 
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
+
+
+### buildpack.toml (TOML)
+
+```toml
+[buildpack]
+id = "<buildpack ID>"
+name = "<buildpack name>"
+version = "<buildpack version>"
+clear-env = false
+
+[[order]]
+[[order.group]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
+
+[[stacks]]
+id = "<stack ID>"
+mixins = ["<mixin name>"]
+
+[metadata]
+# buildpack-specific data
+```
+
+Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
+
+The buildpack ID:
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
+- MUST NOT be `config` or `app`.
+- MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
+
+
+If an `order` is specified, then `stacks` MUST not be specified.
+
+#### Buildpack Implementations
+
+A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface)
+
+
+Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
+
+The stack ID:
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
+- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
+
+#### Order Buildpacks
+
+A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an order of buildpacks that implement the [Buildpack Interface](#buildpack-interface)
+
+A buildpack reference inside of a `group` MUST contain an `id` and `version`.
