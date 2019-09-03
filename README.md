@@ -24,3 +24,4 @@ An implementation is compliant if it satisfies all the MUST, MUST NOT, REQUIRED,
 - [Buildpack Interface Specification](buildpack.md)
 - [Platform Interface Specification](platform.md)
 - [Distribution Specification](distribution.md)
+- [Bindings Extension Specification](bindings.md)
