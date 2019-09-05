@@ -965,12 +965,11 @@ The buildpack ID:
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
 
-If an `order` is specified, then `stacks` MUST not be specified.
+If an `order` is specified, then `stacks` MUST NOT be specified.
 
 #### Buildpack Implementations
 
-A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface)
-
+A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
 
 Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
 
@@ -980,6 +979,6 @@ The stack ID:
 
 #### Order Buildpacks
 
-A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an order of buildpacks that implement the [Buildpack Interface](#buildpack-interface)
+A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
