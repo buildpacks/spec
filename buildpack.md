@@ -7,9 +7,9 @@ A lifecycle is a program that uses buildpacks to transform application source co
 This is accomplished in four phases:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
-3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
-4. **Export,** where the remote layers are replaced by the generated layers.
+1. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
+1. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
+1. **Export,** where the remote layers are replaced by the generated layers.
 
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
@@ -18,37 +18,38 @@ Additionally, a lifecycle can use buildpacks to create a containerized environme
 This is accomplished in two phases:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
+1. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
 
 ## Table of Contents
 
 1. [Buildpack Interface](#buildpack-interface)
    1. [Key](#key)
-   2. [Detection](#detection)
-   3. [Build](#build)
-   4. [Development](#development)
-   5. [Layer Types](#layer-types)
-2. [App Interface](#app-interface)
-3. [Phase #1: Detection](#phase-1-detection)
-4. [Phase #2: Analysis](#phase-2-analysis)
-5. [Phase #3: Build](#phase-3-build)
-6. [Phase #4: Export](#phase-4-export)
-7. [Launch](#launch)
-8. [Development Setup](#development-setup)
-9. [Environment](#environment)
+   1. [Detection](#detection)
+   1. [Build](#build)
+   1. [Development](#development)
+   1. [Layer Types](#layer-types)
+1. [App Interface](#app-interface)
+1. [Phase #1: Detection](#phase-1-detection)
+1. [Phase #2: Analysis](#phase-2-analysis)
+1. [Phase #3: Build](#phase-3-build)
+1. [Phase #4: Export](#phase-4-export)
+
+1. [Launch](#launch)
+1. [Development Setup](#development-setup)
+1. [Environment](#environment)
    1. [Provided by the Lifecycle](#provided-by-the-lifecycle)
-   2. [Provided by the Platform](#provided-by-the-platform)
-   3. [Provided by the Buildpacks](#provided-by-the-buildpacks)
-10. [Security Considerations](#security-considerations)
+   1. [Provided by the Platform](#provided-by-the-platform)
+   1. [Provided by the Buildpacks](#provided-by-the-buildpacks)
+1. [Security Considerations](#security-considerations)
     1. [Assumptions of Trust](#assumptions-of-trust)
-    2. [Requirements](#requirements)
-11. [Data Format](#data-format)
+    1. [Requirements](#requirements)
+1. [Data Format](#data-format)
     1. [launch.toml (TOML)](#launchtoml-toml)
-    2. [Build Plan (TOML)](#build-plan-toml)
-    3. [Buildpack Plan (TOML)](#buildpack-plan-toml)
-    4. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
-    5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
-    6. [buildpack.toml (TOML)](#buildpacktoml-toml)
+    1. [Build Plan (TOML)](#build-plan-toml)
+    1. [Buildpack Plan (TOML)](#buildpack-plan-toml)
+    1. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
+    1. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+    1. [buildpack.toml (TOML)](#buildpacktoml-toml)
 
 ## Buildpack Interface
 
@@ -85,7 +86,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | `<plan>`           | Contributions to the the Build Plan (TOML)
 
 
-###  Build
+### Build
 
 Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[AI]>`
 
