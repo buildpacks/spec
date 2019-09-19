@@ -969,7 +969,12 @@ The buildpack ID:
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
-Buildpack API MUST be in form `<major>.<minor>` and describe the implemented buildpack API. When `<major>` is `0`, this buildpack is only compatible with lifecycles implementing that exact buildpack API. When `<major>` is greater than `0`, this buildpack is compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` equals the `<major>` of the buildpack and `<minor>` is greater than or equal to that of the buildpack.
+The buildpack API:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - MUST describe the implemented buildpack API.
+ - SHALL indicate compatibility with a given lifecycle according to the following rules:
+    - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
+    - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
 
 #### Buildpack Implementations
 
