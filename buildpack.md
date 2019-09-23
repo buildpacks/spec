@@ -101,7 +101,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan]((#buildpack-plan-toml)) (TOML)
+| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -131,7 +131,7 @@ Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `
 | [exit status]                  | Success (0) or failure (1+)
 | `/dev/stdout`                  | Logs (info)
 | `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan]((#buildpack-plan-toml)) (TOML)
+| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
@@ -302,7 +302,7 @@ We propose:
 <img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20O%2C%20%26%20F%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20A%2C%20%26%20B%2C%20%26%20F%20%5C%5C%0AE%2C%20%26%20C%2C%20%26%20D%2C%20%26%20F%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
 \begin{bmatrix}
 E, &amp; O, &amp; F
-\end{bmatrix} = 
+\end{bmatrix} =
 \begin{bmatrix}
 E, &amp; A, &amp; B, &amp; F \\
 E, &amp; C, &amp; D, &amp; F \\
@@ -312,7 +312,7 @@ E, &amp; C, &amp; D, &amp; F \\
 <img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AO%2C%20%26%20P%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AA%2C%20%26%20B%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
 \begin{bmatrix}
 O, &amp; P
-\end{bmatrix} = 
+\end{bmatrix} =
 \begin{bmatrix}
 A, &amp; B, &amp; E, &amp; F \\
 A, &amp; B, &amp; G, &amp; H \\
