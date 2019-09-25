@@ -937,6 +937,8 @@ For a given layer, the buildpack MAY specify:
 ### buildpack.toml (TOML)
 
 ```toml
+api = "<buildpack api>"
+
 [buildpack]
 id = "<buildpack ID>"
 name = "<buildpack name>"
@@ -966,6 +968,13 @@ The buildpack ID:
 
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
+
+The buildpack API:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - MUST describe the implemented buildpack API.
+ - SHALL indicate compatibility with a given lifecycle according to the following rules:
+    - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
+    - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
 
 #### Buildpack Implementations
 
