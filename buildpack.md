@@ -71,8 +71,8 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
-| `/dev/stdout`      | Logs (info)
-| `/dev/stderr`      | Logs (warnings, errors)
+| Standard output    | Logs (info)
+| Standard error     | Logs (warnings, errors)
 | `<plan>`           | Contributions to the the Build Plan (TOML)
 
 
@@ -90,15 +90,15 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | Output                         | Description
 |--------------------------------|-----------------------------------------------
 | [exit status]                  | Success (0) or failure (1+)
-| `/dev/stdout`                  | Logs (info)
-| `/dev/stderr`                  | Logs (warnings, errors)
+| Standard output                | Logs (info)
+| Standard error                 | Logs (warnings, errors)
 | `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
 | `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
 | `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
 | `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
+| `<layers>/<layer>/lib/`        | [†](README.md#linux-only)Shared libraries for launch and/or subsequent buildpacks
+| `<layers>/<layer>/profile.d/`  | Scripts sourced by shell before launch
 | `<layers>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
 | `<layers>/<layer>/pkgconfig/`  | Search path for pkg-config for subsequent buildpacks
 | `<layers>/<layer>/env/`        | Env vars for launch and/or subsequent buildpacks
@@ -160,9 +160,10 @@ The lifecycle MUST consider layers that are marked `launch = false` and `build =
 
 ## App Interface
 
-| Output           | Description
-|------------------|----------------------------------------------
-| `<app>/.profile` | Script sourced by bash before launch
+| Output                 | Description
+|------------------------|----------------------------------------------
+| `<app>/.profile`       | [†](README.md#linux-only) Bash-formatted script sourced by shell before launch
+| `<app>/.profile.bat`   | [‡](README.md#windows-only) BAT-formatted script sourced by shell before launch
 
 ## Phase #1: Detection
 
@@ -176,8 +177,9 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution) and
-- A directory containing application source code,
+- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- A directory containing application source code
+- A shell, if needed,
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
@@ -355,7 +357,7 @@ This is achieved by:
 - The Buildpack Plan,
 - Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
-- Bash version 3 or greater, if needed,
+- A shell, if needed,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
@@ -497,7 +499,7 @@ The purpose of launch is to modify the running app environment using app-provide
 **GIVEN:**
 - An OCI image exported by the lifecycle,
 - An optional process type specified by `CNB_PROCESS_TYPE`, and
-- Bash version 3 or greater, if needed,
+- A shell, if needed,
 
 First, the lifecycle MUST locate a start command and choose an execution strategy.
 
@@ -525,15 +527,14 @@ To choose an execution strategy,
 
 1. **IF** the value of `CMD` is chosen as the start command,
    1. **IF** the first parameter of `CMD` is not `--`,
-      **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
+      **THEN** the lifecycle MUST invoke the value as a command using the shell with subsequent entries as arguments.
 
    2. **IF** the first parameter of `CMD` is `--` and the length of `CMD` is greater than one,
       **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
 
-
 2. **IF** a buildpack-provided process type is chosen as the start command,
    1. **IF** the process type does not have `direct` set to `true`,
-      **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash with values of `args` provided as arguments.
+      **THEN** the lifecycle MUST invoke the value of `command` as a command using the shell with values of `args` provided as arguments.
 
    2. **IF** the process type does have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
@@ -542,17 +543,20 @@ Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
-2. If using an execution strategy involving Bash, the lifecycle MUST use a single Bash process to
+2. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
    1. source each file in each `<layers>/<layer>/profile.d` directory,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
-   2. source `<app>/.profile` if it is present.
+   2. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
 3. The lifecycle MUST invoke the start command with the decided execution strategy.
 
-When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
-When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
+[†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
+
+[†](README.md#linux-only)When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
+
+[‡](README.md#windows-only)When executing a process with Command Prompt, the lifecycle SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
 
 ## Environment
 
@@ -570,15 +574,16 @@ In either case,
 
 - The lifecycle MUST order all `<layer>` paths to reflect the reversed order of the buildpack group.
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
-- The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
+- The lifecycle MUST separate each path with the OS path list separator (e.g. `:` on Linux, `;` on Windows).
 
-| Env Variable      | Layer Path   | Contents         | Build | Launch
-|-------------------|--------------|------------------|-------|--------
-| `PATH`            | `/bin`       | binaries         | [x]   | [x]
-| `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]
-| `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |
-| `CPATH`           | `/include`   | header files     | [x]   |
-| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
+| Env Variable      | Layer Path   | Contents         | Build | Launch | *Linux* | *Windows* | 
+|-------------------|--------------|------------------|-------|--------|---------|-----------|
+| `PATH`            | `/bin`       | binaries         | [x]   | [x]    | [x]     | [x]       |
+| `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]    | [x]     |           |
+| `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |        | [x]     |           |
+| `CPATH`           | `/include`   | header files     | [x]   |        | [x]     | [x]       |
+| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |        | [x]     | [x]       |
+
 
 ### Provided by the Platform
 
@@ -704,7 +709,7 @@ For each process, the buildpack:
 
 - MUST specify a `type` that is not identical to other process types provided by the same buildpack.
 - MUST specify a `command` that is either:
-  - A command sequence that is valid when executed using the Bash 3+ shell, if `args` is not specified.
+  - A command sequence that is valid when executed using the shell, if `args` is not specified.
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
