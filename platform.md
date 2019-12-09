@@ -12,20 +12,40 @@ Examples of a platform might include:
 
 ## Table of Contents
 
-1. [Stacks](#stacks)
+1. [Platform API Version](#platform-api-version)
+   1. [Compatibility Verification](#compatibility-verification)
+2. [Stacks](#stacks)
    1. [Compatibility Guarantees](#compatibility-guarantees)
    2. [Build Image](#build-image)
    3. [Run Image](#run-image)
-2. [Buildpacks](#buildpacks)
+3. [Buildpacks](#buildpacks)
    1. [Buildpacks Directory Layout](#buildpacks-directory-layout)
-3. [Security Considerations](#security-considerations)
-4. [Additional Guidance](#additional-guidance)
+4. [Security Considerations](#security-considerations)
+5. [Additional Guidance](#additional-guidance)
    1. [Environment](#environment)
    2. [Run Image Rebasing](#run-image-rebasing)
    3. [Caching](#caching)
-5. [Data Format](#data-format)
+6. [Data Format](#data-format)
    1. [order.toml (TOML)](#order.toml-(toml))
    2. [group.toml (TOML)](#group.toml-(toml))
+
+
+## Platform API Version
+
+The Platform API version:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - MUST describe the implemented Platform API.
+ - SHALL indicate compatibility with a given lifecycle according to the following rules:
+    - When `<major>` is `0`, the platform is only compatible with lifecycles implementing that exact Platform API.
+    - When `<major>` is greater than `0`, the platforms is only compatible with lifecycles implementing platform API
+    `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the platform and `<minor>` of the lifecycle
+    is greater than or equal to `<minor>` of the platform.
+
+### Compatibility Verification
+
+The lifecycle SHALL verify compatibility if the environment variable `CNB_PLATFORM_API` is set. The value of this
+environment variable MUST be the version of the Platform API the platform implements. Compatibility verification SHALL
+NOT occur if this environment variable is not set. Compatibility verification SHALL occur before any other validation.
 
 ## Stacks
 
