@@ -232,7 +232,7 @@ The value of this label:
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "properties": {
-    "source: {
+    "source": {
       "type": "object",
       "properties":{
         "type": {"type": "string"},
