@@ -522,6 +522,8 @@ Subsequently,
    - The run image filesystem layers,
    - The executable component of the lifecycle that implements the launch phase, and
    - An `ENTRYPOINT` set to that component.
+3. The lifecycle MAY add Config labels to the new OCI image, composed of
+   - A label with the key `"io.buildpacks.app.source"` with a [value describing the source location of the app](#io.buildpacks.app.source-oci-image-label).
 
 Finally, any `<layers>/<layer>` directories specified as `cache = true` in `<layers>/<layer>.toml` MAY be preserved for the next local build.
 For any `<layers>/<layer>.toml` files specifying both `cache = true` and `launch = true`, the lifecycle SHOULD store a checksum of the corresponding `<layers>/<layer>` directory so that it is associated with the locally cached directory.
@@ -991,3 +993,19 @@ The stack ID:
 A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+
+### io.buildpacks.app.source OCI Image label
+The value of this label:
+- MUST be a string of escaped json complying with [RFC 8259](https://tools.ietf.org/html/rfc8259).
+- when unescaped, MUST comply with the following schema:
+```json
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "type": {"type": "string"},
+    "version": {},
+    "metadata": {}
+  }
+}
+```
