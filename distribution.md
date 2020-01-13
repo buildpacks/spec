@@ -29,6 +29,21 @@ Each FS layer blob in the buildpackage MUST contain a single buildpack at the fo
 /cnb/buildpacks/<buildpack ID>/<buildpack version>/
 ```
 
+After all buildpack layer blobs a buildpackage may contain `tar.gz` files at the following file path
+```
+/cnb/artifacts/<artifact SHA256>
+```
+( Top level sha gives us artifact de-duplication over buildpackage, but would make providing dependencies more expensive )
+Alternative is a combination of two files:
+```
+/cnb/artifacts/<artifact SHA256>
+/cnb/artifacts/<artifact SHA256>.toml -> lists buildpack-id & versions that contain this artifact
+                                         [[buildpack]]
+                                            id = io.cloudfoundry.nodejs
+                                            version = 1.2.3
+                                            
+```
+
 A buildpack ID, buildpack version, and at least one stack MUST be provided in the OCI image config as a Label.
 
 Label: `io.buildpacks.buildpackage.metadata`
@@ -36,6 +51,7 @@ Label: `io.buildpacks.buildpackage.metadata`
 {
   "id": "<entrypoint buildpack ID>",
   "version": "<entrypoint buildpack version>",
+  "offline": true,
   "stacks": [
     {
       "id": "<stack ID>",
@@ -55,3 +71,18 @@ Each stack ID MUST only be present once.
 For a given stack, the `mixins` list MUST enumerate mixins such that no included buildpacks are missing a mixin for the stack.
 
 Fewer stack entries as well as additional mixins for a stack entry MAY be specified.
+
+We define the following terms:
+  `child buildpacks`: all buildpacks referenced from a `buildpack.toml` (in the order section) &
+
+For a buildpackage to be offline the following conditions must be met:
+1.) All buildpacks referenced in the tree of buildpacks starting with the root buildpack at the `entrypoint buildpack's` ( need some specification describing how this is built), must be an FS layer blob in the buildpackage.
+1.) All additional downloadable artifacts are included as artifacts of the form `/cnb/artifacts/<artifact SHA256>`
+
+So that the lifecycle can `detect`, `analize`, `build` and `export` on a local offline registry.
+
+
+Open questions:
+- Does the `build` phase of detect now need an extra argument to point to a mounted volume of the artifacts at `/cnb/artifacts/<artifact SHA256>`?
+
+- Should we just take this one step further and make artifacts images as well? 
