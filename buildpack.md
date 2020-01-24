@@ -115,36 +115,6 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `<layers>/<layer>/env.build/`  | Env vars for subsequent buildpacks (after `env`)
 | `<layers>/<layer>/*`           | Other content for launch and/or subsequent buildpacks
 
-### Development
-
-Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[A]>`
-
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/detect` executable
-| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
-
-| Output                         | Description
-|--------------------------------|----------------------------------------------
-| [exit status]                  | Success (0) or failure (1+)
-| `/dev/stdout`                  | Logs (info)
-| `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
-| `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
-| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
-| `<layers>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
-| `<layers>/<layer>/pkgconfig/`  | Search path for pkg-config for subsequent buildpacks
-| `<layers>/<layer>/env/`        | Env vars for launch and/or subsequent buildpacks
-| `<layers>/<layer>/env.launch/` | Env vars for launch (after `env`, before `profile.d`)
-| `<layers>/<layer>/env.build/`  | Env vars for subsequent buildpacks (after `env`)
-| `<layers>/<layer>/*`           | Other content for launch and/or subsequent buildpacks
-
 ### Layer Types
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
