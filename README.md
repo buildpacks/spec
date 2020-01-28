@@ -26,13 +26,16 @@ When a word or bullet point is prefixed with a <a name="linux-only">†</a>, it 
 
 When a word or bullet point is prefixed with a <a name="windows-only">‡</a>, it SHALL be assumed to apply only to Windows stacks.
 
+
 When the specification denotes a "shell", Linux stacks MUST use the Bourne Again Shell (`bash`) version 3 or greater and Windows stacks MUST use Command Prompt (`cmd.exe`) unless otherwise specified.
 
-When the specification denotes a filesystem path using Unix path notation (e.g. `/cnb/lifecycle`), on Windows stacks this notation SHALL be interpreted to represent a path where all unix file path separators are replaced with the Windows filepath separator (`\`) and absolute paths are assumed to be rooted in the default drive (e.g. `C:\cnb\lifecycle`).
+#### Interpreting Paths for Windows
 
-When the specification refers to an executable file with Unix path notation (e.g. `/cnb/lifecycle/builder`), Windows stacks MUST assume two files are intented: one with the suffix  `.exe` (e.g. `C:\cnb\lifecycle\builder.exe`) and another with the suffix `.bat` (e.g. `C:\cnb\lifecycle\builder.bat`).
+When the specification denotes a filesystem path using POSIX path notation (e.g. `/cnb/lifecycle`), this notation SHALL be interpreted to represent a path where all POSIX file path separators are replaced with the Windows filepath separator (`\`) and absolute paths are assumed to be rooted in the default drive (e.g. `C:\cnb\lifecycle`).
 
-When the specification refers to a path in the context of OCI layer blob (e.g. `/cnb/buildpacks/<buildpack ID>/<buildpack version>/`)  it SHALL be assumed that this path is prefixed with `Files` (e.g. `Files/cnb/buildpacks/<buildpack ID>/<buildpack version>/`) when the layer blob is associated with a Windows platform OCI image.
+When the specification refers to an executable file with POSIX path notation (e.g. `/cnb/buildpacks/bp-a/1.2.3/bin/detect`), this notation SHALL be interpreted to represent one of two possible files: one with the suffix `.exe` (e.g. `C:\cnb\buildpacks\bp-a\1.2.3\bin\detect.exe`) or with the suffix `.bat` (e.g. `C:\cnb\buildpacks\bp-a\1.2.3\bin\detect.bat`).
+
+When the specification refers to a path in the context of an OCI layer tar (e.g. `/cnb/buildpacks/bp-a/1.2.3/`), this path SHALL be interpreted to be prefixed with `Files` (e.g. `Files/cnb/buildpacks/bp-a/1.2.3/`). Note: path separators in OCI layer tar headers MUST be `/` regardless of operating system.
 
 ## Sections
 
