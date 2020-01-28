@@ -617,13 +617,13 @@ In either case,
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
 - The lifecycle MUST separate each path with the OS path list separator (e.g. `:` on Linux, `;` on Windows).
 
-| Env Variable      | Layer Path   | Contents         | Build | Launch | *Linux* | *Windows* | 
-|-------------------|--------------|------------------|-------|--------|---------|-----------|
-| `PATH`            | `/bin`       | binaries         | [x]   | [x]    | [x]     | [x]       |
-| `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]    | [x]     |           |
-| `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |        | [x]     |           |
-| `CPATH`           | `/include`   | header files     | [x]   |        | [x]     | [x]       |
-| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |        | [x]     | [x]       |
+| Env Variable                               | Layer Path   | Contents         | Build | Launch |
+|--------------------------------------------|--------------|------------------|-------|--------|
+| `PATH`                                     | `/bin`       | binaries         | [x]   | [x]    |
+| [†](README.md#linux-only)`LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]    |
+| [†](README.md#linux-only)`LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |        |
+| `CPATH`                                    | `/include`   | header files     | [x]   |        |
+| `PKG_CONFIG_PATH`                          | `/pkgconfig` | pc files         | [x]   |        |
 
 
 ### Provided by the Platform
