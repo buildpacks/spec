@@ -13,36 +13,27 @@ This is accomplished in four phases:
 
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
-Additionally, a lifecycle can use buildpacks to create a containerized environment for developing or testing application source code.
-
-This is accomplished in two phases:
-
-1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
-
 ## Table of Contents
 
 1. [Buildpack Interface](#buildpack-interface)
    1. [Key](#key)
    2. [Detection](#detection)
    3. [Build](#build)
-   4. [Development](#development)
-   5. [Layer Types](#layer-types)
+   4. [Layer Types](#layer-types)
 2. [App Interface](#app-interface)
 3. [Phase #1: Detection](#phase-1-detection)
 4. [Phase #2: Analysis](#phase-2-analysis)
 5. [Phase #3: Build](#phase-3-build)
 6. [Phase #4: Export](#phase-4-export)
 7. [Launch](#launch)
-8. [Development Setup](#development-setup)
-9. [Environment](#environment)
+8. [Environment](#environment)
    1. [Provided by the Lifecycle](#provided-by-the-lifecycle)
    2. [Provided by the Platform](#provided-by-the-platform)
    3. [Provided by the Buildpacks](#provided-by-the-buildpacks)
-10. [Security Considerations](#security-considerations)
+9. [Security Considerations](#security-considerations)
     1. [Assumptions of Trust](#assumptions-of-trust)
     2. [Requirements](#requirements)
-11. [Data Format](#data-format)
+10. [Data Format](#data-format)
     1. [launch.toml (TOML)](#launchtoml-toml)
     2. [Build Plan (TOML)](#build-plan-toml)
     3. [Buildpack Plan (TOML)](#buildpack-plan-toml)
@@ -122,8 +113,6 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 - Whether the layer directory in `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
 - Whether the layer directory in `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
 - Whether and how the layer directory in `<layers>/<layer>/` should be persisted to subsequent builds of the same OCI image (via the `cache` boolean).
-
-This section does not apply to the Development Setup phase, which does not generate an OCI image.
 
 #### Launch Layers
 
@@ -564,97 +553,6 @@ Given the start command and execution strategy,
 
 When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
-
-## Development Setup
-
-### Purpose
-
-The purpose of development setup is to create a containerized environment for developing or testing application source code.
-
-During the development setup phase, typical buildpacks might:
-
-1. Read the Buildpack Plan to determine what dependencies to provide.
-2. Provide dependencies in `<layers>/<layer>` for development commands and for subsequent buildpacks.
-3. Provide a command to start a development server in `<layers>/launch.toml`.
-4. Provide a command to run a test suite in `<layers>/launch.toml`.
-
-### Process
-
-**GIVEN:**
-- The final ordered group of buildpacks determined during the detection phase,
-- A directory containing application source code,
-- The Buildpack Plan,
-- The most recent local cached `<layers>/<layer>/` directories from a development setup of a version of the application source code, and
-- Bash version 3 or greater,
-
-For each buildpack in the group in order, the lifecycle MUST execute `/bin/develop`.
-
-1. **IF** the exit status of `/bin/develop` is non-zero, \
-   **THEN** the lifecycle MUST fail the development setup.
-
-2. **IF** the exit status of `/bin/develop` is zero,
-   1. **IF** there are additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/develop`.
-
-   2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to executing a process type as specified in the [Launch](#launch) section.
-
-For each `/bin/develop` executable in each buildpack, the lifecycle:
-
-- MUST configure the build environment as described in the [Environment](#environment) section.
-- MUST provide path arguments to `/bin/develop` as described in the [Buildpack Interface](#buildpack-interface) section.
-- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
-
-Correspondingly, each `/bin/develop` executable:
-
-- MAY read from the app directory.
-- MAY write files to the app directory in an idempotent manner.
-- MAY read the build environment as described in the [Environment](#environment) section.
-- MAY read the Buildpack Plan.
-- MAY augment the Buildpack Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
-- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/develop` executables.
-- MAY log output from the build process to `stdout`.
-- MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a list of possible commands for launch to `<layers>/launch.toml`.
-- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
-- MAY modify or delete any existing `<layers>/<layer>` directories.
-- MAY modify or delete any existing `<layers>/<layer>.toml` files.
-- MAY create new `<layers>/<layer>` directories.
-- MAY create new `<layers>/<layer>.toml` files.
-- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
-- SHOULD NOT use the `<app>` directory to store provided dependencies.
-- SHOULD NOT specify any slices within `launch.toml`, as they are only used to generate OCI image layers.
-
-#### Buildpack Plan Entry Refinements
-
-A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
-The single entry MAY include additional metadata that could not be determined during the detection phase.
-
-A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
-
-The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/develop` to be available in subsequent buildpacks' `<plan>`s.
-
-The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
-
-When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/develop` execution.
-
-#### Layers
-
-Layers designated `cache = true` in `<layers>/<layer>.toml` MAY be persisted to the next development setup.
-Layers not designated `cache = true` in `<layers>/<layer>.toml` MUST be deleted before the next development setup.
-Layers designated `launch = true` in `<layers>/<layer>.toml` MUST be made accessible to the development commands as described in the [Environment](#environment) section.
-Layers designated `build = true` in `<layers>/<layer>.toml` MUST be made accessible to subsequent buildpacks as described in the [Environment](#environment) section.
-
-A buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files.
-
-To decide what layer operations are appropriate, the buildpack should consider:
-
-- Whether files in the `<app>` directory have changed since the layer was created.
-- Whether the environment has changed since the layer was created.
-- Whether the buildpack version has changed since the layer was created.
-- Whether new application dependency versions have been made available since the layer was created.
 
 ## Environment
 
