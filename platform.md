@@ -28,6 +28,8 @@ Examples of a platform might include:
 1. [Data Format](#data-format)
    1. [order.toml (TOML)](#order.toml-(toml))
    1. [group.toml (TOML)](#group.toml-(toml))
+   1. [analyzed.toml (TOML)](#group.toml-(toml))
+   1. [stack.toml (TOML)](#group.toml-(toml))
 
 
 ## Platform API Version
@@ -199,3 +201,36 @@ group = [
 Where:
 
 - Both `id` and `version` MUST be present for each buildpack object in a group.
+
+### analyzed.toml (TOML)
+
+```toml
+[image]
+  reference = "<image reference>"
+
+[metadata]
+# layer metadata
+```
+
+Where:
+- `image.reference` MUST be EITHER a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `metadata` MUST be the TOML representation fo the layer [metadata label](#layer-metadata-label-json)
+
+### stack.toml (TOML)
+
+```toml
+[run-image]
+ image = "<image>"
+
+[run-image.mirrors] = ["<mirror>", "mirror"]
+```
+
+Where:
+- `run-image.image` MAY be a tag reference to an run image in a docker registry
+- `run-image.mirrors` MUST NOT be present IF `run-image.image` is not present
+- `run-image.mirrors` MAY contain one or more tag references to run images in docker registries
+- all present `run-image-mirrors`:
+  * MUST resolve to a digest reference identical to that which `run-image.image` resolves
+  * MUST NOT refer to the same registry as does `run-image.image` or any other entries `run-image.mirrors`
+
+
