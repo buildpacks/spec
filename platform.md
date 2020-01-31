@@ -7,27 +7,27 @@ A platform orchestrates a lifecycle to make buildpack functionality available to
 Examples of a platform might include:
 
 1. A local CLI tool that uses buildpacks to create OCI images
-2. A plugin for a continuous integration service that uses buildpacks to create OCI images
-3. A cloud application platform that uses buildpacks to build source code before deployment
+1. A plugin for a continuous integration service that uses buildpacks to create OCI images
+1. A cloud application platform that uses buildpacks to build source code before deployment
 
 ## Table of Contents
 
 1. [Platform API Version](#platform-api-version)
    1. [Compatibility Verification](#compatibility-verification)
-2. [Stacks](#stacks)
+1. [Stacks](#stacks)
    1. [Compatibility Guarantees](#compatibility-guarantees)
-   2. [Build Image](#build-image)
-   3. [Run Image](#run-image)
-3. [Buildpacks](#buildpacks)
+   1. [Build Image](#build-image)
+   1. [Run Image](#run-image)
+1. [Buildpacks](#buildpacks)
    1. [Buildpacks Directory Layout](#buildpacks-directory-layout)
-4. [Security Considerations](#security-considerations)
-5. [Additional Guidance](#additional-guidance)
+1. [Security Considerations](#security-considerations)
+1. [Additional Guidance](#additional-guidance)
    1. [Environment](#environment)
-   2. [Run Image Rebasing](#run-image-rebasing)
-   3. [Caching](#caching)
-6. [Data Format](#data-format)
+   1. [Run Image Rebasing](#run-image-rebasing)
+   1. [Caching](#caching)
+1. [Data Format](#data-format)
    1. [order.toml (TOML)](#order.toml-(toml))
-   2. [group.toml (TOML)](#group.toml-(toml))
+   1. [group.toml (TOML)](#group.toml-(toml))
 
 
 ## Platform API Version
