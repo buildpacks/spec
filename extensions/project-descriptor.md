@@ -55,7 +55,7 @@ version = "<string>"
 * `documentation-url` - (optional) a URL to the documentation for the project
 * `source-url` - (optional) a URL to the source code for the project
 
-## `[project.licenses]`
+## `[[project.licenses]]`
 
 An optional list of project licenses.
 
