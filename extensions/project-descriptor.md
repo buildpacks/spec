@@ -48,18 +48,23 @@ name = "<string>"
 version = "<string>"
 ```
 
-* `id` - the machine readable identifier of the project (ex. "com.example.myservice")
-* `name` - the human readable name of the project (ex. "My Example Service")
-* `version` - and arbitrary string representing the version of the project
+* `id` - (optional) the machine readable identifier of the project (ex. "com.example.myservice")
+* `name` - (optional) the human readable name of the project (ex. "My Example Service")
+* `version` - (optional) and arbitrary string representing the version of the project
+* `authors` - (optional) the names and/or email addresses of the project's authors
+* `documentation-url` - (optional) a URL to the documentation for the project
+* `source-url` - (optional) a URL to the source code for the project
 
 ## `[project.licenses]`
+
+An optional list of project licenses.
 
 * `type` - This may use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
 * `uri` - If this project is using a nonstandard license, then this key may be specified in lieu of or in addition to `type` to point to the license.
 
 ## `[build.include]` and `[build.exclude]`
 
-A list of files to include in the build (while excluding everything else):
+A optional list of files to include in the build (while excluding everything else):
 
 ```toml
 [build]
