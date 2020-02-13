@@ -19,18 +19,14 @@ source-url = "<url>"
 type = "<string>"
 uri = "<uri>"
 
-[build]
-include = ["<string>"]
-exclude = ["<string>"]
 [[build.buildpacks]]
 id = "<string>"
 version = "<string>"
 uri = "<string>"
+
 [[build.env]]
 name = "<string>"
 value = "<string>"
-[metadata]
-# additional arbitrary keys allowed
 ```
 
 The following sections describe each part of the schema in detail.
@@ -62,35 +58,6 @@ An optional list of project licenses.
 * `type` - This may use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
 * `uri` - If this project is using a nonstandard license, then this key may be specified in lieu of or in addition to `type` to point to the license.
 
-## `[build.include]` and `[build.exclude]`
-
-A optional list of files to include in the build (while excluding everything else):
-
-```toml
-[build]
-include = [
-    "cmd/",
-    "go.mod",
-    "go.sum",
-    "*.go"
-]
-```
-
-A list of files to exclude from the build (while including everything else)
-
-```toml
-[build]
-exclude = [
-    "spec/"
-]
-```
-
-The `.gitignore` pattern is used in both cases. The `exclude` and `include` keys are mutually exclusive, and if both are present the Lifecycle will error out. These lists apply to both buildpacks built with `pack create-package` and apps built with `pack build`.
-
-Any files that are excluded (either via `include` or `exclude`) will be excluded before the build (i.e. not only exluded from the final image).
-
-If both `exclude` and `include` are defined, the build process will error out.
-
 ## `[[build.buildpacks]]`
 
 The build table may contain an array of buildpacks. The schema for this table is:
@@ -116,15 +83,6 @@ name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
 
-## `[metadata]`
-
-This table includes a some defined keys, but additional keys are not validated. It can be used to add platform specific metadata. For example:
-
-```toml
-[metadata.heroku]
-pipeline = "foobar"
-```
-
 ## Example
 
 ```toml
@@ -139,4 +97,8 @@ version = "1.0"
 [[build.buildpacks]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
+
+[[build.env]]
+name = "JAVA_OPTS"
+value = "-Xmx1g"
 ```
