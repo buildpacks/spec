@@ -4,7 +4,7 @@ This document specifies the interface between a single lifecycle and one or more
 
 A lifecycle is a program that uses buildpacks to transform application source code into an OCI image containing the compiled application.
 
-This is accomplished in four phases:
+This is accomplished in five phases:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
 2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
