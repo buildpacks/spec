@@ -803,14 +803,16 @@ For a given layer, the buildpack MAY specify:
 
 
 ### buildpack.toml (TOML)
+This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack api>"
+api = "<buildpack API>"
 
 [buildpack]
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
+homepage = "<buildpack homepage>"
 clear-env = false
 
 [[order]]
@@ -829,7 +831,9 @@ mixins = ["<mixin name>"]
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
-The buildpack ID:
+**The buildpack ID:**
+
+*Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
@@ -837,14 +841,16 @@ The buildpack ID:
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
-The buildpack API:
+**The buildpack API:**
+
+*Key: `api = "<buildpack API>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
  - SHALL indicate compatibility with a given lifecycle according to the following rules:
     - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
     - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
 
-#### Buildpack Implementations
+#### Implementation buildpacks
 
 A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
 
