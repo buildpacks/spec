@@ -37,7 +37,7 @@ The following sections describe each part of the schema in detail.
 
 ## `[project]`
 
-The top-level `[project]` table may contain configuration about the repository, including `id` and `version`, but also metadata about how it is authored, documented, and version controlled.
+The top-level `[project]` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled.
 
 The `project.id`
 
@@ -59,8 +59,8 @@ version = "<string>"
 
 An optional list of project licenses.
 
-* `type` - This may use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
-* `uri` - If this project is using a nonstandard license, then this key may be specified in lieu of or in addition to `type` to point to the license.
+* `type` - This MAY use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
+* `uri` - If this project is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
 ## `[build.include]` and `[build.exclude]`
 
@@ -76,7 +76,7 @@ include = [
 ]
 ```
 
-A list of files to exclude from the build (while including everything else)
+A list of files to exclude from the build (while including everything else):
 
 ```toml
 [build]
@@ -87,13 +87,13 @@ exclude = [
 
 The `.gitignore` pattern is used in both cases. The `exclude` and `include` keys are mutually exclusive, and if both are present the Lifecycle will error out.
 
-Any files that are excluded (either via `include` or `exclude`) will be excluded before the build (i.e. not only exluded from the final image).
+Any files that are excluded (either via `include` or `exclude`) MUST BE excluded before the build (i.e. not only exluded from the final image).
 
-If both `exclude` and `include` are defined, the build process will error out.
+If both `exclude` and `include` are defined, the build process MUST result in an error.
 
 ## `[[build.buildpacks]]`
 
-The build table may contain an array of buildpacks. The schema for this table is:
+The build table MAY contain an array of buildpacks. The schema for this table is:
 
 ```toml
 [[build.buildpacks]]
@@ -104,7 +104,7 @@ uri = "<url or path to the buildpack (optional default=urn:buildpack:<id>)"
 
 This defines the buildpacks that a platform should use on the repo.
 
-Either an `id` or a `uri` are required, but not both. If `uri` is provided, `version` is not allowed.
+Either an `id` or a `uri` MUST be included, but MUST NOT include both. If `uri` is provided, `version` MUST NOT be allowed.
 
 ## `[[build.env]]`
 
