@@ -1,6 +1,6 @@
 # Project Descriptor
 
-A project descriptor is a file that contains configuration for apps, services, functions, and buildpacks. By default, the file is named `project.toml` and located in the root directory of a project's repository.
+A project descriptor is a file that MAY contain configuration for apps, services, functions, and buildpacks. By default, the file SHOULD be named `project.toml` and located in the root directory of a project's repository. A platform SHOULD read the file to enrich the build process.
 
 ## Schema
 
