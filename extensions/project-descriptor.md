@@ -132,6 +132,14 @@ pipeline = "foobar"
 id = "io.buildpacks.my-app"
 version = "0.1"
 
+[build]
+include = [
+    "cmd/",
+    "go.mod",
+    "go.sum",
+    "*.go"
+]
+
 [[build.buildpacks]]
 id = "io.buildpacks/java"
 version = "1.0"
@@ -139,4 +147,10 @@ version = "1.0"
 [[build.buildpacks]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
+
+[metadata]
+foo = "bar"
+
+[metadata.fizz]
+buzz = ["a", "b", "c"]
 ```
