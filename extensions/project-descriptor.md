@@ -22,15 +22,15 @@ uri = "<uri>"
 [build]
 include = ["<string>"]
 exclude = ["<string>"]
+
 [[build.buildpacks]]
 id = "<string>"
 version = "<string>"
 uri = "<string>"
+
 [[build.env]]
 name = "<string>"
 value = "<string>"
-[metadata]
-# additional arbitrary keys allowed
 ```
 
 The following sections describe each part of the schema in detail.
@@ -116,15 +116,6 @@ name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
 
-## `[metadata]`
-
-This table includes a some defined keys, but additional keys are not validated. It can be used to add platform specific metadata. For example:
-
-```toml
-[metadata.heroku]
-pipeline = "foobar"
-```
-
 ## Example
 
 ```toml
@@ -147,9 +138,6 @@ version = "1.0"
 [[build.buildpacks]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
-
-[metadata]
-foo = "bar"
 
 [metadata.fizz]
 buzz = ["a", "b", "c"]
