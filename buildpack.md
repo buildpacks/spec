@@ -850,7 +850,7 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
     - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
     - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
 
-#### Implementation buildpacks
+#### Buildpack Implementations
 
 A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
 
