@@ -2,7 +2,7 @@
 
 The Buildpack Registry supports distribution of buildpacks. It provides a centralized service that platforms can use to resolve a buildpack ID and version into a concrete buildpackage that can be downloaded and used.
 
-# Buildpack ID
+## Buildpack ID
 
 Each buildpack in the registry MUST have an ID that adheres to the following restrictions:
 
@@ -10,7 +10,7 @@ Each buildpack in the registry MUST have an ID that adheres to the following res
 * The value to the left of the `/`, called the namespace, MUST match `[a-z0-9\-\.]{1,253}`
 * The value to the right of the `/`, called the name, MUST match `[a-z0-9\-\.]{1,253}`
 
-# Backing Storage
+## Backing Storage
 
 The registry information is stored in a repository called an index. The index is a set of files and directories that contain information about available buildpacks.
 
@@ -18,7 +18,7 @@ The registry index MUST be stored in a Git repository.
 
 The index MUST work across all major Operating Systems.
 
-## Directory Structure
+### Directory Structure
 
 Folders in the index MUST be split by two nested folders. The buildpack ID will determine the name of the folders where:
 * The first folder MUST represent the first two characters
@@ -79,7 +79,7 @@ The following ids are reserved by Windows, so they aren't allowed as valid ids:
 * lpt8
 * lpt9
 
-## File Contents
+### File Contents
 
 Each file in the index MUST represent a buildpack. The file MUST contain multiple entries representing each version of the buildpack split by a newline. Each version entry:
 * MUST be in JSON format
