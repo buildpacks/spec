@@ -77,8 +77,8 @@ The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
 - The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
-- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the UID of the user specified in the `User` field.
-- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary GID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#linux-only)UID/[‡](README.md#windows-only)SID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#linux-only)GID/[‡](README.md#windows-only)SID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -115,7 +115,7 @@ The platform MUST provide the lifecycle with a reference to the run image during
 
 The platform MUST ensure that:
 
-- The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
+- The image config's `User` field is set to a user with the same user [†](README.md#linux-only)UID/[‡](README.md#windows-only)SID and primary group [†](README.md#linux-only)GID/[‡](README.md#windows-only)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
