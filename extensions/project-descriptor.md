@@ -8,7 +8,7 @@ The TOML schema of the project descriptor is the following:
 
 ```toml
 [project]
-id = "<string>" # machine readble
+id = "<string>" # machine readable
 name = "<string>" # human readable
 version = "<string>"
 authors = ["<string>"]
