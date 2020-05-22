@@ -54,31 +54,6 @@ fo
     └── example_foocal
 ```
 
-The following ids are reserved by Windows, so they aren't allowed as valid ids:
-
-* nul
-* con
-* prn
-* aux
-* com1
-* com2
-* com3
-* com4
-* com5
-* com6
-* com7
-* com8
-* com9
-* lpt1
-* lpt2
-* lpt3
-* lpt4
-* lpt5
-* lpt6
-* lpt7
-* lpt8
-* lpt9
-
 ### File Contents
 
 Each file in the index MUST represent a buildpack. The file MUST contain multiple entries representing each version of the buildpack split by a newline. Each version entry:
