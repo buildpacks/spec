@@ -56,7 +56,7 @@ fo
 
 ### File Contents
 
-Each file in the index MUST represent a buildpack. The file MUST contain multiple entries representing each version of the buildpack split by a newline. Each version entry:
+Each file in the index MUST represent a buildpack. The file MUST contain one or more entries representing each version of the buildpack, delimited by a newline. Each version entry:
 * MUST be in JSON format
 * MUST be minimized (stored on a single line)
 
