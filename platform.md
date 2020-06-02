@@ -225,3 +225,8 @@ type = "<source type>"
 [source.metadata]
 
 ```
+Where:
+- All values are optional
+- `type`, if present, SHOULD contain the type of location where the provided app source is stored (e.g `git`, `s3`)
+- `version`, if present, SHOULD contain data uniquely identifying the particular version of the provided source
+- `metadata` MAY contain additional arbitrary data about the provided source
