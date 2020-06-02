@@ -696,9 +696,13 @@ direct = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
+
+[[labels]]
+key = "<label key>"
+value = "<label valu>"
 ```
 
-The buildpack MAY specify any number of processes or slices.
+The buildpack MAY specify any number of processes, slices, or labels.
 
 For each process, the buildpack:
 
@@ -724,6 +728,15 @@ The lifecycle MUST process each slice as if all files matched in preceding slice
 The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
+
+For each label, the buildpack:
+
+- MUST specify a `key` that is not identical to other labels provided by the same buildpack.
+- MUST specify a `value` to be set in the image label.
+
+The lifecycle MUST add each label as in image label on the created image metadata.
+
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
 
 ### store.toml (TOML)
 
