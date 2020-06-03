@@ -834,6 +834,10 @@ The buildpack ID:
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
+The buildpack version:
+- MUST be in the form `<X>.<Y>.<Z>` where `X`, `Y`, and `Z` are non-negative integers and must not contain leading zeros.
+   - Each element MUST increase numerically.
+   - Buildpack authors will to define how what changes will increment `X`, `Y`, and `Z`.
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
