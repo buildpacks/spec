@@ -221,8 +221,10 @@ Where:
 type = "<source type>"
 
 [source.version]
+# arbitrary data describing version
 
 [source.metadata]
+# arbitrary data
 
 ```
 Where:
