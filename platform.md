@@ -130,6 +130,9 @@ either by executing the following phase specific lifecycle binaries
 
 or by executing
 1. `/cnb/lifecycle/creator`
+
+### Rebase
+To rebase an app image A platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
  
 ### Run
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
@@ -391,26 +394,40 @@ IF a cache is provided the lifecycle SHALL
 ### `creator`
 Usage:
 ```
-/cnb/lifecycle/create <image>
-  [-t <tag>...]
-  [-analyzed <analyzed>] \
+/cnb/lifecycle/creator <image>
   [-app <app>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
   [-daemon <use-daemon>] \
   [-gid <gid>] \
-  [-group <group>] \
-  [-image <run-image>] # Deprecated
   [-launch-cache <launch-cache> ] \
   [-launcher <launcher> ] \
   [-layers <layers>] \
   [-log-level <log-level>] \
+  [-order <order>] \
+  [-platform <platform>] \
+  [-previous-image <previous-image> ] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-run-image <run-image>] \
+  [-skip-restore <skip-restore>] \
   [-stack <stack>] \
+  [-tag <tag>...] \
   [-uid <uid> ]
 ```
+
+Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
+
+| Input             | Environment Variable| Default Value| Description
+|-------------------|---------------------|--------------|----------------------
+| `<previous-image>`| `CNB_PREVIOUS_IMAGE`| `<image>`    | Image reference to be analyzed (usually the result of the previous build)
+| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata or restore cached layers
+| `<tag>...`        | -                   | -            | Additional tag to apply to exported image
+
+If `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
+If the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
+
+Outputs produced by `creator` and identical to those produced by `exporter`.
 
 ## Buildpacks
 
@@ -514,6 +531,25 @@ paths = ["<app sub-path glob>"]
 
 Where:
 - Both `id` and `version` MUST be present for each buildpack.
+
+### project-metadata.toml (TOML)
+
+```toml
+[source]
+type = "<source type>"
+
+[source.version]
+# arbitrary data
+
+[source.metadata]
+# arbitrary data
+```
+
+Where:
+- All values are optional
+- `type`, if present, SHOULD contain the type of location where the provided app source is stored (e.g `git`, `s3`)
+- `version`, if present, SHOULD contain data uniquely identifying the particular version of the provided source
+- `metadata` MAY contain additional arbitrary data about the provided source
 
 ### stack.toml (TOML)
 
