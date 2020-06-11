@@ -1,4 +1,4 @@
-# 1. Platform Interface Specification
+# Platform Interface Specification
 
 This document specifies the interface between a lifecycle and a platform.
 
@@ -10,30 +10,30 @@ Examples of a platform might include:
 2. A plugin for a continuous integration service that uses buildpacks to create OCI images
 3. A cloud application platform that uses buildpacks to build source code before deployment
 
-## 1.1. Table of Contents
+## Table of Contents
 
-- [1. Platform Interface Specification](#1-platform-interface-specification)
-  - [1.1. Table of Contents](#11-table-of-contents)
-  - [1.2. Platform API Version](#12-platform-api-version)
-    - [1.2.1. Compatibility Verification](#121-compatibility-verification)
-  - [1.3. Stacks](#13-stacks)
-    - [1.3.1. Compatibility Guarantees](#131-compatibility-guarantees)
-    - [1.3.2. Build Image](#132-build-image)
-    - [1.3.3. Run Image](#133-run-image)
-    - [1.3.4. Mixins](#134-mixins)
-  - [1.4. Buildpacks](#14-buildpacks)
-    - [1.4.1. Buildpacks Directory Layout](#141-buildpacks-directory-layout)
-  - [1.5. Security Considerations](#15-security-considerations)
-  - [1.6. Additional Guidance](#16-additional-guidance)
-    - [1.6.1. Environment](#161-environment)
-    - [1.6.2. Run Image Rebasing](#162-run-image-rebasing)
-    - [1.6.3. Caching](#163-caching)
-  - [1.7. Data Format](#17-data-format)
-    - [1.7.1. order.toml (TOML)](#171-ordertoml-toml)
-    - [1.7.2. group.toml (TOML)](#172-grouptoml-toml)
+- [Platform Interface Specification](#platform-interface-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Platform API Version](#platform-api-version)
+    - [Compatibility Verification](#compatibility-verification)
+  - [Stacks](#stacks)
+    - [Compatibility Guarantees](#compatibility-guarantees)
+    - [Build Image](#build-image)
+    - [Run Image](#run-image)
+    - [Mixins](#mixins)
+  - [Buildpacks](#buildpacks)
+    - [Buildpacks Directory Layout](#buildpacks-directory-layout)
+  - [Security Considerations](#security-considerations)
+  - [Additional Guidance](#additional-guidance)
+    - [Environment](#environment)
+    - [Run Image Rebasing](#run-image-rebasing)
+    - [Caching](#caching)
+  - [Data Format](#data-format)
+    - [order.toml (TOML)](#ordertoml-toml)
+    - [group.toml (TOML)](#grouptoml-toml)
 
 
-## 1.2. Platform API Version
+## Platform API Version
 
 The Platform API version:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -44,13 +44,13 @@ The Platform API version:
     `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the platform and `<minor>` of the lifecycle
     is greater than or equal to `<minor>` of the platform.
 
-### 1.2.1. Compatibility Verification
+### Compatibility Verification
 
 The lifecycle SHALL verify compatibility if the environment variable `CNB_PLATFORM_API` is set. The value of this
 environment variable MUST be the version of the Platform API the platform implements. Compatibility verification SHALL
 NOT occur if this environment variable is not set. Compatibility verification SHALL occur before any other validation.
 
-## 1.3. Stacks
+## Stacks
 
 A **stack** is a contract defined by a base run OCI image and a base build OCI image that are only updated with security patches.
 Stack images can be modified with mixins in order to make additive changes to the contract.
@@ -61,7 +61,7 @@ A **launch layer** refers to a layer in the app OCI image created from a  `<laye
 
 An **app layer** refers to a layer created from the `<app>` directory as specified in the [Buildpack Interface Specification](buildpack.md).
 
-### 1.3.1. Compatibility Guarantees
+### Compatibility Guarantees
 
 Stack image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
 
@@ -72,7 +72,7 @@ Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](http
 
 During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
 
-### 1.3.2. Build Image
+### Build Image
 
 The platform MUST execute the detection and build phases of the lifecycle on the build image.
 
@@ -112,7 +112,7 @@ Where:
 - `-group` MUST specify input from a `group.toml` file path as defined in the [Data Format](#data-format) section.
 - `-plan` MUST specify input from a Build Plan as defined in the [Buildpack Interface Specification](buildpack.md).
 
-### 1.3.3. Run Image
+### Run Image
 
 The platform MUST provide the lifecycle with a reference to the run image during the export phase.
 
@@ -122,7 +122,7 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
-### 1.3.4. Mixins
+### Mixins
 
 A mixin name MUST only be defined by the author of its corresponding stack.
 A mixin name MUST always be used to specify the same set of changes.
@@ -136,30 +136,30 @@ A platform MAY support any number of mixins for a given stack in order to suppor
 Changes introduced by mixins SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
 However, mixins MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
 
-## 1.4. Buildpacks
+## Buildpacks
 
-### 1.4.1. Buildpacks Directory Layout
+### Buildpacks Directory Layout
 
 The buildpacks directory MUST contain unarchived buildpacks such that:
 
 - Each top-level directory is a buildpack ID.
 - Each second-level directory is a buildpack version.
 
-## 1.5. Security Considerations
+## Security Considerations
 
 The platform SHOULD run each phase of the lifecycle in an isolated container to prevent untrusted app and buildpack code from accessing storage credentials needed during the export and analysis phases.
 A more thorough explanation is provided in the [Buildpack Interface Specification](buildpack.md).
 
-## 1.6. Additional Guidance
+## Additional Guidance
 
-### 1.6.1. Environment
+### Environment
 
 User-provided environment variables intended for build and launch SHOULD NOT come from the same list.
 The end-user SHOULD be encouraged to define them separately.
 The platform MAY determine the initial environment of the build phase, detection phase, and launch.
 The lifecycle MUST NOT assume that all platforms provide an identical environment.
 
-### 1.6.2. Run Image Rebasing
+### Run Image Rebasing
 
 Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
 When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
@@ -169,14 +169,14 @@ The new run image MUST have an identical stack ID and MUST include the exact sam
 
 ![Launch](img/launch.svg)
 
-### 1.6.3. Caching
+### Caching
 
 Each platform SHOULD implement caching so as to appropriately optimize performance.
 Cache locality and availability MAY vary between platforms.
 
-## 1.7. Data Format
+## Data Format
 
-### 1.7.1. order.toml (TOML)
+### order.toml (TOML)
 
 ```toml
 [[order]]
@@ -191,7 +191,7 @@ Where:
 - Both `id` and `version` MUST be present for each buildpack object in a group.
 - The value of `optional` MUST default to false if not specified.
 
-### 1.7.2. group.toml (TOML)
+### group.toml (TOML)
 
 ```toml
 group = [

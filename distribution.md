@@ -1,23 +1,23 @@
-# 1. Distribution Specification
+# Distribution Specification
 
 This document specifies the artifact format, delivery mechanism, and order resolution process for buildpacks.
 
 
-## 1.1. Table of Contents
+## Table of Contents
 
-- [1. Distribution Specification](#1-distribution-specification)
-  - [1.1. Table of Contents](#11-table-of-contents)
-  - [1.2. Artifact Format](#12-artifact-format)
-    - [1.2.1. Buildpack](#121-buildpack)
-    - [1.2.2. Buildpackage](#122-buildpackage)
+- [Distribution Specification](#distribution-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Artifact Format](#artifact-format)
+    - [Buildpack](#buildpack)
+    - [Buildpackage](#buildpackage)
 
-## 1.2. Artifact Format
+## Artifact Format
 
-### 1.2.1. Buildpack
+### Buildpack
 
 A buildpack MUST contain a [`buildpack.toml`](buildpack.md#buildpacktoml-toml) file at its root directory.
 
-### 1.2.2. Buildpackage
+### Buildpackage
 
 A buildpackage MUST exist as either an OCI image on an image registry, an OCI image in a Docker daemon, or a `.cnb` file.
 
