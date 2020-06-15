@@ -470,6 +470,41 @@ The rebased app image SHALL be identical to `<image>`, with the following modifi
 * The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
   * `run-image.reference` SHALL uniquely identify `<run-image>`
   * `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
+  
+### `launcher`
+Usage:
+```
+/cnb/lifecycle/launcher [--] [args...]
+```
+
+| Input               | Environment Variable  | Default Value         | Description
+|---------------------|-----------------------|-----------------------|---------------------------------------
+| `<app>`             | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
+| `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`             | Path to layer directory
+| `<process-type>`    | `CNB_PROCESS_TYPE`    | `web`                 | `type` of process to launch
+| `<direct>`          |                       | `false`               | Execution strategy for user provided process
+| `<args>...`         |                       | -                     | User provided process
+| `<layers>/config/metadata.toml`    |-       |-| Build metadata (see [metadata.toml (TOML)](#metdata.toml-(toml))
+| `<layers>/<buildpack-id>/<layer>/` |-       |-| Launch Layers
+
+If `$1` is `--` `<direct>` is `true` and `<args>` SHALL be `${@2:}`
+If `$1` is anything other than `--`, `<direct>` is `false`, and `<args>` SHALL be `$@`
+If `<direct>`
+
+If `<args>` are NOT provided `launcher` SHALL select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml` and launch it as described in the [Buildpack Interface Specification](buildpack.md).
+If `<args>` are provided `launcher` SHALL behaves as if it selected a process with the following process from `metadata.toml`.
+```
+[[process]]
+direct = <direct>
+command = "args[0]"
+args = ["args[1]"...]
+```
+
+The lifecycle SHOULD replace the lifecycle process in memory without forking it.
+The process execution environment SHALL be identical to the lifecycle execution environment, with the following exceptions:
+* `CNB_APP_DIR` SHALL NOT be set in the process environment
+* `CNB_LAYERS_DIR` SHALL NOT be set in the process environment
+* `CNB_PROCESS_TYPE` SHALL NOT be set in the process environment
 
 ## Buildpacks
 
