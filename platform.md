@@ -295,7 +295,6 @@ Usage:
 | `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output build plan file ( see  data format in [Buildpack Interface Specification](buildpack.md))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
-#### Outputs
 | Output                                     | Description
 |--------------------------------------------|----------------------------------------------
 | [exit status]                              | Pass (0), or error (1+)
@@ -348,7 +347,7 @@ Usage:
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | info                | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    | -                   | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [project-metadata.toml (TOML)](#project-metadata.toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from <stack>| Default process type to set in the exported image
+| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from <stack>| Run image reference
 | `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [stack.toml (TOML)](#stack.toml-(toml))
 | `<uid>`             | `CNB_USER_ID`         | -                   | User that build phase will run as
 | `<layers>/config/metadata.toml` |-|-| Build metadata (see [metadata.toml (TOML)](#metdata.toml-(toml))
@@ -428,6 +427,49 @@ If `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip t
 If the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 Outputs produced by `creator` and identical to those produced by `exporter`.
+
+### `rebaser`
+Usage:
+```
+/cnb/lifecycle/rebaser <image> [<image>...]
+  [-daemon]
+  [-gid <gid>]
+  [-image <run-image>] # Deprecated
+  [-log-level <log-level>]
+  [-run-image <run-image>]
+  [-uid <uid>]
+```
+
+| Input               | Environment Variable  | Default Value         | Description
+|---------------------|-----------------------|-----------------------|---------------------------------------
+| `<use-daemon>`      | `CNB_USE_DAEMON`      | `false`               | Export image to docker daemon
+| `<gid>`             | `CNB_GROUP_ID`        | -                     | Group of user that build phase will run as
+| `<image>`           | -                     | -                     | App image to rebase
+| `<log-level>`       | `CNB_LOG_LEVEL`   `   | info                  | Log Level
+| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>`| Run image reference
+| `<uid>`             | `CNB_USER_ID`         | -                     | User that build phase will run as
+
+At least one `<image>` must be provided
+Each `<image>` MUST be a valid OCI image registry tag reference
+If `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+If `<run-image>` is not provided by the platform the value will be derived from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
+* If any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
+* If none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | Pass (0), or error (1+)
+| `/dev/stdout`      | Logs (info)
+| `/dev/stderr`      | Logs (warnings, errors)
+| `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md)
+
+The lifecycle SHALL write the same app image to each `<image>` tag
+The rebased app image SHALL be identical to `<image>`, with the following modifications:
+* Run image layers SHALL be defined as Layers in `<image>` up to and including the layer with diff ID matching the value of `run-image.top-layer` from the `io.buildpacks.lifecycle.metadata` label
+* Run image layers SHALL be replaced with the layers from the new `<run-image>`
+* The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
+  * `run-image.reference` SHALL uniquely identify `<run-image>`
+  * `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
 
 ## Buildpacks
 
