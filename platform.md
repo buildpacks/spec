@@ -20,18 +20,18 @@ Examples of a platform might include:
 1. [Lifecycle Interface](#lifecycle-interface)
    1. [Platform API Compatibility](#platform-api-compatibility)
    1. [Operations](#operations)
-     1. [Build](#build)
-     1. [Rebase](#rebase)
-     1. [Launch](#launch)
+      1. [Build](#build)
+      1. [Rebase](#rebase)
+      1. [Launch](#launch)
    1. [Usage](#usage)
-     1. [detector](#detector)
-     1. [analyzer](#analyzer)
-     1. [restorer](#restorer)
-     1. [builder](#builder)
-     1. [exporter](#exporter)
-     1. [creator](#creator)
-     1. [rebaser](#rebaser)
-     1. [launcher](#launcher)
+      1. [detector](#detector)
+      1. [analyzer](#analyzer)
+      1. [restorer](#restorer)
+      1. [builder](#builder)
+      1. [exporter](#exporter)
+      1. [creator](#creator)
+      1. [rebaser](#rebaser)
+      1. [launcher](#launcher)
 1. [Buildpacks](#buildpacks)
    1. [Buildpacks Directory Layout](#buildpacks-directory-layout)
 1. [Security Considerations](#security-considerations)
@@ -40,16 +40,16 @@ Examples of a platform might include:
    1. [Caching](#caching)
 1. [Data Format](#data-format)
    1. [Files](#files)
-     1. [analyzed.toml (TOML)](#analyzedtoml-toml)
-     1. [group.toml (TOML)](#grouptoml-toml)
-     1. [metadata.toml (TOML)](#metadatatoml-toml)
-     1. [order.toml (TOML)](#ordertoml-toml)
-     1. [project-metadata.toml (TOML)](#project-metadatatoml-toml)
-     1. [stack.toml (TOML)](#group.toml-(toml))
+      1. [analyzed.toml (TOML)](#analyzedtoml-toml)
+      1. [group.toml (TOML)](#grouptoml-toml)
+      1. [metadata.toml (TOML)](#metadatatoml-toml)
+      1. [order.toml (TOML)](#ordertoml-toml)
+      1. [project-metadata.toml (TOML)](#project-metadatatoml-toml)
+      1. [stack.toml (TOML)](#group.toml-(toml))
    1. [Labels](#labels)
-     1. [io.buildpacks.build.metadata (JSON)](#iobuildpacksbuildmetadata-json)
-     1. [io.buildpacks.lifecycle.metadata (JSON)](#iobuildpackslifecyclemetadata-json)
-     1. [io.buildpacks.project.metadata (JSON)](#iobuildpacksprojectmetadata-json)
+      1. [io.buildpacks.build.metadata (JSON)](#iobuildpacksbuildmetadata-json)
+      1. [io.buildpacks.lifecycle.metadata (JSON)](#iobuildpackslifecyclemetadata-json)
+      1. [io.buildpacks.project.metadata (JSON)](#iobuildpacksprojectmetadata-json)
 
 
 ## Platform API Version
@@ -706,7 +706,7 @@ Where:
 }
 ```
 Where:
-- `processes` MUST contain all buildpack contributed proccesses
+- `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
 - `bom` MUST contain the Bill of Materials
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
@@ -753,16 +753,18 @@ Where:
 }
 ```
 Where:
-- `app` MUST contains one entry per app slice layer where
+- `app` MUST contain one entry per app slice layer where
   - `sha` MUST contain the digest of the uncompressed layer
 - `config.sha` MUST the digest of the uncompressed layer containing launcher config
 - `launcher.sha` MUST the digest of the uncompressed layer containing the launcher binary
 - `buildpacks` MUST contain one entry per buildpack that participated in the build where
   - `key` is required and MUST contain the buildpack ID
   - `version` is required and MUST contain the buidpack Version
-  - `layers` is required and MUST contain one entry per launch layer contributed by the given buildpack where
-    - the key MUST be the name of the layer
+  - `layers` is required and MUST contain one entry per launch layer contributed by the given buildpack.
+  - For each entry in `layers`:
+    - the key  MUST be the name of the layer
     - the value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
+    - the value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
 - `run-image.topLayer` must contain the uncompressed digest of the top layer of the run-image
 - `run-image.reference` MUST uniquely identify the run image. It MAY contain one of the following
   - an image ID (the digest of the uncompressed config blob)
