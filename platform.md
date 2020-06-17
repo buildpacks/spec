@@ -19,6 +19,8 @@ Examples of a platform might include:
   - [Stacks](#stacks)
     - [Compatibility Guarantees](#compatibility-guarantees)
     - [Build Image](#build-image)
+      - [Detect](#detect)
+      - [Build](#build)
     - [Run Image](#run-image)
     - [Mixins](#mixins)
   - [Buildpacks](#buildpacks)
