@@ -2,6 +2,15 @@
 
 The Buildpack Registry supports distribution of buildpacks. It provides a centralized service that platforms can use to resolve a buildpack ID and version into a concrete buildpackage that can be downloaded and used.
 
+## Table of Contents
+
+- [Buildpack Registry](#buildpack-registry)
+  - [Table of Contents](#table-of-contents)
+  - [Buildpack ID](#buildpack-id)
+  - [Backing Storage](#backing-storage)
+    - [Directory Structure](#directory-structure)
+    - [File Contents](#file-contents)
+
 ## Buildpack ID
 
 Each buildpack in the registry MUST have an ID that adheres to the following restrictions:
