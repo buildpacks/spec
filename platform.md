@@ -12,24 +12,25 @@ Examples of a platform might include:
 
 ## Table of Contents
 
-1. [Platform API Version](#platform-api-version)
-   1. [Compatibility Verification](#compatibility-verification)
-2. [Stacks](#stacks)
-   1. [Compatibility Guarantees](#compatibility-guarantees)
-   2. [Build Image](#build-image)
-   3. [Run Image](#run-image)
-3. [Buildpacks](#buildpacks)
-   1. [Buildpacks Directory Layout](#buildpacks-directory-layout)
-4. [Security Considerations](#security-considerations)
-5. [Additional Guidance](#additional-guidance)
-   1. [Environment](#environment)
-   2. [Run Image Rebasing](#run-image-rebasing)
-   3. [Caching](#caching)
-6. [Data Format](#data-format)
-   1. [order.toml (TOML)](#order.toml-(toml))
-   2. [group.toml (TOML)](#group.toml-(toml))
-   3. [project-metadata.toml (TOML)](#project-metadata.toml-(toml))
-
+- [Platform Interface Specification](#platform-interface-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Platform API Version](#platform-api-version)
+    - [Compatibility Verification](#compatibility-verification)
+  - [Stacks](#stacks)
+    - [Compatibility Guarantees](#compatibility-guarantees)
+    - [Build Image](#build-image)
+    - [Run Image](#run-image)
+    - [Mixins](#mixins)
+  - [Buildpacks](#buildpacks)
+    - [Buildpacks Directory Layout](#buildpacks-directory-layout)
+  - [Security Considerations](#security-considerations)
+  - [Additional Guidance](#additional-guidance)
+    - [Environment](#environment)
+    - [Run Image Rebasing](#run-image-rebasing)
+    - [Caching](#caching)
+  - [Data Format](#data-format)
+    - [order.toml (TOML)](#ordertoml-toml)
+    - [group.toml (TOML)](#grouptoml-toml)
 
 ## Platform API Version
 
@@ -82,7 +83,7 @@ The platform MUST ensure that:
 - The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary GID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
- 
+
 #### Detection phase
 To initiate the detection phase, the platform MUST invoke the `/cnb/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
