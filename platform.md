@@ -19,10 +19,14 @@ Examples of a platform might include:
   - [Stacks](#stacks)
     - [Compatibility Guarantees](#compatibility-guarantees)
     - [Build Image](#build-image)
+      - [Detection phase](#detection-phase)
+      - [Build phase](#build-phase)
+      - [Export phase](#export-phase)
     - [Run Image](#run-image)
     - [Mixins](#mixins)
   - [Buildpacks](#buildpacks)
     - [Buildpacks Directory Layout](#buildpacks-directory-layout)
+  - [Exported Image](#exported-image)
   - [Security Considerations](#security-considerations)
   - [Additional Guidance](#additional-guidance)
     - [Environment](#environment)
@@ -31,6 +35,7 @@ Examples of a platform might include:
   - [Data Format](#data-format)
     - [order.toml (TOML)](#ordertoml-toml)
     - [group.toml (TOML)](#grouptoml-toml)
+    - [project-metadata.toml (TOML)](#project-metadatatoml-toml)
 
 ## Platform API Version
 
