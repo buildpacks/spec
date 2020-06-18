@@ -85,6 +85,18 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
+The platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
+- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.version` set to the release number of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.release_date` set to the release date of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+
+
 To initiate the detection phase, the platform MUST invoke the `/cnb/lifecycle/detector` executable with the user and environment defined in the build image config.
 Invoking this executable with no flags is equivalent to the following invocation including all accepted flags and their default values.
 
@@ -121,6 +133,17 @@ The platform MUST ensure that:
 - The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+
+The platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
+- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.version` set to the release number of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.release_date` set to the release date of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
 
 ### Mixins
 
@@ -163,7 +186,9 @@ The lifecycle MUST NOT assume that all platforms provide an identical environmen
 
 Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
 When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
-Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded.
+Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded. 
+
+Rebasing MUST also ensure that the latest run image `io.buildpacks.stack.*` labels are updated on the app image.
 
 The new run image MUST have an identical stack ID and MUST include the exact same set of mixins.
 
