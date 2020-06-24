@@ -586,6 +586,16 @@ When executing a process with Bash, the lifecycle SHOULD additionally replace th
 
 ### Provided by the Lifecycle
 
+#### Buildpack Specific Variables
+
+The following environment variables MUST be set per-buildpack.
+
+These variables MAY change between execution of each buildpack in a single lifecycle phase.
+
+| Env Variable        | Description                          | Detect | Build | Launch
+|---------------------|--------------------------------------|--------|-------|--------
+| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
+
 #### Layer Paths
 
 The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
@@ -612,12 +622,13 @@ In either case,
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                          | Detect | Build | Launch
-|-----------------|--------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                      | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for profile.d |        |       | [x]
-| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
+| Env Variable        | Description                          | Detect | Build | Launch
+|---------------------|--------------------------------------|--------|-------|--------
+| `CNB_STACK_ID`      | Chosen stack ID                      | [x]    | [x]   |
+| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
+| `BP_*`              | User-provided variable for buildpack | [x]    | [x]   |
+| `BPL_*`             | User-provided variable for profile.d |        |       | [x]
+| `HOME`              | Current user's home directory        | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
