@@ -658,7 +658,7 @@ If the environment variable file name ends in `.prepend`, then the value of the 
 In either case, within that environment variable value,
 - Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` precede file contents in `<layers>/<layer>/env/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` precede file contents in `<layers>/<layer>/env.launch/`, which must precede `<layers>/<layer>/env/`.**
 
 ##### Append
 
@@ -666,7 +666,7 @@ If the environment variable file name ends in `.append`, then the value of the e
 Within that environment variable value,
 - Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which must precede file contents in `<layers>/<layer>/env.launch/<process>/`.**
 
 ##### Override
 
@@ -674,7 +674,7 @@ If the environment variable file name ends in `.override`, then the value of the
 For that environment variable value,
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` override file contents in `<layers>/<layer>/env/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` override file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env/`.**
 
 ##### Default
 
@@ -682,7 +682,7 @@ If the environment variable file name ends in `.default`, then the value of the 
 For that environment variable value,
 - Earlier buildpacks' environment default variable file contents MUST override later buildpacks' environment variable file contents.
 - For default environment variable file contents originating from the same buildpack, file contents that are earlier (when sorted alphabetically ascending by associated layer name) MUST override file contents that are later.
-- Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in  `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+- **Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in  `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env.launch/<process>/`.**
 
 ## Security Considerations
 
