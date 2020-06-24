@@ -125,9 +125,9 @@ However, mixins MAY consist of any changes that follow the [Compatibility Guaran
 ## Lifecycle Interface
 ### Platform API Compatibility
 
-The platform SHOULD set `CNB_PLATFORM_API=<major>[.<minor]` is set in the lifecycle's execution environment
+The platform SHOULD set `CNB_PLATFORM_API=<major>[.<minor>]` in the lifecycle's execution environment
 
-IF `CNB_PLATFORM_API=<major>[.<minor]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
+IF `CNB_PLATFORM_API=<major>[.<minor>]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
   1. conform usage and behavior to the given version of the platform API specification
   1. fail if it does not support the requested API version
 
@@ -152,10 +152,10 @@ A platform MUST execute these phases EITHER by invoking the following phase-spec
 OR by executing `/cnb/lifecycle/creator`.
 
 #### Rebase
-Run image rebasing allows for fast stack updates for already-exported OCI images without require a rebuild. A rebase requires minimal data transfer when those images are stored on a Docker registry.
+Run image rebasing allows for fast stack updates for already-exported OCI images without requiring a rebuild. A rebase requires minimal data transfer when those images are stored on a Docker registry.
 When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
 
-To rebase an app image A platform MUST execute the `/cnb/lifecycle/rebaser` OR perform an equivalent operation.
+To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` OR perform an equivalent operation.
  
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
@@ -187,21 +187,21 @@ Usage:
 
 | Input         | Environment Variable| Default Value   | Description
 |---------------|---------------------|-----------------|----------------------
-| `<app>`         | `CNB_APP_DIR`         | /workspace      | Path to application directory
-| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | /cnb/buildpacks | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`       | `CNB_GROUP_PATH`      | ./group.toml    | Path to output group file
-| `<log-level>`   | `CNB_LOG_LEVEL`       | info            | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | ./order.toml    | Path to order definition ( see [order.toml (TOML)](#order.toml-(toml)))
-| `<plan>`        | `CNB_PLAN_PATH`       | ./plan.toml     | Path to output build plan file
-| `<platform>`    | `CNB_PLATFORM_DIR`    | /platform       | Path to platform directory
+| `<app>`         | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
+| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<group>`       | `CNB_GROUP_PATH`      | `./group.toml`    | Path to output group file
+| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`            | Log Level
+| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml` (TOML)](#order.toml-(toml)))
+| `<plan>`        | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output build plan file
+| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<group>`          | Detected buildpack group  ( see [group.toml (TOML)](#group.toml-(toml)))
-| `<plan>`           | Resolved Build Plan ( see  data format in [Buildpack Interface Specification](buildpack.md))
+| `<group>`          | Detected buildpack group  (see [`group.toml` (TOML)](#group.toml-(toml)))
+| `<plan>`           | Resolved Build Plan (see  data format in [Buildpack Interface Specification](buildpack.md))
 
 #### `analyzer`
 Usage: 
@@ -220,15 +220,15 @@ Usage:
 
 | Input          | Environment Variable  | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata ( see [analyzed.toml (TOML)](#analyzed.toml-(toml))
-| `<cache-dir>`  | `CNB_CACHE_DIR`       | -                 | Location of cache, provided as a directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     | -                 | Location of cache, provided as an image
-| `<gid>`        | `CNB_GROUP_ID`        | -                 | Group of user that build phase will run as
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition ( see [group.toml (TOML)](#group.toml-(toml)))
-| `<image>`      | -                     | -                 | Image reference to be analyzed (usually the result of the previous build)
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                   | Location of cache, provided as a directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                   | Location of cache, provided as an image
+| `<gid>`        | `CNB_GROUP_ID`        |                   | Group of user that build phase will run as
+| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
+| `<image>`      |                       |                   | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layer directory
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`           | Do not write layer metadata
-| `<uid>`        | `CNB_USER_ID`         | -                 | User that build phase will run as
+| `<uid>`        | `CNB_USER_ID`         |                   | User that build phase will run as
 | `<use-daemon>` | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 
 IF `<use-daemon>` is `false`, `<image>` MUST be a valid registry reference
@@ -240,8 +240,8 @@ The lifecycle MUST accept valid references to non-existent images without error.
 | [exit status]      | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<analyzed>`       | Analysis metadata ( see [analyzed.toml (TOML)](#analyzed.toml-(toml))
-| `<layers>/<buidpack-id>/<layer>.toml` files          | Contain analyzed layer metadata ( see  data format in [Buildpack Interface Specification](buildpack.md))
+| `<analyzed>`       | Analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
+| `<layers>/<buidpack-id>/<layer>.toml` files          | Contain analyzed layer metadata (see  data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>.sha` files           | Contain sha256 of the uncompressed layer
 
 The lifecycle MUST write analysis metadata if `<image>` is accessible.
@@ -273,14 +273,14 @@ Usage:
 
 | Input          | Environment Variable  | Default Value   | Description
 |----------------|-----------------------|-----------------|----------------------
-| `<cache-dir>`  | `CNB_CACHE_DIR`       | -               | Path to a cache directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     | -               | Reference to a cache image in an OCI image registry
-| `<gid>`        | `CNB_GROUP_ID`        | -               | Group of user that build phase will run as
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`  | Path to group definition ( see [group.toml (TOML)](#group.toml-(toml)))
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                 | Path to a cache directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                 | Reference to a cache image in an OCI image registry
+| `<gid>`        | `CNB_GROUP_ID`        |                 | Group of user that build phase will run as
+| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`  | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`       | Path to layer directory
-| `<uid>`        | `CNB_USER_ID`         | -               | User that build phase will run as
+| `<uid>`        | `CNB_USER_ID`         |                 | User that build phase will run as
 | `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files Containing the sha256 of the uncompressed layers
-| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files Containing analyzed layer metadata ( see  data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files Containing analyzed layer metadata (see  data format in [Buildpack Interface Specification](buildpack.md))
 
 | Output                             | Description
 |------------------------------------|----------------------------------------------
@@ -290,7 +290,7 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>/*` | Restored layer contents
 
 ##### Layer restoration
-For each layer metadata file found in the `<layers>` the lifecycle:
+For each layer metadata file found in the `<layers>` directory the lifecycle:
 1. MUST restore cached layer contents IF the cache contains a layer with a matching ID
 1. MUST remove layer metadata IF `cache=true` AND the cache DOES NOT contain a matching layer
 
@@ -312,9 +312,9 @@ Usage:
 |--------------|---------------------|-----------------|----------------------
 | `<app>`        | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
 | `<buildpacks>` | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group file ( see [group.toml (TOML)](#group.toml-(toml)))
+| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group file (see [`group.toml` (TOML)](#group.toml-(toml)))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layer directory
-| `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output build plan file ( see  data format in [Buildpack Interface Specification](buildpack.md))
+| `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output build plan file (see  data format in [Buildpack Interface Specification](buildpack.md))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
 | Output                                     | Description
@@ -324,7 +324,7 @@ Usage:
 | `/dev/stderr`                              | Logs (warnings, errors)
 | `<layers>/<buildpack ID>/<layer>`          | Layer contents buildpacks (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/<buildpack ID>/<layer>.toml`     | Layer metadata (see [Buildpack Interface Specfication](buildpack.md)
-| `<layers>/config/metadata.toml`            | Build metadata (see [metadata.toml (TOML)](#metdata.toml-(toml))
+| `<layers>/config/metadata.toml`            | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
 
 The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the rules of the [Buildpack Interface Specification](buildpack.md).
 The lifecycle SHALL add all invoked buildpacks to `[[buildpacks]]` in `<layers>/config/metadata.toml`.
@@ -354,24 +354,24 @@ Usage:
 
 | Input               | Environment Variable  | Default Value       | Description
 |---------------------|-----------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata ( see [analyzed.toml (TOML)](#analyzed.toml-(toml))
+| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`        | Path to application directory
-| `<cache-dir>`       | `CNB_CACHE_DIR`       | -                   | Path to a cache directory
-| `<cache-image>`     | `CNB_CACHE_IMAGE`     | -                   | Reference to a cache image in an OCI image registry
+| `<cache-dir>`       | `CNB_CACHE_DIR`       |                     | Path to a cache directory
+| `<cache-image>`     | `CNB_CACHE_IMAGE`     |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        | -                   | Group of user that build phase will run as
-| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file ( see [group.toml (TOML)](#group.toml-(toml)))
-| `<image>`           | -                     | -                   | An 
-| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`| -                   | Path to a cache directory containing launch layers
-| `<launcher>`        | -                     | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
+| `<gid>`             | `CNB_GROUP_ID`        |                     | Group of user that build phase will run as
+| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml` (TOML)](#group.toml-(toml)))
+| `<image>`           |                       |                     | An 
+| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
+| `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
-| `<log-level>`       | `CNB_LOG_LEVEL`   `   | info                | Log Level
-| `<process-type>`    | `CNB_PROCESS_TYPE`    | -                   | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [project-metadata.toml (TOML)](#project-metadata.toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from <stack>| Run image reference
-| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [stack.toml (TOML)](#stack.toml-(toml))
-| `<uid>`             | `CNB_USER_ID`         | -                   | User that build phase will run as
-| `<layers>/config/metadata.toml` |-|-| Build metadata (see [metadata.toml (TOML)](#metdata.toml-(toml))
+| `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`                | Log Level
+| `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
+| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml` (TOML)](#project-metadata.toml)
+| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<stack>` | Run image reference
+| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml` (TOML)](#stack.toml-(toml))
+| `<uid>`             | `CNB_USER_ID`         |                     | User that build phase will run as
+| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
 
 At least one `<image>` must be provided
 Each `<image>` MUST be a valid OCI image registry tag reference
@@ -382,10 +382,10 @@ If `<run-image>` is not provided by the platform the value will be derived from 
 
 | Output             | Description
 |--------------------|----------------------------------------------
-| `[exit status]`      | Success (0), or error (1+)
+| `[exit status]`     | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<image>`            | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
+| `<image>`           | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
 
 The lifecycle SHALL write the same app image to each `<image>` tag
 The app image:
@@ -441,7 +441,7 @@ Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restor
 |-------------------|---------------------|--------------|----------------------
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`| `<image>`    | Image reference to be analyzed (usually the result of the previous build)
 | `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata or restore cached layers
-| `<tag>...`        | -                   | -            | Additional tag to apply to exported image
+| `<tag>...`        |                     |              | Additional tag to apply to exported image
 
 If `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
 If the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
@@ -462,11 +462,11 @@ Usage:
 | Input               | Environment Variable  | Default Value         | Description
 |---------------------|-----------------------|-----------------------|---------------------------------------
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`               | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        | -                     | Group of user that build phase will run as
-| `<image>`           | -                     | -                     | App image to rebase
-| `<log-level>`       | `CNB_LOG_LEVEL`   `   | info                  | Log Level
-| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>`| Run image reference
-| `<uid>`             | `CNB_USER_ID`         | -                     | User that build phase will run as
+| `<gid>`             | `CNB_GROUP_ID`        |                       | Group of user that build phase will run as
+| `<image>`           |                       |                       | App image to rebase
+| `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                  | Log Level
+| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
+| `<uid>`             | `CNB_USER_ID`         |                       | User that build phase will run as
 
 At least one `<image>` must be provided
 Each `<image>` MUST be a valid OCI image registry tag reference
@@ -502,10 +502,10 @@ Usage:
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`             | Path to layer directory
 | `<process-type>`    | `CNB_PROCESS_TYPE`    | `web`                 | `type` of process to launch
 | `<direct>`          |                       | `false`               | Execution strategy for user provided process
-| `<cmd>`             |                       | -                     | User-provided command
-| `<arg>...`          |                       | -                     | Arguments to user-provided command
-| `<layers>/config/metadata.toml`    |-       |-| Build metadata (see [metadata.toml (TOML)](#metdata.toml-(toml))
-| `<layers>/<buildpack-id>/<layer>/` |-       |-| Launch Layers
+| `<cmd>`             |                       |                       | User-provided command
+| `<arg>...`          |                       |                       | Arguments to user-provided command
+| `<layers>/config/metadata.toml`    |        | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
+| `<layers>/<buildpack-id>/<layer>/` |        | | Launch Layers
 
 If `$1` is `--` `<direct>` is `true` and `<args>` SHALL be `${@2:}`
 If `$1` is anything other than `--`, `<direct>` is `false`, and `<args>` SHALL be `$@`
@@ -557,7 +557,7 @@ Cache locality and availability MAY vary between platforms.
 
 ### Files
 
-#### analyzed.toml (TOML)
+#### `analyzed.toml` (TOML)
 
 ```toml
 [image]
@@ -571,7 +571,7 @@ Where:
 - `image.reference` MUST be EITHER a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `metadata` MUST be the TOML representation of the layer [metadata label](#layer-metadata-label-json)
 
-#### group.toml (TOML)
+#### `group.toml` (TOML)
 
 ```toml
 group = [
@@ -583,7 +583,7 @@ Where:
 
 - Both `id` and `version` MUST be present for each buildpack object in a group.
 
-#### metadata.toml (TOML)
+#### `metadata.toml` (TOML)
 ```toml
 [[buildpacks]]
 id = "<buildpack ID>"
@@ -608,7 +608,7 @@ Where:
 - Where `processes` contains the complete set of slice defined by all buildpacks
 - Where `bom` contains the Bill of Materials
 
-#### order.toml (TOML)
+#### `order.toml` (TOML)
 
 ```toml
 [[order]]
@@ -623,7 +623,7 @@ Where:
 - Both `id` and `version` MUST be present for each buildpack object in a group.
 - The value of `optional` MUST default to false if not specified.
 
-#### project-metadata.toml (TOML)
+#### `project-metadata.toml` (TOML)
 
 ```toml
 [source]
@@ -642,7 +642,7 @@ Where:
 - `version`, if present, SHOULD contain data uniquely identifying the particular version of the provided source
 - `metadata` MAY contain additional arbitrary data about the provided source
 
-#### stack.toml (TOML)
+#### `stack.toml` (TOML)
 
 ```toml
 [run-image]
@@ -663,7 +663,7 @@ Where:
 
 #### `io.buildpacks.build.metadata` (JSON)
 
-```
+```json
 {
   "processes": [
     {
@@ -773,7 +773,7 @@ Where:
 
 #### `io.buildpacks.project.metadata` (JSON)
 
-```
+```json
 {
   "source": {
     "type": "<type",
@@ -787,4 +787,3 @@ Where:
 }
 ```
 This label MUST contain the JSON representation of [`project-metadata.toml`](#project-metadatatoml-toml)
-
