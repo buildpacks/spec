@@ -84,7 +84,7 @@ The following specifies the interface implemented by executables in each buildpa
 The lifecycle MUST invoke these executables as described in the Phase sections.
 
 ### Buildpack API Compatibility
-Given a buildpack declaring `<buildpack API Version>` in it's [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
+Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
 - return an error to the platform if it does not support `<buildpack API Version>`
 
