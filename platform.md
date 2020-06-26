@@ -60,9 +60,9 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-**Current Version**: 0.3
+This document specifies Platform API version `0.3`
 
-The Platform API version:
+Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
@@ -131,11 +131,11 @@ However, mixins MAY consist of any changes that follow the [Compatibility Guaran
 ## Lifecycle Interface
 ### Platform API Compatibility
 
-The platform SHOULD set `CNB_PLATFORM_API=<major>[.<minor>]` in the lifecycle's execution environment
+The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecycle's execution environment
 
-IF `CNB_PLATFORM_API=<major>[.<minor>]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
-  - Conform usage and behavior to the given version of the platform API specification
-  - Fail if it does not support the requested API version
+IF `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifecycle:
+  - MUST EITHER conform to the matching version of this specification OR
+  - Fail if it does not support `<platform API version>`
 
 ### Operations
 
@@ -169,12 +169,10 @@ To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` OR p
 
 ### Usage
 
-The following is true of all lifecycle phases:
+All lifecycle phases:
 
-- Command line inputs ALWAYS take precedence over other inputs
-- IF `CNB_PLATFORM_API=<major>[.<minor]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
-    - Conform behavior to the given version of the platform API specification
-    - Fail if it does not support the requested API version
+- MUST read `CNB_PLATFORM_API` from the execution environment and evaluate compatibility before attempting to parse other inputs (see [Platform API Compatibility](#platform-api-compatibility))
+- MUST give command line inputs precedence over other inputs
 
 #### `detector`
 The platform MUST execute `detector` in the build environment
@@ -239,8 +237,8 @@ Usage:
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`           | Do not write layer metadata
 | `<uid>`        | `CNB_USER_ID`         |                   | User that build phase will run as
 
-- IF `<use-daemon>` is `false`, `<image>` MUST be a valid registry reference
-- IF `<use-daemon>` is `true`, `<image>` MUST be a valid registry reference OR a docker image ID
+- IF `<daemon>` is `false`, `<image>` MUST be a valid registry reference
+- IF `<daemon>` is `true`, `<image>` MUST be a valid registry reference OR a docker image ID
 - The lifecycle MUST accept valid references to non-existent images without error.
 
 | Output             | Description
@@ -387,7 +385,7 @@ Usage:
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid OCI image registry tag reference
-- IF `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+- IF `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - IF `<run-image>` is not provided by the platform the value will be derived from the contents of `stack`
     - IF any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
     - IF none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
@@ -482,7 +480,7 @@ Usage:
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid OCI image registry tag reference
-- IF `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+- IF `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - IF `<run-image>` is not provided by the platform the value will be derived from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
     - IF any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
     - IF none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
