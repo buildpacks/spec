@@ -653,8 +653,7 @@ Where:
 ```toml
 [run-image]
  image = "<image>"
-
-[run-image.mirrors] = ["<mirror>", "<mirror>"]
+ mirrors = ["<mirror>", "<mirror>"]
 ```
 
 Where:
