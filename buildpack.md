@@ -625,7 +625,6 @@ The following additional environment variables MUST NOT be overridden by the lif
 | Env Variable        | Description                          | Detect | Build | Launch
 |---------------------|--------------------------------------|--------|-------|--------
 | `CNB_STACK_ID`      | Chosen stack ID                      | [x]    | [x]   |
-| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
 | `BP_*`              | User-provided variable for buildpack | [x]    | [x]   |
 | `BPL_*`             | User-provided variable for profile.d |        |       | [x]
 | `HOME`              | Current user's home directory        | [x]    | [x]   | [x]
