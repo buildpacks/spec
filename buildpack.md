@@ -21,7 +21,7 @@ This is accomplished in two phases:
 2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
 
 ## Table of Contents
-
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 1. [Buildpack Interface](#buildpack-interface)
    1. [Key](#key)
    2. [Detection](#detection)
