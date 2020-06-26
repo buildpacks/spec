@@ -134,8 +134,8 @@ However, mixins MAY consist of any changes that follow the [Compatibility Guaran
 The platform SHOULD set `CNB_PLATFORM_API=<major>[.<minor>]` in the lifecycle's execution environment
 
 IF `CNB_PLATFORM_API=<major>[.<minor>]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
-  1. conform usage and behavior to the given version of the platform API specification
-  1. fail if it does not support the requested API version
+  - Conform usage and behavior to the given version of the platform API specification
+  - Fail if it does not support the requested API version
 
 ### Operations
 
@@ -171,10 +171,10 @@ To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` OR p
 
 The following is true of all lifecycle phases:
 
-1. command line inputs ALWAYS take precedence over other inputs
-1. IF `CNB_PLATFORM_API=<major>[.<minor]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
-    1. conform behavior to the given version of the platform API specification
-    1. fail if it does not support the requested API version
+- Command line inputs ALWAYS take precedence over other inputs
+- IF `CNB_PLATFORM_API=<major>[.<minor]` is set in the lifecycle's execution environment, the lifecycle MUST do one the following before attempting to parse other inputs
+    - Conform behavior to the given version of the platform API specification
+    - Fail if it does not support the requested API version
 
 #### `detector`
 The platform MUST execute `detector` in the build environment
@@ -237,9 +237,9 @@ Usage:
 | `<uid>`        | `CNB_USER_ID`         |                   | User that build phase will run as
 | `<use-daemon>` | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 
-IF `<use-daemon>` is `false`, `<image>` MUST be a valid registry reference
-IF `<use-daemon>` is `true`, `<image>` MUST be a valid registry reference OR a docker image ID
-The lifecycle MUST accept valid references to non-existent images without error.
+- IF `<use-daemon>` is `false`, `<image>` MUST be a valid registry reference
+- IF `<use-daemon>` is `true`, `<image>` MUST be a valid registry reference OR a docker image ID
+- The lifecycle MUST accept valid references to non-existent images without error.
 
 | Output             | Description
 |--------------------|----------------------------------------------
@@ -250,20 +250,20 @@ The lifecycle MUST accept valid references to non-existent images without error.
 | `<layers>/<buidpack-id>/<layer>.toml` files          | Contain analyzed layer metadata (see  data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>.sha` files           | Contain sha256 of the uncompressed layer
 
-The lifecycle MUST write analysis metadata if `<image>` is accessible.
-If `<skip-layers>` is `false` the lifecycle MUST analyze layers created by any buildpack present in the provided `<group>`.
-If `<skip-layers>` is `true` the lifecycle MUST NOT analyze layers.
+- The lifecycle MUST write analysis metadata if `<image>` is accessible.
+- IF `<skip-layers>` is `false` the lifecycle MUST analyze layers created by any buildpack present in the provided `<group>`.
+- IF `<skip-layers>` is `true` the lifecycle MUST NOT analyze layers.
 
 ##### Layer analysis
 When analyzing a given layer the lifecycle SHALL:
-* IF `build=true`, `cache=false`:
-1. do nothing
-* ELSE IF `launch=true`:
-1. write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
-2. write the sha256 of the uncompressed layer from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
-* ELSE IF `cache=true`:
-1. write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-2. write the sha256 of the uncompressed layer from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
+- IF `build=true`, `cache=false`:
+    - Do nothing
+- ELSE IF `launch=true`:
+    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the sha256 of the uncompressed layer from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
+- ELSE IF `cache=true`:
+    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the sha256 of the uncompressed layer from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
 
 #### `restorer`
 Usage:
@@ -297,8 +297,8 @@ Usage:
 
 ##### Layer restoration
 For each layer metadata file found in the `<layers>` directory the lifecycle:
-1. MUST restore cached layer contents IF the cache contains a layer with a matching ID
-1. MUST remove layer metadata IF `cache=true` AND the cache DOES NOT contain a matching layer
+- MUST restore cached layer contents IF the cache contains a layer with a matching ID
+- MUST remove layer metadata IF `cache=true` AND the cache DOES NOT contain a matching layer
 
 #### `builder`
 The platform MUST execute `builder` in the build environment
@@ -332,9 +332,9 @@ Usage:
 | `<layers>/<buildpack ID>/<layer>.toml`     | Layer metadata (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/config/metadata.toml`            | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
 
-The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the rules of the [Buildpack Interface Specification](buildpack.md).
-The lifecycle SHALL add all invoked buildpacks to `[[buildpacks]]` in `<layers>/config/metadata.toml`.
-The lifecycle SHALL aggregate all `processes`, `slices` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the rules of the [Buildpack Interface Specification](buildpack.md).
+- The lifecycle SHALL add all invoked buildpacks to `[[buildpacks]]` in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes`, `slices` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
 
 #### `exporter`
 Usage:
@@ -379,12 +379,12 @@ Usage:
 | `<uid>`             | `CNB_USER_ID`         |                     | User that build phase will run as
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
 
-At least one `<image>` must be provided
-Each `<image>` MUST be a valid OCI image registry tag reference
-If `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-If `<run-image>` is not provided by the platform the value will be derived from the contents of `stack`
-* If any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
-* If none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+- At least one `<image>` must be provided
+- Each `<image>` MUST be a valid OCI image registry tag reference
+- IF `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+- IF `<run-image>` is not provided by the platform the value will be derived from the contents of `stack`
+    - IF any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
+    - IF none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
 
 | Output             | Description
 |--------------------|----------------------------------------------
@@ -393,28 +393,28 @@ If `<run-image>` is not provided by the platform the value will be derived from 
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`           | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
 
-The lifecycle SHALL write the same app image to each `<image>` tag
-The app image:
-* MUST be an extension of the `<run-image>`
-  * all run-image layers and config values SHALL be preserved unless they conflict with the following
-* MUST contain all buildpack provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-* MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-* MUST contain a layer that includes the `<launcher>`
-* MUST contain a layer that includes `<layers>/config/metadata.toml`
-* MUST have `ENTRYPOINT=<launcher>`
-* MUST contain the following `Env` entries
-  * `"CNB_LAYERS_DIR=<layers>"`
-  * `"CNB_APP_DIR=<app>"`
-* MUST contain the following `Env` entry, IF `<process-type>` is set
-  * `"CNB_PROCESS_TYPE=<process-type>"`
-* MUST contain the following labels
-- `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label (JSON)](#lifecycle-metadata-label-(json))
-- `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
-- `io.buildpacks.build.metadata`: see [build metadata (JSON)](#build-metadata-label-(json))
+- The lifecycle SHALL write the same app image to each `<image>` tag
+- The app image:
+    - MUST be an extension of the `<run-image>`
+      - All run-image layers and config values SHALL be preserved unless they conflict with the following
+    - MUST contain all buildpack provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - MUST contain a layer that includes the `<launcher>`
+    - MUST contain a layer that includes `<layers>/config/metadata.toml`
+    - MUST have `ENTRYPOINT=<launcher>`
+    - MUST contain the following `Env` entries
+      - `"CNB_LAYERS_DIR=<layers>"`
+      - `"CNB_APP_DIR=<app>"`
+    - MUST contain the following `Env` entry, IF `<process-type>` is set
+      - `"CNB_PROCESS_TYPE=<process-type>"`
+    - MUST contain the following labels
+        - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label (JSON)](#lifecycle-metadata-label-(json))
+        - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
+        - `io.buildpacks.build.metadata`: see [build metadata (JSON)](#build-metadata-label-(json))
 
-IF a cache is provided the lifecycle SHALL
-* write `io.buildpacks.cache.metadata` to the cache
-* ensure all `cache=true` layers are written to the cache
+IF a cache is provided the lifecycle SHALL:
+- Write `io.buildpacks.cache.metadata` to the cache
+- Ensure all `cache=true` layers are written to the cache
 
 #### `creator`
 Usage:
@@ -449,8 +449,8 @@ Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restor
 | `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata or restore cached layers
 | `<tag>...`        |                     |              | Additional tag to apply to exported image
 
-If `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
-If the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
+- IF `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
+- IF the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 Outputs produced by `creator` and identical to those produced by `exporter`.
 
@@ -474,12 +474,12 @@ Usage:
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
 | `<uid>`             | `CNB_USER_ID`         |                       | User that build phase will run as
 
-At least one `<image>` must be provided
-Each `<image>` MUST be a valid OCI image registry tag reference
-If `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-If `<run-image>` is not provided by the platform the value will be derived from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
-* If any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
-* If none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+- At least one `<image>` must be provided
+- Each `<image>` MUST be a valid OCI image registry tag reference
+- IF `<use-daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+- IF `<run-image>` is not provided by the platform the value will be derived from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
+    - IF any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
+    - IF none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
 
 | Output             | Description
 |--------------------|----------------------------------------------
@@ -488,13 +488,13 @@ If `<run-image>` is not provided by the platform the value will be derived from 
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md)
 
-The lifecycle SHALL write the same app image to each `<image>` tag
-The rebased app image SHALL be identical to `<image>`, with the following modifications:
-* Run image layers SHALL be defined as Layers in `<image>` up to and including the layer with diff ID matching the value of `run-image.top-layer` from the `io.buildpacks.lifecycle.metadata` label
-* Run image layers SHALL be replaced with the layers from the new `<run-image>`
-* The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
-  * `run-image.reference` SHALL uniquely identify `<run-image>`
-  * `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
+- The lifecycle SHALL write the same app image to each `<image>` tag
+- The rebased app image SHALL be identical to `<image>`, with the following modifications:
+    - Run image layers SHALL be defined as Layers in `<image>` up to and including the layer with diff ID matching the value of `run-image.top-layer` from the `io.buildpacks.lifecycle.metadata` label
+    - Run image layers SHALL be replaced with the layers from the new `<run-image>`
+    - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
+      - `run-image.reference` SHALL uniquely identify `<run-image>`
+      - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
 
 #### `launcher`
 Usage:
@@ -513,12 +513,11 @@ Usage:
 | `<layers>/config/metadata.toml`    |        | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
 | `<layers>/<buildpack-id>/<layer>/` |        | | Launch Layers
 
-If `$1` is `--` `<direct>` is `true` and `<args>` SHALL be `${@2:}`
-If `$1` is anything other than `--`, `<direct>` is `false`, and `<args>` SHALL be `$@`
-If `<direct>`
-
-If `<args>` are NOT provided `launcher` SHALL select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml` and launch it as described in the [Buildpack Interface Specification](buildpack.md).
-If `<args>` are provided `launcher` SHALL behaves as if it selected a process with the following process from `metadata.toml`.
+- IF `$1` is `--` `<direct>` is `true` and `<args>` SHALL be `${@2:}`
+- IF `$1` is anything other than `--`, `<direct>` is `false`, and `<args>` SHALL be `$@`
+- IF `<direct>`
+- IF `<args>` are NOT provided `launcher` SHALL select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml` and launch it as described in the [Buildpack Interface Specification](buildpack.md).
+- IF `<args>` are provided `launcher` SHALL behaves as if it selected a process with the following process from `metadata.toml`.
 ```
 [[process]]
 direct = <direct>
@@ -526,11 +525,11 @@ command = "<cmd>"
 args = ["<arg>"...]
 ```
 
-The lifecycle SHOULD replace the lifecycle process in memory without forking it.
-The process execution environment SHALL be identical to the lifecycle execution environment, with the following exceptions:
-* `CNB_APP_DIR` SHALL NOT be set in the process environment
-* `CNB_LAYERS_DIR` SHALL NOT be set in the process environment
-* `CNB_PROCESS_TYPE` SHALL NOT be set in the process environment
+- The lifecycle SHOULD replace the lifecycle process in memory without forking it.
+- The process execution environment SHALL be identical to the lifecycle execution environment, with the following exceptions:
+    - `CNB_APP_DIR` SHALL NOT be set in the process environment
+    - `CNB_LAYERS_DIR` SHALL NOT be set in the process environment
+    - `CNB_PROCESS_TYPE` SHALL NOT be set in the process environment
 
 ## Buildpacks
 
@@ -555,7 +554,7 @@ The lifecycle MUST NOT assume that all platforms provide an identical environmen
 
 ### Caching
 
-If caching is enabled the platform is responsible for providing the lifecycle with access to the correct cache.
+IF caching is enabled the platform is responsible for providing the lifecycle with access to the correct cache.
 Whenever possible, the platform SHOULD provide the same cache to each rebuild of a given app image.
 Cache locality and availability MAY vary between platforms.
 
@@ -660,8 +659,8 @@ Where:
 - `run-image.image` MAY be a reference to a run image in a docker registry
 - `run-image.mirrors` MUST NOT be present IF `run-image.image` is not present
 - `run-image.mirrors` MAY contain one or more tag references to run images in docker registries
-- all `run-image.mirrors`:
-  * SHOULD reference an image with ID identical to that of `run-image.image`
+- All `run-image.mirrors`:
+  - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
 
 ### Labels
@@ -767,13 +766,13 @@ Where:
   - `version` is required and MUST contain the buidpack Version
   - `layers` is required and MUST contain one entry per launch layer contributed by the given buildpack.
   - For each entry in `layers`:
-    - the key  MUST be the name of the layer
-    - the value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
-    - the value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
+    - The key  MUST be the name of the layer
+    - The value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
+    - The value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
 - `run-image.topLayer` must contain the uncompressed digest of the top layer of the run-image
 - `run-image.reference` MUST uniquely identify the run image. It MAY contain one of the following
-  - an image ID (the digest of the uncompressed config blob)
-  - a digest reference to a manifest stored in an OCI image registry
+  - An image ID (the digest of the uncompressed config blob)
+  - A digest reference to a manifest stored in an OCI image registry
 - `stack` MUST contain the json representation of `stack.toml`
 
 #### `io.buildpacks.project.metadata` (JSON)
