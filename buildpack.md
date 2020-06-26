@@ -622,12 +622,12 @@ In either case,
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable        | Description                          | Detect | Build | Launch
-|---------------------|--------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`      | Chosen stack ID                      | [x]    | [x]   |
-| `BP_*`              | User-provided variable for buildpack | [x]    | [x]   |
-| `BPL_*`             | User-provided variable for profile.d |        |       | [x]
-| `HOME`              | Current user's home directory        | [x]    | [x]   | [x]
+| Env Variable    | Description                          | Detect | Build | Launch
+|-----------------|--------------------------------------|--------|-------|--------
+| `CNB_STACK_ID`  | Chosen stack ID                      | [x]    | [x]   |
+| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
+| `BPL_*`         | User-provided variable for profile.d |        |       | [x]
+| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
@@ -734,9 +734,13 @@ direct = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
+
+[[labels]]
+key = "<label key>"
+value = "<label valu>"
 ```
 
-The buildpack MAY specify any number of processes or slices.
+The buildpack MAY specify any number of processes, slices, or labels.
 
 For each process, the buildpack:
 
@@ -762,6 +766,15 @@ The lifecycle MUST process each slice as if all files matched in preceding slice
 The lifecycle MUST accept slices that do not contain any files or directory. However, the lifecycle MAY warn about such slices.
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
+
+For each label, the buildpack:
+
+- MUST specify a `key` that is not identical to other labels provided by the same buildpack.
+- MUST specify a `value` to be set in the image label.
+
+The lifecycle MUST add each label as in image label on the created image metadata.
+
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
 
 ### store.toml (TOML)
 
@@ -841,14 +854,16 @@ For a given layer, the buildpack MAY specify:
 
 
 ### buildpack.toml (TOML)
+This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack api>"
+api = "<buildpack API>"
 
 [buildpack]
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
+homepage = "<buildpack homepage>"
 clear-env = false
 
 [[order]]
@@ -867,15 +882,23 @@ mixins = ["<mixin name>"]
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
-The buildpack ID:
+**The buildpack ID:**
+
+*Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
+The buildpack version:
+- MUST be in the form `<X>.<Y>.<Z>` where `X`, `Y`, and `Z` are non-negative integers and must not contain leading zeros.
+   - Each element MUST increase numerically.
+   - Buildpack authors will define what changes will increment `X`, `Y`, and `Z`.
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
-The buildpack API:
+**The buildpack API:**
+
+*Key: `api = "<buildpack API>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
  - SHALL indicate compatibility with a given lifecycle according to the following rules:
