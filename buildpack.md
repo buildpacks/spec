@@ -588,7 +588,7 @@ When executing a process with Bash, the lifecycle SHOULD additionally replace th
 
 #### Buildpack Specific Variables
 
-The following environment variables MUST be set per-buildpack.
+The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
 
 These variables MAY change between execution of each buildpack in a single lifecycle phase.
 
