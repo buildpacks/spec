@@ -220,6 +220,7 @@ Usage:
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
+  [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
   [-uid <uid>] \
 ```
@@ -229,13 +230,14 @@ Usage:
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                   | Location of cache, provided as a directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                   | Location of cache, provided as an image
+| `<daemon>`     | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 | `<gid>`        | `CNB_GROUP_ID`        |                   | Group of user that build phase will run as
 | `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
 | `<image>`      |                       |                   | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layer directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`           | Do not write layer metadata
 | `<uid>`        | `CNB_USER_ID`         |                   | User that build phase will run as
-| `<use-daemon>` | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 
 - IF `<use-daemon>` is `false`, `<image>` MUST be a valid registry reference
 - IF `<use-daemon>` is `true`, `<image>` MUST be a valid registry reference OR a docker image ID
@@ -274,6 +276,7 @@ Usage:
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
+  [-log-level <log-level>] \
   [-uid <uid>]
 ```
 
@@ -284,6 +287,7 @@ Usage:
 | `<gid>`        | `CNB_GROUP_ID`        |                 | Group of user that build phase will run as
 | `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`  | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`       | Path to layer directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`          | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                 | User that build phase will run as
 | `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files Containing the sha256 of the uncompressed layers
 | `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files Containing analyzed layer metadata (see  data format in [Buildpack Interface Specification](buildpack.md))
@@ -310,16 +314,18 @@ Usage:
   [-buildpacks <buildpacks>] \
   [-group <group>] \
   [-layers <layers>] \
+  [-log-level <log-level>] \
   [-plan <plan>] \
   [-platform <platform>]
 ```
 
-| Input        | Env                 | Default Value   | Description
-|--------------|---------------------|-----------------|----------------------
+| Input          | Env                   | Default Value     | Description
+|----------------|-----------------------|-------------------|----------------------
 | `<app>`        | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
 | `<buildpacks>` | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
 | `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group file (see [`group.toml` (TOML)](#group.toml-(toml)))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layer directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
 | `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output build plan file (see  data format in [Buildpack Interface Specification](buildpack.md))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
@@ -371,10 +377,10 @@ Usage:
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
 | `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
-| `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`                | Log Level
+| `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml` (TOML)](#project-metadata.toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<stack>` | Run image reference
+| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<stack>`    | Run image reference
 | `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml` (TOML)](#stack.toml-(toml))
 | `<uid>`             | `CNB_USER_ID`         |                     | User that build phase will run as
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
@@ -388,10 +394,10 @@ Usage:
 
 | Output             | Description
 |--------------------|----------------------------------------------
-| `[exit status]`     | Success (0), or error (1+)
+| `[exit status]`    | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<image>`           | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
+| `<image>`          | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
@@ -465,14 +471,14 @@ Usage:
   [-uid <uid>]
 ```
 
-| Input               | Environment Variable  | Default Value         | Description
-|---------------------|-----------------------|-----------------------|---------------------------------------
-| `<daemon>`          | `CNB_USE_DAEMON`      | `false`               | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        |                       | Group of user that build phase will run as
-| `<image>`           |                       |                       | App image to rebase
-| `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                  | Log Level
+| Input               | Environment Variable  | Default Value          | Description
+|---------------------|-----------------------|------------------------|---------------------------------------
+| `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
+| `<gid>`             | `CNB_GROUP_ID`        |                        | Group of user that build phase will run as
+| `<image>`           |                       |                        | App image to rebase
+| `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
-| `<uid>`             | `CNB_USER_ID`         |                       | User that build phase will run as
+| `<uid>`             | `CNB_USER_ID`         |                        | User that build phase will run as
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid OCI image registry tag reference
@@ -510,8 +516,8 @@ Usage:
 | `<direct>`          |                       | `false`               | Execution strategy for user provided process
 | `<cmd>`             |                       |                       | User-provided command
 | `<arg>...`          |                       |                       | Arguments to user-provided command
-| `<layers>/config/metadata.toml`    |        | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
-| `<layers>/<buildpack-id>/<layer>/` |        | | Launch Layers
+| `<layers>/config/metadata.toml`    |        |                       | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
+| `<layers>/<buildpack-id>/<layer>/` |        |                       | Launch Layers
 
 - IF `$1` is `--` `<direct>` is `true` and `<args>` SHALL be `${@2:}`
 - IF `$1` is anything other than `--`, `<direct>` is `false`, and `<args>` SHALL be `$@`
