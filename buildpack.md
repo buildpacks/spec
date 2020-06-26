@@ -590,7 +590,7 @@ When executing a process with Bash, the lifecycle SHOULD additionally replace th
 
 The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
 
-These variables MAY change between execution of each buildpack in a single lifecycle phase.
+These variables MAY differ between buildpacks.
 
 | Env Variable        | Description                          | Detect | Build | Launch
 |---------------------|--------------------------------------|--------|-------|--------
