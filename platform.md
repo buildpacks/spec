@@ -41,6 +41,7 @@ Examples of a platform might include:
       - [`rebaser`](#rebaser)
       - [`launcher`](#launcher)
     - [Run Image Resolution](#run-image-resolution)
+    - [Registry Authentication](#registry-authentication)
   - [Buildpacks](#buildpacks)
     - [Buildpacks Directory Layout](#buildpacks-directory-layout)
   - [Security Considerations](#security-considerations)
@@ -574,6 +575,18 @@ args = ["<arg>"...]
 Given stack metadata containing `run-image.image` and a set of `run-image.mirrors`. The `<run-image>` for a given `<image>` shall be resolved as follows:
 - IF any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
 - IF none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+
+### Registry Authentication
+
+The platform MAY set `CNB_REGISTRY_AUTH`  in the lifecycle execution environment, where value of `CNB_REGISTRY_AUTH`, MUST be valid JSON object and MAY contain any number of `<regsitry>` to `<auth-header>` mappings.
+IF `CNB_REGISTRY_AUTH` is set AND `<registry>` matches the registry of an image reference, the lifecycle SHOULD set the value of the `Authorization` HTTP header to `<auth-header>` when attempting to read or write the image located at the given reference.
+
+IF `CNB_REGISTRY_AUTH` is unset AND a docker [config.json](https://docs.docker.com/engine/reference/commandline/cli/#configjson-properties) file is present, the lifecycle SHOULD use the contents of this file to authenticate with any matching registry.
+The lifecycle SHOULD adhere to established docker conventions when checking for the existence of or interpreting the contents of a `config.json` file.
+
+The lifecycle MAY provide other mechanisms by which a platform can supply registry credentials.
+
+The lifecycle MUST attempt to authenticate anonymously if no matching credentials are found.
 
 ## Buildpacks
 
