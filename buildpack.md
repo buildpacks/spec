@@ -586,6 +586,16 @@ When executing a process with Bash, the lifecycle SHOULD additionally replace th
 
 ### Provided by the Lifecycle
 
+#### Buildpack Specific Variables
+
+The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
+
+These variables MAY differ between buildpacks.
+
+| Env Variable        | Description                          | Detect | Build | Launch
+|---------------------|--------------------------------------|--------|-------|--------
+| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
+
 #### Layer Paths
 
 The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
