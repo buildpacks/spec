@@ -409,7 +409,7 @@ Usage:
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                     | Primary GID of the stack `User`
 | `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#group.toml-(toml)))
-| `<image>`           |                       |                     | An 
+| `<image>`           |                       |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
 | `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
