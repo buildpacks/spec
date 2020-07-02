@@ -47,6 +47,10 @@ Examples of a platform might include:
   - [Security Considerations](#security-considerations)
   - [Additional Guidance](#additional-guidance)
     - [Environment](#environment)
+      - [Buildpack Environment](#buildpack-environment)
+        - [Stack-Provided Variables](#stack-provided-variables)
+        - [User-Provided Variables](#user-provided-variables)
+      - [Launch Environment](#launch-environment)
     - [Caching](#caching)
   - [Data Format](#data-format)
     - [Files](#files)
@@ -607,9 +611,40 @@ A more thorough explanation is provided in the [Buildpack Interface Specificatio
 ## Additional Guidance
 
 ### Environment
+#### Buildpack Environment
+##### Stack-Provided Variables
+The following variables SHOULD be set in the lifecycle execution environment and SHALL be directly inherited by the buildpack without modification:
+| Env Variable    | Description
+|-----------------|--------------------------------------
+| `CNB_STACK_ID`  | Chosen stack ID
+| `HOME`          | Current user's home directory
+    
+The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
-The platform MAY determine the initial environment of the build phase, detection phase, and launch.
-The lifecycle MUST NOT assume that all platforms provide an identical environment.
+| Env Variable      | Layer Path   | Contents
+|-------------------|--------------|------------------
+| `PATH`            | `/bin`       | binaries
+| `LD_LIBRARY_PATH` | `/lib`       | shared libraries
+| `LIBRARY_PATH`    | `/lib`       | static libraries
+| `CPATH`           | `/include`   | header files
+| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files
+
+The platform SHOULD NOT assume any other stack-provided environment variables are inherited by the buildpack.
+
+##### User-Provided Variables
+User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
+Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
+
+User-provided environment variables MAY be modified by prior buildpacks before they are provided to a given buildpack.
+
+The platform SHOULD NOT set user-provided environment variables directly in the lifecycle execution environment.
+
+#### Launch Environment
+User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
+
+The process SHALL inherit both stack-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
+* `CNB_APP_DIR`, `CNB_LAYERS_DIR` and `CNB_PROCESS_TYPE` SHALL NOT be set in the process execution environment.
+* The lifecycle SHALL apply buildpack-provided modifications to the environment as outlined in the [Buildpack Interface Specification](buildpack.md).
 
 ### Caching
 
