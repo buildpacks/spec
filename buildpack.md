@@ -435,7 +435,7 @@ The lifecycle MUST NOT allow any entries with names matching those in `<plan>` a
 The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
 
 When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution.
+If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -816,21 +816,6 @@ version = "<dependency version>"
 [[entries]]
 name = "<dependency name>"
 version = "<dependency version>"
-
-[entries.metadata]
-# buildpack-specific data
-```
-
-### Bill-of-Materials (TOML)
-
-```toml
-[[entries]]
-name = "<dependency name>"
-version = "<dependency version>"
-
-[[entries.buildpacks]]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 
 [entries.metadata]
 # buildpack-specific data
