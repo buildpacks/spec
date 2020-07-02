@@ -209,7 +209,7 @@ All lifecycle phases:
 - MUST give command line inputs precedence over other inputs
 
 #### `detector`
-The platform MUST execute `detector` in the build environment
+The platform MUST execute `detector` in the **build environment**
 
 Usage: 
 ```
@@ -341,7 +341,7 @@ For each layer metadata file found in the `<layers>` directory, the lifecycle:
 - MUST remove layer metadata IF `cache=true` AND the cache DOES NOT contain a layer with matching DiffID
 
 #### `builder`
-The platform MUST execute `builder` in the build environment
+The platform MUST execute `builder` in the **build environment**
 
 Usage: 
 ```
@@ -458,6 +458,8 @@ IF a cache is provided the lifecycle:
 - SHALL record the DiffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
+The platform MUST execute `creator` in the **build environment**
+
 Usage:
 ```
 /cnb/lifecycle/creator <image>
