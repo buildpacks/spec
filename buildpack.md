@@ -863,7 +863,7 @@ For a given layer, the buildpack MAY specify:
 This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack API Version>"
+api = "<buildpack API version>"
 
 [buildpack]
 id = "<buildpack ID>"
@@ -904,7 +904,7 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 
 **The buildpack API:**
 
-*Key: `api = "<buildpack API Version>"`*
+*Key: `api = "<buildpack API version>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
  - SHOULD indicate the lowest compatible `<minor>` IF buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
