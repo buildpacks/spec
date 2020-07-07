@@ -524,47 +524,23 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- An optional process type specified by `CNB_PROCESS_TYPE`, and
 - Bash version 3 or greater, if needed,
 
 First, the lifecycle MUST locate a start command and choose an execution strategy.
 
-To locate a start command,
-
-1. **IF** `CMD` in the container configuration is not empty,
-    **THEN** the value of `CMD` is chosen as the start command.
-
-2. **IF** `CMD` in the container configuration is empty,
-   1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
-         **THEN** launch fails.
-
-   2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-      1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** launch fails.
+To locate a start command, the lifecycle MUST follow the process outlined in the [Platform Interface Specification](platform.md).
 
 To choose an execution strategy,
 
-1. **IF** the value of `CMD` is chosen as the start command,
-   1. **IF** the first parameter of `CMD` is not `--`,
-      **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
-
-   2. **IF** the first parameter of `CMD` is `--` and the length of `CMD` is greater than one,
-      **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
-
-
-2. **IF** a buildpack-provided process type is chosen as the start command,
+1. **IF** a buildpack-provided process type is chosen as the start command,
    1. **IF** the process type does not have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash with values of `args` provided as arguments.
 
    2. **IF** the process type does have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
+
+2. **IF** a user-defined process type is chosen as the start command,
+   **THEN** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
 
 Given the start command and execution strategy,
 
@@ -791,7 +767,6 @@ name = "<dependency name>"
 
 [[requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [requires.metadata]
 # buildpack-specific data
@@ -803,7 +778,6 @@ name = "<dependency name>"
 
 [[or.requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [or.requires.metadata]
 # buildpack-specific data
@@ -815,7 +789,6 @@ version = "<dependency version>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [entries.metadata]
 # buildpack-specific data
