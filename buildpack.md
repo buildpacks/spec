@@ -791,7 +791,6 @@ name = "<dependency name>"
 
 [[requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [requires.metadata]
 # buildpack-specific data
@@ -803,7 +802,6 @@ name = "<dependency name>"
 
 [[or.requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [or.requires.metadata]
 # buildpack-specific data
@@ -815,7 +813,6 @@ version = "<dependency version>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [entries.metadata]
 # buildpack-specific data
@@ -826,7 +823,6 @@ version = "<dependency version>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [[entries.buildpacks]]
 id = "<buildpack ID>"
