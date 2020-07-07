@@ -4,7 +4,7 @@ This document specifies the interface between a single lifecycle and one or more
 
 A lifecycle is a program that uses buildpacks to transform application source code into an OCI image containing the compiled application.
 
-This is accomplished in five phases:
+This is accomplished in four phases:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
 2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
@@ -14,7 +14,7 @@ This is accomplished in five phases:
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
 ## Table of Contents
-<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+
 1. [Buildpack Interface](#buildpack-interface)
    1. [Key](#key)
    2. [Detection](#detection)
