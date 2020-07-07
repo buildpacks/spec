@@ -46,6 +46,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Process](#process-4)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
+      - [Buildpack Specific Variables](#buildpack-specific-variables)
       - [Layer Paths](#layer-paths)
     - [Provided by the Platform](#provided-by-the-platform)
     - [Provided by the Buildpacks](#provided-by-the-buildpacks)
@@ -63,7 +64,6 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [store.toml (TOML)](#storetoml-toml)
     - [Build Plan (TOML)](#build-plan-toml)
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
-    - [Bill-of-Materials (TOML)](#bill-of-materials-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
       - [Buildpack Implementations](#buildpack-implementations)
@@ -435,7 +435,7 @@ The lifecycle MUST NOT allow any entries with names matching those in `<plan>` a
 The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
 
 When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution.
+If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -789,20 +789,6 @@ name = "<dependency name>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-
-[entries.metadata]
-# buildpack-specific data
-```
-
-### Bill-of-Materials (TOML)
-
-```toml
-[[entries]]
-name = "<dependency name>"
-
-[[entries.buildpacks]]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 
 [entries.metadata]
 # buildpack-specific data
