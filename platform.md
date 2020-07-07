@@ -785,7 +785,7 @@ Where:
 
 #### `io.buildpacks.build.metadata` (JSON)
 
-```json
+```javascript
 {
   "processes": [
     {
@@ -808,7 +808,7 @@ Where:
       "name": "<bom-entry-name>",
       "version": "<bom-entry-version>",
       "metadata": {
-        # arbitrary buildpack provided metadata
+        // arbitrary buildpack provided metadata
       },
       "buildpack": {
         "id": "<buildpack ID>",
@@ -837,7 +837,7 @@ Where:
 
 #### `io.buildpacks.lifecycle.metadata` (JSON)
 
-```json
+```javascript
 {
   "app": [
     {"sha": "<slice-layer-diffID>"}
@@ -895,15 +895,15 @@ Where:
 
 #### `io.buildpacks.project.metadata` (JSON)
 
-```json
+```javascript
 {
   "source": {
     "type": "<type",
     "version": {
-     # arbitrary version data
+     // arbitrary version data
     },
     "metadata": {
-    # arbitrary data
+    // arbitrary data
     }
   }
 }
