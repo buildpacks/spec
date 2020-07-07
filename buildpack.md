@@ -17,7 +17,9 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
 
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
+  - [Buildpack API Version](#buildpack-api-version)
   - [Buildpack Interface](#buildpack-interface)
+    - [Buildpack API Compatibility](#buildpack-api-compatibility)
     - [Key](#key)
     - [Detection](#detection)
     - [Build](#build)
@@ -69,10 +71,24 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Buildpack Implementations](#buildpack-implementations)
       - [Order Buildpacks](#order-buildpacks)
 
+## Buildpack API Version
+This document specifies Buildpack API version `0.3`
+
+Buildpack API versions:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
+
 ## Buildpack Interface
 
 The following specifies the interface implemented by executables in each buildpack.
 The lifecycle MUST invoke these executables as described in the Phase sections.
+
+### Buildpack API Compatibility
+Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
+- MUST either conform to the matching version of this specification when interfacing with the buildpack or
+- return an error to the platform if it does not support `<buildpack API Version>`
+
+The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
 ### Key
 
@@ -815,7 +831,7 @@ For a given layer, the buildpack MAY specify:
 This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack API>"
+api = "<buildpack API version>"
 
 [buildpack]
 id = "<buildpack ID>"
@@ -856,12 +872,10 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 
 **The buildpack API:**
 
-*Key: `api = "<buildpack API>"`*
+*Key: `api = "<buildpack API version>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
- - SHALL indicate compatibility with a given lifecycle according to the following rules:
-    - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
-    - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
+ - SHOULD indicate the lowest compatible `<minor>` IF buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
 
 #### Buildpack Implementations
 
