@@ -69,7 +69,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.3`
+This document specifies Platform API version `0.3`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -166,7 +166,7 @@ The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecyc
 
 IF `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifecycle:
   - MUST EITHER conform to the matching version of this specification OR
-  - Fail if it does not support `<platform API version>`
+  - MUST fail if it does not support `<platform API version>`
 
 ### Operations
 
@@ -192,12 +192,12 @@ OR by executing `/cnb/lifecycle/creator`.
 > The meaning of any particular instance of the word **build** must be assessed in context
 
 #### Rebase
-When a new stack version with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing `RootFS` with the layers from the new run image.
+When an updated run image with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
 When layers are rebased, any app image metadata referenceing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
-Rebasing allows for fast stack updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry.
+Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` OR perform an equivalent operation.
  
@@ -703,9 +703,9 @@ paths = ["<app sub-path glob>"]
 
 Where:
 - Both `id` and `version` MUST be present for each buildpack.
-- Where `processes` contains the complete set of processes contributed by all buildpacks
-- Where `processes` contains the complete set of slice defined by all buildpacks
-- Where `bom` contains the Bill of Materials
+- `processes` contains the complete set of processes contributed by all buildpacks
+- `processes` contains the complete set of slice defined by all buildpacks
+- `bom` contains the Bill of Materials
 
 #### `order.toml` (TOML)
 
