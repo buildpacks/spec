@@ -131,24 +131,26 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
-| Output                         | Description
-|--------------------------------|-----------------------------------------------
-| [exit status]                  | Success (0) or failure (1+)
-| `/dev/stdout`                  | Logs (info)
-| `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
-| `<layers>/launch.toml`         | App metadata (see [launch.toml](#launchtoml-toml))
-| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#storetoml-toml))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
-| `<layers>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
-| `<layers>/<layer>/pkgconfig/`  | Search path for pkg-config for subsequent buildpacks
-| `<layers>/<layer>/env/`        | Env vars for launch and/or subsequent buildpacks
-| `<layers>/<layer>/env.launch/` | Env vars for launch (after `env`, before `profile.d`)
-| `<layers>/<layer>/env.build/`  | Env vars for subsequent buildpacks (after `env`)
-| `<layers>/<layer>/*`           | Other content for launch and/or subsequent buildpacks
+| Output                                   | Description
+|------------------------------------------|--------------------------------------
+| [exit status]                            | Success (0) or failure (1+)
+| `/dev/stdout`                            | Logs (info)
+| `/dev/stderr`                            | Logs (warnings, errors)
+| `<plan>`                                 | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
+| `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
+| `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
+| `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
+| `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
+| `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
+| `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
+| `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for the launched process
+| `<layers>/<layer>/include/`              | C/C++ headers for subsequent buildpacks
+| `<layers>/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks
+| `<layers>/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks
+| `<layers>/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)
+| `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
+| `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
+| `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
 
 ### Layer Types
 
@@ -567,7 +569,11 @@ Given the start command and execution strategy,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
-   2. source `<app>/.profile` if it is present.
+   2. source each file in each `<layers>/<layer>/profile.d/<process>` directory,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   3. source `<app>/.profile` if it is present.
 
 3. The lifecycle MUST invoke the start command with the decided execution strategy.
 
@@ -660,7 +666,7 @@ If the environment variable file name ends in `.prepend`, then the value of the 
 In either case, within that environment variable value,
 - Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` precede file contents in `<layers>/<layer>/env/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` precede file contents in `<layers>/<layer>/env.launch/` or `<layers>/<layer>/env.build/`, which must precede `<layers>/<layer>/env/`.**
 
 ##### Append
 
@@ -668,7 +674,7 @@ If the environment variable file name ends in `.append`, then the value of the e
 Within that environment variable value,
 - Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which must precede file contents in `<layers>/<layer>/env.launch/<process>/`.**
 
 ##### Override
 
@@ -676,7 +682,7 @@ If the environment variable file name ends in `.override`, then the value of the
 For that environment variable value,
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` override file contents in `<layers>/<layer>/env/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` override file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env/`.**
 
 ##### Default
 
@@ -684,7 +690,7 @@ If the environment variable file name ends in `.default`, then the value of the 
 For that environment variable value,
 - Earlier buildpacks' environment default variable file contents MUST override later buildpacks' environment variable file contents.
 - For default environment variable file contents originating from the same buildpack, file contents that are earlier (when sorted alphabetically ascending by associated layer name) MUST override file contents that are later.
-- Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in  `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+- **Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env.launch/<process>/`.**
 
 ## Security Considerations
 
