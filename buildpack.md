@@ -17,7 +17,9 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
 
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
+  - [Buildpack API Version](#buildpack-api-version)
   - [Buildpack Interface](#buildpack-interface)
+    - [Buildpack API Compatibility](#buildpack-api-compatibility)
     - [Key](#key)
     - [Detection](#detection)
     - [Build](#build)
@@ -46,6 +48,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Process](#process-4)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
+      - [Buildpack Specific Variables](#buildpack-specific-variables)
       - [Layer Paths](#layer-paths)
     - [Provided by the Platform](#provided-by-the-platform)
     - [Provided by the Buildpacks](#provided-by-the-buildpacks)
@@ -63,16 +66,29 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [store.toml (TOML)](#storetoml-toml)
     - [Build Plan (TOML)](#build-plan-toml)
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
-    - [Bill-of-Materials (TOML)](#bill-of-materials-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
       - [Buildpack Implementations](#buildpack-implementations)
       - [Order Buildpacks](#order-buildpacks)
 
+## Buildpack API Version
+This document specifies Buildpack API version `0.3`
+
+Buildpack API versions:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
+
 ## Buildpack Interface
 
 The following specifies the interface implemented by executables in each buildpack.
 The lifecycle MUST invoke these executables as described in the Phase sections.
+
+### Buildpack API Compatibility
+Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
+- MUST either conform to the matching version of this specification when interfacing with the buildpack or
+- return an error to the platform if it does not support `<buildpack API Version>`
+
+The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
 ### Key
 
@@ -437,7 +453,7 @@ The lifecycle MUST NOT allow any entries with names matching those in `<plan>` a
 The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
 
 When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution.
+If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -526,47 +542,23 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- An optional process type specified by `CNB_PROCESS_TYPE`, and
 - Bash version 3 or greater, if needed,
 
 First, the lifecycle MUST locate a start command and choose an execution strategy.
 
-To locate a start command,
-
-1. **IF** `CMD` in the container configuration is not empty,
-    **THEN** the value of `CMD` is chosen as the start command.
-
-2. **IF** `CMD` in the container configuration is empty,
-   1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
-         **THEN** launch fails.
-
-   2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-      1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** launch fails.
+To locate a start command, the lifecycle MUST follow the process outlined in the [Platform Interface Specification](platform.md).
 
 To choose an execution strategy,
 
-1. **IF** the value of `CMD` is chosen as the start command,
-   1. **IF** the first parameter of `CMD` is not `--`,
-      **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
-
-   2. **IF** the first parameter of `CMD` is `--` and the length of `CMD` is greater than one,
-      **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
-
-
-2. **IF** a buildpack-provided process type is chosen as the start command,
+1. **IF** a buildpack-provided process type is chosen as the start command,
    1. **IF** the process type does not have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash with values of `args` provided as arguments.
 
    2. **IF** the process type does have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
+
+2. **IF** a user-defined process type is chosen as the start command,
+   **THEN** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
 
 Given the start command and execution strategy,
 
@@ -797,7 +789,6 @@ name = "<dependency name>"
 
 [[requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [requires.metadata]
 # buildpack-specific data
@@ -809,7 +800,6 @@ name = "<dependency name>"
 
 [[or.requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [or.requires.metadata]
 # buildpack-specific data
@@ -821,22 +811,6 @@ version = "<dependency version>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-version = "<dependency version>"
-
-[entries.metadata]
-# buildpack-specific data
-```
-
-### Bill-of-Materials (TOML)
-
-```toml
-[[entries]]
-name = "<dependency name>"
-version = "<dependency version>"
-
-[[entries.buildpacks]]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 
 [entries.metadata]
 # buildpack-specific data
@@ -863,7 +837,7 @@ For a given layer, the buildpack MAY specify:
 This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack API>"
+api = "<buildpack API version>"
 
 [buildpack]
 id = "<buildpack ID>"
@@ -904,12 +878,10 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 
 **The buildpack API:**
 
-*Key: `api = "<buildpack API>"`*
+*Key: `api = "<buildpack API version>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
- - SHALL indicate compatibility with a given lifecycle according to the following rules:
-    - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
-    - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
+ - SHOULD indicate the lowest compatible `<minor>` IF buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
 
 #### Buildpack Implementations
 
