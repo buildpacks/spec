@@ -253,7 +253,7 @@ The lifecycle:
 #### `analyzer`
 Usage: 
 ```
-/cnb/lifecycle/analyzer <image> \
+/cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
@@ -264,6 +264,7 @@ Usage:
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
   [-uid <uid>] \
+  <image>
 ```
 
 | Input          | Environment Variable  | Default Value     | Description
@@ -386,7 +387,7 @@ Usage:
 #### `exporter`
 Usage:
 ```
-/cnb/lifecycle/exporter <image> [<image>...]
+/cnb/lifecycle/exporter \
   [-analyzed <analyzed>] \
   [-app <app>] \
   [-cache-dir <cache-dir>] \
@@ -402,7 +403,8 @@ Usage:
   [-project-metadata <project-metadata> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-stack <stack>] \
-  [-uid <uid> ]
+  [-uid <uid> ] \
+  <image> [<image>...]
 ```
 
 | Input               | Environment Variable  | Default Value       | Description
@@ -467,7 +469,7 @@ The platform MUST execute `creator` in the **build environment**
 
 Usage:
 ```
-/cnb/lifecycle/creator <image>
+/cnb/lifecycle/creator \
   [-app <app>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
@@ -486,7 +488,8 @@ Usage:
   [-skip-restore <skip-restore>] \
   [-stack <stack>] \
   [-tag <tag>...] \
-  [-uid <uid> ]
+  [-uid <uid> ] \
+   <image>
 ```
 
 Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
@@ -505,12 +508,13 @@ Outputs produced by `creator` are identical to those produced by `exporter`.
 #### `rebaser`
 Usage:
 ```
-/cnb/lifecycle/rebaser <image> [<image>...] \
+/cnb/lifecycle/rebaser \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-log-level <log-level>] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
-  [-uid <uid>]
+  [-uid <uid>] \
+  <image> [<image>...]
 ```
 
 | Input               | Environment Variable  | Default Value          | Description
