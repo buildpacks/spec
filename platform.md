@@ -53,6 +53,7 @@ Examples of a platform might include:
         - [User-Provided Variables](#user-provided-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
+    - [Build Reproducibility](#build-reproducibility)
   - [Data Format](#data-format)
     - [Files](#files)
       - [`analyzed.toml` (TOML)](#analyzedtoml-toml)
@@ -459,6 +460,9 @@ Usage:
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label (JSON)](#lifecycle-metadata-label-(json))
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
         - `io.buildpacks.build.metadata`: see [build metadata (JSON)](#build-metadata-label-(json))
+- To ensure [build reproducibility](#build-reproducibility), the lifecycle:
+    - SHOULD set the modification time of all files in newly created layers to a constant value
+    - SHOULD set the `created` time in image config to a constant value
 
 If a cache is provided the lifecycle:
 - SHALL write the contents of all cached layers to the cache
@@ -545,6 +549,8 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
+- To ensure [build reproducibility](#build-reproducibility), the lifecycle:
+    - Set the `created` time in image config to a constant
 
 #### `launcher`
 Usage:
@@ -659,6 +665,25 @@ The process SHALL inherit both stack-provided and user-provided variables from t
 If caching is enabled the platform is responsible for providing the lifecycle with access to the correct cache.
 Whenever possible, the platform SHOULD provide the same cache to each rebuild of a given app image.
 Cache locality and availability MAY vary between platforms.
+
+### Build Reproducibility
+When given identical inputs all build and rebase operations:
+   - SHOULD produce app images with identical imageIDs
+   - **If** exporting directly to a registry
+       - SHOULD produce app images with identical manifest digests
+   - MAY output other non-reproducible artifacts
+
+To achieve reproducibility the lifecycle SHOULD set the following to a constant, rather than an accurate value:
+- file modification times in generated layers
+- image creation time
+
+Because compressions algorithms and manifest whitespace affect the image digest, an app image exported to the docker daemon and subsequently pushed to a registry MAY have a different digest than an app image exported directly to a registry by the lifecycle, even when all other inputs are held constant.
+
+If buildpacks do not generate layer contents or layer metadata reproducibly, builds MAY NOT be reproducibile even when identical source code and buildpacks are provided to the lifecycle.
+
+All app image labels SHOULD contain only reproducible values.
+
+For more information on build reproducibility see [https://reproducible-builds.org/](https://reproducible-builds.org/)
 
 ## Data Format
 
