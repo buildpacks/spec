@@ -2,6 +2,20 @@
 
 A project descriptor is a file that MAY contain configuration for apps, services, functions, and buildpacks. By default, the file SHOULD be named `project.toml` and located in the root directory of a project's repository. A platform SHOULD read the file to enrich the build process.
 
+## Table of Contents
+
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+- [Project Descriptor](#project-descriptor)
+  - [Table of Contents](#table-of-contents)
+  - [Schema](#schema)
+  - [`[project]`](#project)
+  - [`[[project.licenses]]`](#projectlicenses)
+  - [`[build.include]` and `[build.exclude]`](#buildinclude-and-buildexclude)
+  - [`[[build.buildpacks]]`](#buildbuildpacks)
+  - [`[[build.env]]`](#buildenv)
+  - [`[metadata]`](#metadata)
+  - [Example](#example)
+
 ## Schema
 
 The TOML schema of the project descriptor is the following:
