@@ -4,6 +4,7 @@ A project descriptor is a file that MAY contain configuration for apps, services
 
 ## Table of Contents
 
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Project Descriptor](#project-descriptor)
   - [Table of Contents](#table-of-contents)
   - [Schema](#schema)
