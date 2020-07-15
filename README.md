@@ -43,9 +43,11 @@ When the specification refers to a path in the context of an OCI layer tar (e.g.
 - [Platform Interface Specification](platform.md)
 - [Distribution Specification](distribution.md)
 - [Bindings Extension Specification](extensions/bindings.md)
+- [Buildpack Registry Extension Specification](extensions/buildpack-registry.md)
 
 ## API Versions
 
 These documents currently specify:
-#### Buildpack API: 0.2
-#### Platform API: 0.2
+
+- Buildpack API: `0.3`
+- Platform API: `0.3`
