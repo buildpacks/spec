@@ -5,6 +5,7 @@ This document specifies the artifact format, delivery mechanism, and order resol
 
 ## Table of Contents
 
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Distribution Specification](#distribution-specification)
   - [Table of Contents](#table-of-contents)
   - [Artifact Format](#artifact-format)

@@ -11,6 +11,7 @@ Examples of a platform might include:
 1. A cloud application platform that uses buildpacks to build source code before deployment
 
 ## Table of Contents
+
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Platform Interface Specification](#platform-interface-specification)
   - [Table of Contents](#table-of-contents)
@@ -67,7 +68,6 @@ Examples of a platform might include:
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
       - [`io.buildpacks.lifecycle.metadata` (JSON)](#iobuildpackslifecyclemetadata-json)
       - [`io.buildpacks.project.metadata` (JSON)](#iobuildpacksprojectmetadata-json)
-
 
 ## Platform API Version
 
