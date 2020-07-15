@@ -70,6 +70,9 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
       - [Buildpack Implementations](#buildpack-implementations)
       - [Order Buildpacks](#order-buildpacks)
+  - [Deprecations](#deprecations)
+    - [`0.3`](#deprecations-buildpack-api-0.3)
+      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requires-version-key)
 
 ## Buildpack API Version
 This document specifies Buildpack API version `0.3`
@@ -898,3 +901,50 @@ The stack ID:
 A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+
+## Deprecations
+This section describes all the features that are deprecated.
+
+### `0.3`
+
+#### Build Plan (TOML) `requires.version` Key
+
+The `requires.version` and `or.requires.version` keys are deprecated.
+
+```toml
+[[requires]]
+name = "<dependency name>"
+version = "<dependency version>"
+
+[[or.requires]]
+name = "<dependency name>"
+version = "dependency version>"
+```
+
+To upgrade, buildpack authors SHOULD set `requires.version` as `requires.metadata.version` and `or.requires.version` as `or.requires.metadata.version`.
+
+```toml
+[[requires]]
+name = "<dependency name>"
+
+[requires.metadata]
+version = "<dependency version>"
+
+[[or.requires]]
+name = "<dependency name>"
+
+[or.requires.metadata]
+version = "<dependency version>"
+```
+
+If `requires.version` and `requires.metadata.version` or `or.requires.version` and `or.requires.metadata.version` are both defined then lifecycle will fail.
+
+For backwards compatibility, the lifecycle will produce a Buildpack Plan (TOML) that puts `version` in `entries.metadata` as long as `version` does not exist in `requires.metadata`.
+
+```toml
+[[entries]]
+name = "<dependency name>"
+
+[entries.metadata]
+version = "<dependency version>"
+```
