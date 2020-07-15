@@ -25,6 +25,7 @@ An implementation is compliant if it satisfies all the MUST, MUST NOT, REQUIRED,
 - [Platform Interface Specification](platform.md)
 - [Distribution Specification](distribution.md)
 - [Bindings Extension Specification](extensions/bindings.md)
+- [Buildpack Registry Extension Specification](extensions/buildpack-registry.md)
 
 ## API Versions
 

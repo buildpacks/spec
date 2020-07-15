@@ -4,12 +4,14 @@ The Buildpack Registry supports distribution of buildpacks. It provides a centra
 
 ## Table of Contents
 
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Buildpack Registry](#buildpack-registry)
   - [Table of Contents](#table-of-contents)
   - [Buildpack ID](#buildpack-id)
   - [Backing Storage](#backing-storage)
     - [Directory Structure](#directory-structure)
     - [File Contents](#file-contents)
+  - [Example](#example)
 
 ## Buildpack ID
 
