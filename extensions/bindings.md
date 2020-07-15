@@ -1,5 +1,20 @@
 # Bindings
-Bindings are exposed inside of a container during all three phases of the lifecycle; detect, build, and launch.  The contents of bindings MUST NOT be part of the image created after the detect and build phases.
+
+Bindings are exposed inside of a container during the detect, build, and launch phases of the lifecycle.  The contents of bindings MUST NOT be part of the image created after the detect and build phases.
+
+## Table of Contents
+
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+- [Bindings](#bindings)
+  - [Table of Contents](#table-of-contents)
+  - [Detect and Build Phases](#detect-and-build-phases)
+    - [Metadata](#metadata)
+    - [Secret](#secret)
+    - [Example Directory Structure](#example-directory-structure)
+  - [Launch Phase](#launch-phase)
+    - [Metadata](#metadata-1)
+    - [Secret](#secret-1)
+    - [Example Directory Structure](#example-directory-structure-1)
 
 ## Detect and Build Phases
 During the detect and build phases, the lifecycle MUST provide any bindings as files in `<platform>/bindings/<binding-name>` with directory names matching the name of the binding.  Binding names MUST match `[a-z0-9\-\.]{1,253}`.
