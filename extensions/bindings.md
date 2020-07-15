@@ -1,4 +1,5 @@
 # Bindings
+
 Bindings are exposed inside of a container during the detect, build, and launch phases of the lifecycle.  The contents of bindings MUST NOT be part of the image created after the detect and build phases.
 
 ## Table of Contents
