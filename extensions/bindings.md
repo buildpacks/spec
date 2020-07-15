@@ -4,6 +4,7 @@ Bindings are exposed inside of a container during the detect, build, and launch 
 
 ## Table of Contents
 
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Bindings](#bindings)
   - [Table of Contents](#table-of-contents)
   - [Detect and Build Phases](#detect-and-build-phases)

@@ -29,5 +29,6 @@ An implementation is compliant if it satisfies all the MUST, MUST NOT, REQUIRED,
 ## API Versions
 
 These documents currently specify:
-#### Buildpack API: 0.2
-#### Platform API: 0.2
+
+- Buildpack API: `0.2`
+- Platform API: `0.3`

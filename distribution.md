@@ -5,11 +5,12 @@ This document specifies the artifact format, delivery mechanism, and order resol
 
 ## Table of Contents
 
-1. [Order Resolution](#order-resolution)
-2. [Artifact Format](#artifact-format)
-   1. [Buildpack](#buildpack)
-   2. [Buildpackage](#buildpackage)
-
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+- [Distribution Specification](#distribution-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Artifact Format](#artifact-format)
+    - [Buildpack](#buildpack)
+    - [Buildpackage](#buildpackage)
 
 ## Artifact Format
 
