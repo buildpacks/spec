@@ -80,7 +80,7 @@ Platform API versions:
 ## Terminology
 
 #### CNB Terminology
-A **buildpack** refers to software compliant with the [Buildpack Interface Specification](https://github.com/buildpacks/spec/blob/main/buildpack.md).
+A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
 
 A **stack** is a contract defined by a **build image** and a **run image** that are only updated with security patches.
 
@@ -134,8 +134,8 @@ The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
 - The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
-- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#linux-only)UID/[‡](README.md#windows-only)SID of the user specified in the `User` field.
-- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#linux-only)GID/[‡](README.md#windows-only)SID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -143,7 +143,7 @@ The platform MUST ensure that:
 
 The platform MUST ensure that:
 
-- The image config's `User` field is set to a user with the same user [†](README.md#linux-only)UID/[‡](README.md#windows-only)SID and primary group [†](README.md#linux-only)GID/[‡](README.md#windows-only)SID as in the build image.
+- The image config's `User` field is set to a user with the same user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID and primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -235,7 +235,7 @@ Usage:
 | `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
 | `<group>`       | `CNB_GROUP_PATH`      | `./group.toml`    | Path to output group definition
 | `<log-level>`   | `CNB_LOG_LEVEL`       | `info`            | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml` (TOML)](#ordertoml-(toml)))
+| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
@@ -277,12 +277,12 @@ Usage:
 
 | Input          | Environment Variable  | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml` (TOML)](#analyzedtoml-toml)
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                   | Location of cache, provided as a directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                   | Location of cache, provided as an image
 | `<daemon>`     | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 | `<gid>`        | `CNB_GROUP_ID`        |                   | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
+| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<image>`      |                       |                   | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
@@ -300,7 +300,7 @@ Usage:
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification]((buildpack.md)))
+| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
 - **If** `<skip-layers>` is `false` the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
@@ -340,7 +340,7 @@ Usage:
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`          | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                 | UID of the stack `User`
 | `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification]((buildpack.md)))
+| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
 | Output                             | Description
 |------------------------------------|----------------------------------------------
@@ -423,24 +423,24 @@ Usage:
 
 | Input               | Environment Variable  | Default Value       | Description
 |---------------------|-----------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
+| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`        | Path to application directory
 | `<cache-dir>`       | `CNB_CACHE_DIR`       |                     | Path to a cache directory
 | `<cache-image>`     | `CNB_CACHE_IMAGE`     |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                     | Primary GID of the stack `User`
-| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#group.toml-(toml)))
+| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#grouptoml-toml))
 | `<image>`           |                       |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
 | `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml` (TOML)](#project-metadata.toml)
+| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml` (TOML)](#stack.toml-(toml))
+| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
-| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
+| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -470,9 +470,9 @@ Usage:
     - MUST contain the following `Env` entry, if `<process-type>` is set
       - `"CNB_PROCESS_TYPE=<process-type>"`
     - MUST contain the following labels
-        - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label (JSON)](#lifecycle-metadata-label-(json))
+        - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
-        - `io.buildpacks.build.metadata`: see [build metadata (JSON)](#build-metadata-label-(json))
+        - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the modification time of all files in newly created layers to a constant value
     - SHOULD set the `created` time in image config to a constant value
@@ -579,7 +579,7 @@ Usage:
 | `<direct>`          |                       |                | Process execution strategy
 | `<cmd>`             |                       |                | Command to execute
 | `<args>`            |                       |                | Arguments to command
-| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metdata.toml-(toml))
+| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 | `<layers>/<buildpack-id>/<layer>/` |        |                | Launch Layers
 
 A command (`<cmd>`), arguments to that command (`<args>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
@@ -714,7 +714,7 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 Where:
 - `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
-- `metadata` MUST be the TOML representation of the layer [metadata label](#layer-metadata-label-json)
+- `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
 
