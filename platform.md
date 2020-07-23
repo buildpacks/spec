@@ -63,6 +63,7 @@ Examples of a platform might include:
       - [`order.toml` (TOML)](#ordertoml-toml)
       - [`plan.toml` (TOML)](#plantoml-toml)
       - [`project-metadata.toml` (TOML)](#project-metadatatoml-toml)
+      - [`report.toml` (TOML)](#reporttoml-toml)
       - [`stack.toml` (TOML)](#stacktoml-toml)
     - [Labels](#labels)
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
@@ -415,6 +416,7 @@ Usage:
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
+  [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-stack <stack>] \
   [-uid <uid> ] \
@@ -437,6 +439,7 @@ Usage:
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to export report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
 | `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
@@ -477,9 +480,11 @@ Usage:
     - SHOULD set the modification time of all files in newly created layers to a constant value
     - SHOULD set the `created` time in image config to a constant value
 
-If a cache is provided the lifecycle:
-- SHALL write the contents of all cached layers to the cache
-- SHALL record the diffID and layer content metadata of all cached layers in the cache
+- The lifecycle SHALL write an [export report](#reporttoml-toml) to `<report>` describing the exported app image
+
+- *If* a cache is provided the lifecycle:
+   - SHALL write the contents of all cached layers to the cache
+   - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
 The platform MUST execute `creator` in the **build environment**
@@ -501,6 +506,7 @@ Usage:
   [-previous-image <previous-image> ] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
+  [-report <report> ] \
   [-run-image <run-image>] \
   [-skip-restore <skip-restore>] \
   [-stack <stack>] \
@@ -806,6 +812,20 @@ Where:
 - `type`, if present, SHOULD contain the type of location where the provided app source is stored (e.g `git`, `s3`)
 - `version`, if present, SHOULD contain data uniquely identifying the particular version of the provided source
 - `metadata` MAY contain additional arbitrary data about the provided source
+
+#### `report.toml` (TOML)
+```toml
+[image]
+tags = ["<tag reference>"]
+digest = "<image digest>"
+imageID = "<imageID>"
+```
+Where:
+- `tags` MUST contain all tag references to the exported app image
+- **If** the app image was exported to an OCI registry
+  - `digest` MUST contain the image digest
+- **If** the app image was exported to a docker daemon
+  - `imageID` MUST contain the imageID
 
 #### `stack.toml` (TOML)
 
