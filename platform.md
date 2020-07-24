@@ -669,7 +669,7 @@ Usage:
 #### `launcher`
 Usage:
 ```
-/cnb/lifecycle/<process-type> [<arg>...]
+/cnb/process/<process-type> [<arg>...]
 # OR
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
@@ -689,11 +689,11 @@ A command (`<cmd>`), arguments to that command (`<args>`), and an execution stra
 
 The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
-- **If** the final path element in `$0`, matches the `type` of a buildpack provided process
+- **If** the final path element in `$0`, matches the type of any buildpack provided process
     - `<proces-type>` SHALL be the final path element in `$0`
     - the lifecycle:
-        - MUST select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml`
-        - MUST append any user-provided `<args>` to process `<args>`
+        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
