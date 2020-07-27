@@ -32,16 +32,31 @@ Examples of a platform might include:
       - [Launch](#launch)
     - [Usage](#usage)
       - [`detector`](#detector)
+        - [Inputs](#inputs)
+        - [Outputs](#outputs)
       - [`analyzer`](#analyzer)
+        - [Inputs](#inputs-1)
+        - [Outputs](#outputs-1)
         - [Layer analysis](#layer-analysis)
       - [`restorer`](#restorer)
+        - [Inputs](#inputs-2)
+        - [Outputs](#outputs-2)
         - [Layer restoration](#layer-restoration)
       - [`builder`](#builder)
+        - [Inputs](#inputs-3)
+        - [Outputs](#outputs-3)
       - [`exporter`](#exporter)
+        - [Inputs](#inputs-4)
+        - [Outputs](#outputs-4)
       - [`creator`](#creator)
+        - [Inputs](#inputs-5)
+        - [Outputs](#outputs-5)
       - [`rebaser`](#rebaser)
+        - [Inputs](#inputs-6)
+        - [Outputs](#outputs-6)
       - [`launcher`](#launcher)
-        - [Process Selection](#process-selection)
+        - [Inputs](#inputs-7)
+        - [Outputs](#outputs-7)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
   - [Buildpacks](#buildpacks)
@@ -229,6 +244,7 @@ Usage:
   [-platform <platform>]
 ```
 
+##### Inputs
 | Input         | Environment Variable| Default Value   | Description
 |---------------|---------------------|-----------------|----------------------
 | `<app>`         | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
@@ -239,6 +255,7 @@ Usage:
 | `<plan>`        | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | (see Exit Code table below for values)
@@ -250,9 +267,12 @@ Usage:
 | Exit Code | Result|
 |-----------|-------|
 | `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
 | `100`     | All buildpacks groups have failed to detect w/o error
 | `101`     | All buildpack groups have failed to detect and at least one buildpack has errored
-| `1-99`, `102+`| Lifecycle error
+| `102-199` | Detection-specific lifecycle errors
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
@@ -275,6 +295,7 @@ Usage:
   <image>
 ```
 
+##### Inputs
 | Input          | Environment Variable  | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
@@ -293,18 +314,27 @@ Usage:
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
 - The lifecycle MUST accept valid references to non-existent images without error.
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
-| [exit status]      | Success (0), or error (1+)
+| [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
 | `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `200-299` | Analysis-specific lifecycle errors
+
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
-- **If** `<skip-layers>` is `false` the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
+- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 
 ##### Layer analysis
 When analyzing a given layer the lifecycle SHALL:
@@ -330,6 +360,7 @@ Usage:
   [-uid <uid>]
 ```
 
+##### Inputs
 | Input          | Environment Variable  | Default Value   | Description
 |----------------|-----------------------|-----------------|----------------------
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                 | Path to a cache directory
@@ -342,12 +373,21 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files containing the diffID of each analyzed layer
 | `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
+##### Outputs
 | Output                             | Description
 |------------------------------------|----------------------------------------------
-| [exit status]                      | Success (0), or error (1+)
+| [exit status]                      | (see Exit Code table below for values)
 | `/dev/stdout`                      | Logs (info)
 | `/dev/stderr`                      | Logs (warnings, errors)
 | `<layers>/<buidpack-id>/<layer>/*` | Restored layer contents
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `300-399` | Restoration-specific lifecycle errors
 
 ##### Layer restoration
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
@@ -369,6 +409,7 @@ Usage:
   [-platform <platform>]
 ```
 
+##### Inputs
 | Input          | Env                   | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
 | `<app>`        | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
@@ -379,6 +420,7 @@ Usage:
 | `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
+##### Outputs
 | Output                                     | Description
 |--------------------------------------------|----------------------------------------------
 | [exit status]                              | (see Exit Code table below for values)
@@ -391,8 +433,11 @@ Usage:
 | Exit Code | Result|
 |-----------|-------|
 | `0`       | Success
-| `101`     | Buildpack error
-| `1-100`, `102+`| Lifecycle error
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `401`     | Buildpack build error
+| `400`, `402-499`|  Build-specific lifecycle errors
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
@@ -421,6 +466,7 @@ Usage:
   <image> [<image>...]
 ```
 
+##### Inputs
 | Input               | Environment Variable  | Default Value       | Description
 |---------------------|-----------------------|---------------------|---------------------------------------
 | `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
@@ -447,12 +493,21 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of `stack`
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
 | `[exit status]`    | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`          | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `500-599`|  Export-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
@@ -509,6 +564,7 @@ Usage:
    <image>
 ```
 
+##### Inputs
 Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
 
 | Input             | Environment Variable| Default Value| Description
@@ -520,7 +576,21 @@ Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restor
 - **If** `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
-Outputs produced by `creator` are identical to those produced by `exporter`.
+##### Outputs
+Outputs produced by `creator` are identical to those produced by `exporter`, with the following additional expanded set of error codes.
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `100-199`|  Detection-specific lifecycle errors
+| `200-299`|  Analysis-specific lifecycle errors
+| `300-399`|  Restoration-specific lifecycle errors
+| `400-499`|  Build-specific lifecycle errors
+| `500-599`|  Export-specific lifecycle errors
+
 
 #### `rebaser`
 Usage:
@@ -534,6 +604,7 @@ Usage:
   <image> [<image>...]
 ```
 
+##### Inputs
 | Input               | Environment Variable  | Default Value          | Description
 |---------------------|-----------------------|------------------------|---------------------------------------
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
@@ -548,12 +619,21 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`.
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
-| [exit status]      | Pass (0), or error (1+)
+| [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `600-699`|  Rebase-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The rebased app image SHALL be identical to `<image>`, with the following modifications:
@@ -570,7 +650,7 @@ Usage:
 ```
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
-
+##### Inputs
 | Input               | Environment Variable  | Default Value  | Description
 |---------------------|-----------------------|----------------|---------------------------------------
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`   | Path to application directory
@@ -585,23 +665,34 @@ Usage:
 A command (`<cmd>`), arguments to that command (`<args>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST [select](#process-selection) a single process
-- MUST construct the process execution environment as described in [Launch Environment](#launch-environment)
-- MUST execute the process as specified in the [Buildpack Interface Specfication](buildpack.md)
-- SHOULD replace the lifecycle with the process in memory without forking it.
-
-##### Process Selection
-- **If** zero positional arguments are provided to the **launcher**, the lifecycle
-    - MUST select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml`
-- **Else**
-    - **If** `$1` is `--`
-        - `<direct>` SHALL be `true`
-        - `<cmd>` SHALL be `$2`
-        - `<args>` SHALL be `${@3:}`
+- MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
+    - **If** zero positional arguments are provided to the **launcher**, the lifecycle
+        - MUST read `<cmd>`, `<args>` and `<direct>` from the the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml`
     - **Else**
-        - `<direct>` SHALL be `false`
-        - `<cmd>` SHALL be `$1`
-        - `<args>` SHALL be `${@2:}`
+        - **If** `$1` is `--`
+            - `<direct>` SHALL be `true`
+            - `<cmd>` SHALL be `$2`
+            - `<args>` SHALL be `${@3:}`
+        - **Else**
+            - `<direct>` SHALL be `false`
+            - `<cmd>` SHALL be `$1`
+            - `<args>` SHALL be `${@2:}`
+
+##### Outputs
+If the launcher errors before executing the process it will have one of the following error codes:
+
+| Exit Code | Result|
+|-----------|-------|
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `700-799`|  Launch-specific lifecycle errors
+
+Otherwise, the exit code shall be the exit code of the launched process.
+
+The launcher:
+- MUST construct the process execution environment as described in [Launch Environment](#launch-environment)
+- MUST execute the selected process as specified in the [Buildpack Interface Specfication](buildpack.md)
+- SHOULD replace the lifecycle with the process in memory without forking it.
 
 ### Run Image Resolution
 
