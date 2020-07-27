@@ -939,7 +939,6 @@ Where:
   "bom": [
     {
       "name": "<bom-entry-name>",
-      "version": "<bom-entry-version>",
       "metadata": {
         // arbitrary buildpack provided metadata
       },
