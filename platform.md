@@ -818,7 +818,7 @@ Where:
 [image]
 tags = ["<tag reference>"]
 digest = "<image digest>"
-imageID = "<imageID>"
+image-id = "<imageID>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
