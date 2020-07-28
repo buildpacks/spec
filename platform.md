@@ -835,19 +835,20 @@ Where:
 
 ```toml
 group = [
-  { id = "<buildpack ID>", version = "<buildpack version>" }
+  { id = "<buildpack ID>", version = "<buildpack version>", api = "<buildpack API version>" }
 ]
 ```
 
 Where:
 
-- Both `id` and `version` MUST be present for each buildpack object in a group.
+- `id` and `version` and `api` MUST be present for each buildpack object in a group.
 
 #### `metadata.toml` (TOML)
 ```toml
 [[buildpacks]]
 id = "<buildpack ID>"
-version = "<buildpack Version>"
+version = "<buildpack version>"
+api = "<buildpack API version>"
 optional = false
 
 [[processes]]
@@ -863,7 +864,7 @@ paths = ["<app sub-path glob>"]
 ```
 
 Where:
-- Both `id` and `version` MUST be present for each buildpack.
+- `id`, `version` and `api` MUST be present for each buildpack.
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `processes` contains the complete set of slice defined by all buildpacks
 - `bom` contains the Bill of Materials
