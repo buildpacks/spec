@@ -485,7 +485,7 @@ Usage:
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
-| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to export report (see [`report.toml`](#reporttoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
 | `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
@@ -535,7 +535,7 @@ Usage:
     - SHOULD set the modification time of all files in newly created layers to a constant value
     - SHOULD set the `created` time in image config to a constant value
 
-- The lifecycle SHALL write an [export report](#reporttoml-toml) to `<report>` describing the exported app image
+- The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers to the cache
@@ -606,6 +606,7 @@ Usage:
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-log-level <log-level>] \
+  [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-uid <uid>] \
   <image> [<image>...]
@@ -618,6 +619,7 @@ Usage:
 | `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
+| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`        | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
 | `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
 
@@ -651,6 +653,8 @@ Usage:
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - Set the `created` time in image config to a constant
+
+- The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
 
 #### `launcher`
 Usage:
