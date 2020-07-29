@@ -475,6 +475,7 @@ Usage:
 ```
 /cnb/lifecycle/creator \
   [-app <app>] \
+  [-buildpacks <buildpacks>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
