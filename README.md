@@ -44,6 +44,7 @@ When the specification refers to a path in the context of an OCI layer tar (e.g.
 - [Distribution Specification](distribution.md)
 - [Bindings Extension Specification](extensions/bindings.md)
 - [Buildpack Registry Extension Specification](extensions/buildpack-registry.md)
+- [Project Descriptor Extension Specification](extensions/project-descriptor.md)
 
 ## API Versions
 
