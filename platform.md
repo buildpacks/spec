@@ -32,16 +32,31 @@ Examples of a platform might include:
       - [Launch](#launch)
     - [Usage](#usage)
       - [`detector`](#detector)
+        - [Inputs](#inputs)
+        - [Outputs](#outputs)
       - [`analyzer`](#analyzer)
+        - [Inputs](#inputs-1)
+        - [Outputs](#outputs-1)
         - [Layer analysis](#layer-analysis)
       - [`restorer`](#restorer)
+        - [Inputs](#inputs-2)
+        - [Outputs](#outputs-2)
         - [Layer restoration](#layer-restoration)
       - [`builder`](#builder)
+        - [Inputs](#inputs-3)
+        - [Outputs](#outputs-3)
       - [`exporter`](#exporter)
+        - [Inputs](#inputs-4)
+        - [Outputs](#outputs-4)
       - [`creator`](#creator)
+        - [Inputs](#inputs-5)
+        - [Outputs](#outputs-5)
       - [`rebaser`](#rebaser)
+        - [Inputs](#inputs-6)
+        - [Outputs](#outputs-6)
       - [`launcher`](#launcher)
-        - [Process Selection](#process-selection)
+        - [Inputs](#inputs-7)
+        - [Outputs](#outputs-7)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
   - [Buildpacks](#buildpacks)
@@ -63,6 +78,7 @@ Examples of a platform might include:
       - [`order.toml` (TOML)](#ordertoml-toml)
       - [`plan.toml` (TOML)](#plantoml-toml)
       - [`project-metadata.toml` (TOML)](#project-metadatatoml-toml)
+      - [`report.toml` (TOML)](#reporttoml-toml)
       - [`stack.toml` (TOML)](#stacktoml-toml)
     - [Labels](#labels)
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
@@ -71,7 +87,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.3`.
+This document specifies Platform API version `0.4`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -80,7 +96,7 @@ Platform API versions:
 ## Terminology
 
 #### CNB Terminology
-A **buildpack** refers to software compliant with the [Buildpack Interface Specification](https://github.com/buildpacks/spec/blob/main/buildpack.md).
+A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
 
 A **stack** is a contract defined by a **build image** and a **run image** that are only updated with security patches.
 
@@ -134,8 +150,8 @@ The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
 - The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
-- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the UID of the user specified in the `User` field.
-- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary GID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -143,7 +159,7 @@ The platform MUST ensure that:
 
 The platform MUST ensure that:
 
-- The image config's `User` field is set to a user with the same UID and primary GID as in the build image.
+- The image config's `User` field is set to a user with the same user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID and primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -229,23 +245,35 @@ Usage:
   [-platform <platform>]
 ```
 
+##### Inputs
 | Input         | Environment Variable| Default Value   | Description
 |---------------|---------------------|-----------------|----------------------
 | `<app>`         | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
 | `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
 | `<group>`       | `CNB_GROUP_PATH`      | `./group.toml`    | Path to output group definition
 | `<log-level>`   | `CNB_LOG_LEVEL`       | `info`            | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml` (TOML)](#ordertoml-(toml)))
+| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
-| [exit status]      | Success (0), or error (1+)
+| [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<group>`          | Detected buildpack group  (see [`group.toml`](#grouptoml-toml))
 | `<plan>`           | Resolved Build Plan (see [`plan.toml`](#plantoml-toml))
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `100`     | All buildpacks groups have failed to detect w/o error
+| `101`     | All buildpack groups have failed to detect and at least one buildpack has errored
+| `102-199` | Detection-specific lifecycle errors
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
@@ -268,14 +296,15 @@ Usage:
   <image>
 ```
 
+##### Inputs
 | Input          | Environment Variable  | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml` (TOML)](#analyzedtoml-toml)
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                   | Location of cache, provided as a directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                   | Location of cache, provided as an image
 | `<daemon>`     | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
 | `<gid>`        | `CNB_GROUP_ID`        |                   | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml` (TOML)](#group.toml-(toml)))
+| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<image>`      |                       |                   | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
@@ -286,18 +315,27 @@ Usage:
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
 - The lifecycle MUST accept valid references to non-existent images without error.
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
-| [exit status]      | Success (0), or error (1+)
+| [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification]((buildpack.md)))
+| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `200-299` | Analysis-specific lifecycle errors
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
-- **If** `<skip-layers>` is `false` the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
+- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 
 ##### Layer analysis
 When analyzing a given layer the lifecycle SHALL:
@@ -323,6 +361,7 @@ Usage:
   [-uid <uid>]
 ```
 
+##### Inputs
 | Input          | Environment Variable  | Default Value   | Description
 |----------------|-----------------------|-----------------|----------------------
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                 | Path to a cache directory
@@ -333,14 +372,23 @@ Usage:
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`          | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                 | UID of the stack `User`
 | `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification]((buildpack.md)))
+| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
+##### Outputs
 | Output                             | Description
 |------------------------------------|----------------------------------------------
-| [exit status]                      | Success (0), or error (1+)
+| [exit status]                      | (see Exit Code table below for values)
 | `/dev/stdout`                      | Logs (info)
 | `/dev/stderr`                      | Logs (warnings, errors)
 | `<layers>/<buidpack-id>/<layer>/*` | Restored layer contents
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `300-399` | Restoration-specific lifecycle errors
 
 ##### Layer restoration
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
@@ -362,6 +410,7 @@ Usage:
   [-platform <platform>]
 ```
 
+##### Inputs
 | Input          | Env                   | Default Value     | Description
 |----------------|-----------------------|-------------------|----------------------
 | `<app>`        | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
@@ -372,14 +421,24 @@ Usage:
 | `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
 
+##### Outputs
 | Output                                     | Description
 |--------------------------------------------|----------------------------------------------
-| [exit status]                              | Success (0), or error (1+)
+| [exit status]                              | (see Exit Code table below for values)
 | `/dev/stdout`                              | Logs (info)
 | `/dev/stderr`                              | Logs (warnings, errors)
 | `<layers>/<buildpack ID>/<layer>`          | Layer contents (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/<buildpack ID>/<layer>.toml`     | Layer metadata (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/config/metadata.toml`            | Build metadata (see [`metadata.toml`](#metadatatoml-toml))
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `401`     | Buildpack build error
+| `400`, `402-499`|  Build-specific lifecycle errors
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
@@ -402,44 +461,56 @@ Usage:
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
+  [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-stack <stack>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
 
+##### Inputs
 | Input               | Environment Variable  | Default Value       | Description
 |---------------------|-----------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml` (TOML)](#analyzed.toml-(toml))
+| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`        | Path to application directory
 | `<cache-dir>`       | `CNB_CACHE_DIR`       |                     | Path to a cache directory
 | `<cache-image>`     | `CNB_CACHE_IMAGE`     |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                     | Primary GID of the stack `User`
-| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#group.toml-(toml)))
+| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#grouptoml-toml))
 | `<image>`           |                       |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
 | `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml` (TOML)](#project-metadata.toml)
+| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml` (TOML)](#stack.toml-(toml))
+| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
-| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml` (TOML)](#metdata.toml-(toml))
+| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of `stack`
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
 | `[exit status]`    | Success (0), or error (1+)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`          | Exported app image (see [Buildpack Interface Specfication](buildpack.md)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `500-599`|  Export-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
@@ -448,25 +519,34 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflict with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer that includes `<launcher>`
+    - MUST contain one or more launcher layers that include:
+        - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
+        - One symlink per buildpack-provided process type with name `/cnb/process/<type>` and target `/cnb/lifecycle/launcher`
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
-    - MUST have `ENTRYPOINT=<launcher>`
+    - **If** `<process-type>` matches a buildpack-provided process:
+      - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
+    - **If** `<process-type>` does not match a buildpack-provided process:
+      - **If** there is exactly one buildpack-provided process:
+        - MUST have `ENTRYPOINT=/cnb/process/<type>` where `<type>` matches the `type` of the process
+      - **Else**:
+        - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
     - MUST contain the following `Env` entries
-      - `"CNB_LAYERS_DIR=<layers>"`
-      - `"CNB_APP_DIR=<app>"`
-    - MUST contain the following `Env` entry, if `<process-type>` is set
-      - `"CNB_PROCESS_TYPE=<process-type>"`
+      - `CNB_LAYERS_DIR=<layers>`
+      - `CNB_APP_DIR=<app>`
+      - `PATH=/cnb/process:$PATH` where `$PATH` is the value of `$PATH` on the run-image.
     - MUST contain the following labels
-        - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label (JSON)](#lifecycle-metadata-label-(json))
+        - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
-        - `io.buildpacks.build.metadata`: see [build metadata (JSON)](#build-metadata-label-(json))
+        - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the modification time of all files in newly created layers to a constant value
     - SHOULD set the `created` time in image config to a constant value
 
-If a cache is provided the lifecycle:
-- SHALL write the contents of all cached layers to the cache
-- SHALL record the diffID and layer content metadata of all cached layers in the cache
+- The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
+
+- *If* a cache is provided the lifecycle:
+   - SHALL write the contents of all cached layers to the cache
+   - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
 The platform MUST execute `creator` in the **build environment**
@@ -489,6 +569,7 @@ Usage:
   [-previous-image <previous-image> ] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
+  [-report <report> ] \
   [-run-image <run-image>] \
   [-skip-restore <skip-restore>] \
   [-stack <stack>] \
@@ -497,6 +578,7 @@ Usage:
    <image>
 ```
 
+##### Inputs
 Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
 
 | Input             | Environment Variable| Default Value| Description
@@ -508,7 +590,21 @@ Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restor
 - **If** `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
-Outputs produced by `creator` are identical to those produced by `exporter`.
+##### Outputs
+Outputs produced by `creator` are identical to those produced by `exporter`, with the following additional expanded set of error codes.
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `100-199`|  Detection-specific lifecycle errors
+| `200-299`|  Analysis-specific lifecycle errors
+| `300-399`|  Restoration-specific lifecycle errors
+| `400-499`|  Build-specific lifecycle errors
+| `500-599`|  Export-specific lifecycle errors
+
 
 #### `rebaser`
 Usage:
@@ -517,17 +613,20 @@ Usage:
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-log-level <log-level>] \
+  [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-uid <uid>] \
   <image> [<image>...]
 ```
 
+##### Inputs
 | Input               | Environment Variable  | Default Value          | Description
 |---------------------|-----------------------|------------------------|---------------------------------------
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
+| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`        | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
 | `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
 
@@ -536,12 +635,21 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`.
 
+##### Outputs
 | Output             | Description
 |--------------------|----------------------------------------------
-| [exit status]      | Pass (0), or error (1+)
+| [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `600-699`|  Rebase-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The rebased app image SHALL be identical to `<image>`, with the following modifications:
@@ -553,34 +661,36 @@ Usage:
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - Set the `created` time in image config to a constant
 
+- The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
+
 #### `launcher`
 Usage:
 ```
+/cnb/process/<process-type> [<arg>...]
+# OR
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
-
+##### Inputs
 | Input               | Environment Variable  | Default Value  | Description
 |---------------------|-----------------------|----------------|---------------------------------------
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`   | Path to application directory
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`      | Path to layer directory
-| `<process-type>`    | `CNB_PROCESS_TYPE`    | `web`          | `type` of process to launch
+| `<process-type>`    |                       |                | `type` of process to launch
 | `<direct>`          |                       |                | Process execution strategy
 | `<cmd>`             |                       |                | Command to execute
 | `<args>`            |                       |                | Arguments to command
-| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metdata.toml-(toml))
+| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 | `<layers>/<buildpack-id>/<layer>/` |        |                | Launch Layers
 
 A command (`<cmd>`), arguments to that command (`<args>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST [select](#process-selection) a single process
-- MUST construct the process execution environment as described in [Launch Environment](#launch-environment)
-- MUST execute the process as specified in the [Buildpack Interface Specfication](buildpack.md)
-- SHOULD replace the lifecycle with the process in memory without forking it.
-
-##### Process Selection
-- **If** zero positional arguments are provided to the **launcher**, the lifecycle
-    - MUST select the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml`
+- MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
+- **If** the final path element in `$0`, matches the type of any buildpack-provided process type
+    - `<process-type>` SHALL be the final path element in `$0`
+    - The lifecycle:
+        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
@@ -590,6 +700,22 @@ The launcher:
         - `<direct>` SHALL be `false`
         - `<cmd>` SHALL be `$1`
         - `<args>` SHALL be `${@2:}`
+
+##### Outputs
+If the launcher errors before executing the process it will have one of the following error codes:
+
+| Exit Code | Result|
+|-----------|-------|
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `700-799`|  Launch-specific lifecycle errors
+
+Otherwise, the exit code shall be the exit code of the launched process.
+
+The launcher:
+- MUST construct the process execution environment as described in [Launch Environment](#launch-environment)
+- MUST execute the selected process as specified in the [Buildpack Interface Specfication](buildpack.md)
+- SHOULD replace the lifecycle with the process in memory without forking it.
 
 ### Run Image Resolution
 
@@ -659,6 +785,7 @@ User-provided modifications to the process execution environment SHOULD be set d
 
 The process SHALL inherit both stack-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
 * `CNB_APP_DIR`, `CNB_LAYERS_DIR` and `CNB_PROCESS_TYPE` SHALL NOT be set in the process execution environment.
+* `/cnb/process` SHALL be removed from the beginning of `PATH`.
 * The lifecycle SHALL apply buildpack-provided modifications to the environment as outlined in the [Buildpack Interface Specification](buildpack.md).
 
 ### Caching
@@ -702,25 +829,26 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 Where:
 - `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
-- `metadata` MUST be the TOML representation of the layer [metadata label](#layer-metadata-label-json)
+- `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
 
 ```toml
 group = [
-  { id = "<buildpack ID>", version = "<buildpack version>" }
+  { id = "<buildpack ID>", version = "<buildpack version>", api = "<buildpack API version>" }
 ]
 ```
 
 Where:
 
-- Both `id` and `version` MUST be present for each buildpack object in a group.
+- `id`, `version`, and `api` MUST be present for each buildpack object in a group.
 
 #### `metadata.toml` (TOML)
 ```toml
 [[buildpacks]]
 id = "<buildpack ID>"
-version = "<buildpack Version>"
+version = "<buildpack version>"
+api = "<buildpack API version>"
 optional = false
 
 [[processes]]
@@ -736,7 +864,7 @@ paths = ["<app sub-path glob>"]
 ```
 
 Where:
-- Both `id` and `version` MUST be present for each buildpack.
+- `id`, `version`, and `api` MUST be present for each buildpack.
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `processes` contains the complete set of slice defined by all buildpacks
 - `bom` contains the Bill of Materials
@@ -795,6 +923,20 @@ Where:
 - `version`, if present, SHOULD contain data uniquely identifying the particular version of the provided source
 - `metadata` MAY contain additional arbitrary data about the provided source
 
+#### `report.toml` (TOML)
+```toml
+[image]
+tags = ["<tag reference>"]
+digest = "<image digest>"
+image-id = "<imageID>"
+```
+Where:
+- `tags` MUST contain all tag references to the exported app image
+- **If** the app image was exported to an OCI registry
+  - `digest` MUST contain the image digest
+- **If** the app image was exported to a docker daemon
+  - `imageID` MUST contain the imageID
+
 #### `stack.toml` (TOML)
 
 ```toml
@@ -836,7 +978,6 @@ Where:
   "bom": [
     {
       "name": "<bom-entry-name>",
-      "version": "<bom-entry-version>",
       "metadata": {
         // arbitrary buildpack provided metadata
       },

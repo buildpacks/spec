@@ -557,8 +557,11 @@ To locate a start command, the lifecycle MUST follow the process outlined in the
 To choose an execution strategy,
 
 1. **IF** a buildpack-provided process type is chosen as the start command,
-   1. **IF** the process type does not have `direct` set to `true`,
-      **THEN** the lifecycle MUST invoke the value of `command` as a command using the shell with values of `args` provided as arguments.
+   1. **IF** the process type has `direct` set to `false`,
+      1. **IF** the process has one or more `args`
+         **THEN** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
+      2. **IF** the process has zero `args`
+         **THEN** the lifecycle MUST invoke the value of `command` as a command using the shell.
 
    2. **IF** the process type does have `direct` set to `true`,
       **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
