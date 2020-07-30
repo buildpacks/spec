@@ -519,7 +519,7 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflict with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a launcher layer containing:
+    - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
         - One symlink per buildpack-provided process type with name `/cnb/process/<type>` and target `/cnb/lifecycle/launcher`
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
@@ -530,13 +530,10 @@ Usage:
         - MUST have `ENTRYPOINT=/cnb/process/<type>` where `<type>` matches the `type` of the process
       - **Else**:
         - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
-    - MUST have `/cnb/process` to the existing value of `PATH` on the run-image
     - MUST contain the following `Env` entries
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
       - `PATH=/cnb/process:$PATH` where `$PATH` is the value of `$PATH` on the run-image.
-    - MUST contain the following `Env` entry, if `<process-type>` is set
-      - `"CNB_PROCESS_TYPE=<process-type>"`
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
