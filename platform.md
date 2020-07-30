@@ -519,14 +519,21 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflict with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer that includes `<launcher>`
+    - MUST contain one or more launcher layers that include:
+        - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
+        - One symlink per buildpack-provided process type with name `/cnb/process/<type>` and target `/cnb/lifecycle/launcher`
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
-    - MUST have `ENTRYPOINT=<launcher>`
+    - **If** `<process-type>` matches a buildpack-provided process:
+      - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
+    - **If** `<process-type>` does not match a buildpack-provided process:
+      - **If** there is exactly one buildpack-provided process:
+        - MUST have `ENTRYPOINT=/cnb/process/<type>` where `<type>` matches the `type` of the process
+      - **Else**:
+        - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
     - MUST contain the following `Env` entries
-      - `"CNB_LAYERS_DIR=<layers>"`
-      - `"CNB_APP_DIR=<app>"`
-    - MUST contain the following `Env` entry, if `<process-type>` is set
-      - `"CNB_PROCESS_TYPE=<process-type>"`
+      - `CNB_LAYERS_DIR=<layers>`
+      - `CNB_APP_DIR=<app>`
+      - `PATH=/cnb/process:$PATH` where `$PATH` is the value of `$PATH` on the run-image.
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
@@ -659,6 +666,8 @@ Usage:
 #### `launcher`
 Usage:
 ```
+/cnb/process/<process-type> [<arg>...]
+# OR
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
 ##### Inputs
@@ -666,7 +675,7 @@ Usage:
 |---------------------|-----------------------|----------------|---------------------------------------
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`   | Path to application directory
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`      | Path to layer directory
-| `<process-type>`    | `CNB_PROCESS_TYPE`    | `web`          | `type` of process to launch
+| `<process-type>`    |                       |                | `type` of process to launch
 | `<direct>`          |                       |                | Process execution strategy
 | `<cmd>`             |                       |                | Command to execute
 | `<args>`            |                       |                | Arguments to command
@@ -677,17 +686,20 @@ A command (`<cmd>`), arguments to that command (`<args>`), and an execution stra
 
 The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
-    - **If** zero positional arguments are provided to the **launcher**, the lifecycle
-        - MUST read `<cmd>`, `<args>` and `<direct>` from the the process with `type` equal to `<process-type>` from `<layers>/config/metadata.toml`
+- **If** the final path element in `$0`, matches the type of any buildpack-provided process type
+    - `<process-type>` SHALL be the final path element in `$0`
+    - The lifecycle:
+        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST append any user-provided `<args>` to process arguments
+- **Else**
+    - **If** `$1` is `--`
+        - `<direct>` SHALL be `true`
+        - `<cmd>` SHALL be `$2`
+        - `<args>` SHALL be `${@3:}`
     - **Else**
-        - **If** `$1` is `--`
-            - `<direct>` SHALL be `true`
-            - `<cmd>` SHALL be `$2`
-            - `<args>` SHALL be `${@3:}`
-        - **Else**
-            - `<direct>` SHALL be `false`
-            - `<cmd>` SHALL be `$1`
-            - `<args>` SHALL be `${@2:}`
+        - `<direct>` SHALL be `false`
+        - `<cmd>` SHALL be `$1`
+        - `<args>` SHALL be `${@2:}`
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
@@ -773,6 +785,7 @@ User-provided modifications to the process execution environment SHOULD be set d
 
 The process SHALL inherit both stack-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
 * `CNB_APP_DIR`, `CNB_LAYERS_DIR` and `CNB_PROCESS_TYPE` SHALL NOT be set in the process execution environment.
+* `/cnb/process` SHALL be removed from the beginning of `PATH`.
 * The lifecycle SHALL apply buildpack-provided modifications to the environment as outlined in the [Buildpack Interface Specification](buildpack.md).
 
 ### Caching
