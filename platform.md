@@ -521,7 +521,7 @@ Usage:
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain a launcher layer containing:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
-        - One symlink per buildpack provided `process` with name `/cnb/process/<type>` and target `/cnb/lifecycle/launcher`
+        - One symlink per buildpack-provided process type with name `/cnb/process/<type>` and target `/cnb/lifecycle/launcher`
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
     - **If** `<process-type>` matches a buildpack-provided process:
       - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
@@ -689,8 +689,8 @@ A command (`<cmd>`), arguments to that command (`<args>`), and an execution stra
 
 The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
-- **If** the final path element in `$0`, matches the type of any buildpack provided process
-    - `<proces-type>` SHALL be the final path element in `$0`
+- **If** the final path element in `$0`, matches the type of any buildpack-provided process type
+    - `<process-type>` SHALL be the final path element in `$0`
     - the lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
         - MUST append any user-provided `<args>` to process arguments
