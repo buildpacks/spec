@@ -31,5 +31,5 @@ An implementation is compliant if it satisfies all the MUST, MUST NOT, REQUIRED,
 
 These documents currently specify:
 
-- Buildpack API: `0.3`
+- Buildpack API: `0.4`
 - Platform API: `0.3`
