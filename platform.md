@@ -691,7 +691,7 @@ The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
-    - the lifecycle:
+    - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
         - MUST append any user-provided `<args>` to process arguments
 - **Else**
