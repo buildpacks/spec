@@ -239,6 +239,7 @@ Usage:
   [-app <app>] \
   [-buildpacks <buildpacks>] \
   [-group <group>] \
+  [-layers <layers>] \
   [-log-level <log-level>] \
   [-order <order>] \
   [-plan <plan>] \
@@ -246,15 +247,16 @@ Usage:
 ```
 
 ##### Inputs
-| Input         | Environment Variable| Default Value   | Description
-|---------------|---------------------|-----------------|----------------------
-| `<app>`         | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
-| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`       | `CNB_GROUP_PATH`      | `./group.toml`    | Path to output group definition
-| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`            | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `./order.toml`    | Path to order definition (see [`order.toml`](#ordertoml-toml))
-| `<plan>`        | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to output resolved build plan
-| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
+| Input         | Environment Variable    | Default Value             | Description
+|---------------|-------------------------|---------------------------|----------------------
+| `<app>`         | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
+| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to output group definition
+| `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
+| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                | Log Level
+| `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
+| `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
+| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
 
 ##### Outputs
 | Output             | Description
@@ -297,19 +299,19 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Environment Variable  | Default Value     | Description
-|----------------|-----------------------|-------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `./analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                   | Location of cache, provided as a directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                   | Location of cache, provided as an image
-| `<daemon>`     | `CNB_USE_DAEMON`      | `false`           | Analyze image from docker daemon
-| `<gid>`        | `CNB_GROUP_ID`        |                   | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<image>`      |                       |                   | Image reference to be analyzed (usually the result of the previous build)
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`           | Do not perform layer analysis
-| `<uid>`        | `CNB_USER_ID`         |                   | UID of the stack `User`
+| Input          | Environment Variable  | Default Value            | Description
+|----------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Location of cache, provided as a directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
+| `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
+| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
+| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
@@ -362,17 +364,17 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Environment Variable  | Default Value   | Description
-|----------------|-----------------------|-----------------|----------------------
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                 | Path to a cache directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                 | Reference to a cache image in an OCI image registry
-| `<gid>`        | `CNB_GROUP_ID`        |                 | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`  | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`       | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`          | Log Level
-| `<uid>`        | `CNB_USER_ID`         |                 | UID of the stack `User`
-| `<layers>/<buidpack-id>/<layer>.sha`  ||                 | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` ||                 | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| Input          | Environment Variable  | Default Value         | Description
+|----------------|-----------------------|-----------------------|----------------------
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                       | Path to a cache directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                       | Reference to a cache image in an OCI image registry
+| `<gid>`        | `CNB_GROUP_ID`        |                       | Primary GID of the stack `User`
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
+| `<uid>`        | `CNB_USER_ID`         |                       | UID of the stack `User`
+| `<layers>/<buidpack-id>/<layer>.sha`  ||                       | Files containing the diffID of each analyzed layer
+| `<layers>/<buidpack-id>/<layer>.toml` ||                       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 
 ##### Outputs
 | Output                             | Description
@@ -411,15 +413,15 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Env                   | Default Value     | Description
-|----------------|-----------------------|-------------------|----------------------
-| `<app>`        | `CNB_APP_DIR`         | `/workspace`      | Path to application directory
-| `<buildpacks>` | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks` | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`      | `CNB_GROUP_PATH`      | `./group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
-| `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
-| `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`       | Path to platform directory
+| Input          | Env                   | Default Value         | Description
+|----------------|-----------------------|-----------------------|----------------------
+| `<app>`        | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
+| `<buildpacks>` | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
+| `<plan>`       | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
+| `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
 
 ##### Outputs
 | Output                                     | Description
@@ -471,21 +473,21 @@ Usage:
 ##### Inputs
 | Input               | Environment Variable  | Default Value       | Description
 |---------------------|-----------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<app>`             | `CNB_APP_DIR`         | `/workspace`        | Path to application directory
 | `<cache-dir>`       | `CNB_CACHE_DIR`       |                     | Path to a cache directory
 | `<cache-image>`     | `CNB_CACHE_IMAGE`     |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                     | Primary GID of the stack `User`
-| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#grouptoml-toml))
+| `<group>`           | `CNB_GROUP_PATH`      | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
 | `<image>`           |                       |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
 | `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
 | `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
 | `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
 | `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
-| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to report (see [`report.toml`](#reporttoml-toml)
+| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
 | `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
@@ -626,7 +628,7 @@ Usage:
 | `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
-| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`        | Path to report (see [`report.toml`](#reporttoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
 | `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
 
@@ -1069,7 +1071,7 @@ Where:
 ```javascript
 {
   "source": {
-    "type": "<type",
+    "type": "<type>",
     "version": {
      // arbitrary version data
     },
