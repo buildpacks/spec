@@ -836,9 +836,11 @@ Where:
 #### `group.toml` (TOML)
 
 ```toml
-group = [
-  { id = "<buildpack ID>", version = "<buildpack version>", api = "<buildpack API version>" }
-]
+[[group]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+api = "<buildpack API version>"
+homepage = "<buildpack homepage>"
 ```
 
 Where:
@@ -974,7 +976,8 @@ Where:
   "buildpacks": [
     {
       "id": "<buildpack ID>",
-      "version": "<buildpack Version>"
+      "version": "<buildpack version>",
+      "homepage": "<buildpack homepage>"
     }
   ],
   "bom": [
@@ -985,7 +988,7 @@ Where:
       },
       "buildpack": {
         "id": "<buildpack ID>",
-        "version": "<buildpack Version>"
+        "version": "<buildpack version>"
       }
     },
   ],
