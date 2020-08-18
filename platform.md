@@ -470,25 +470,25 @@ Usage:
 
 ##### Inputs
 | Input               | Environment Variable  | Default Value       | Description
-|---------------------|-----------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`   | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<app>`             | `CNB_APP_DIR`         | `/workspace`        | Path to application directory
-| `<cache-dir>`       | `CNB_CACHE_DIR`       |                     | Path to a cache directory
-| `<cache-image>`     | `CNB_CACHE_IMAGE`     |                     | Reference to a cache image in an OCI image registry
-| `<daemon>`          | `CNB_USE_DAEMON`      | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        |                     | Primary GID of the stack `User`
-| `<group>`           | `CNB_GROUP_PATH`      | `./group.toml`      | Path to group file (see [`group.toml`](#grouptoml-toml))
-| `<image>`           |                       |                     | Tag reference to which the app image will be written
-| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`|                     | Path to a cache directory containing launch layers
-| `<launcher>`        |                       | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
-| `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`           | Path to layer directory
-| `<log-level>`       | `CNB_LOG_LEVEL`   `   | `info`              | Log Level
-| `<process-type>`    | `CNB_PROCESS_TYPE`    |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROCESS_TYPE`    | `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
-| `<report>`          | `CNB_REPORT_PATH`     | `./report.toml`     | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`       | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`      | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
-| `<uid>`             | `CNB_USER_ID`         |                     | UID of the stack `User`
+|---------------------|----------------------------|---------------------|---------------------------------------
+| `<analyzed>`        | `CNB_ANALYZED_PATH`        | `./analyzed.toml`   | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<app>`             | `CNB_APP_DIR`              | `/workspace`        | Path to application directory
+| `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
+| `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI image registry
+| `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
+| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the stack `User`
+| `<group>`           | `CNB_GROUP_PATH`           | `./group.toml`      | Path to group file (see [`group.toml`](#grouptoml-toml))
+| `<image>`           |                            |                     | Tag reference to which the app image will be written
+| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`     |                     | Path to a cache directory containing launch layers
+| `<launcher>`        |                            | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
+| `<layers>`          | `CNB_LAYERS_DIR`           | `/layers`           | Path to layer directory
+| `<log-level>`       | `CNB_LOG_LEVEL`            | `info`              | Log Level
+| `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
+| `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `./project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
+| `<report>`          | `CNB_REPORT_PATH`          | `./report.toml`     | Path to report (see [`report.toml`](#reporttoml-toml)
+| `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
+| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
+| `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
