@@ -743,6 +743,16 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 ### launch.toml (TOML)
 
 ```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+
+[[labels]]
+key = "<label key>"
+value = "<label valu>"
+
 [[processes]]
 type = "<process type>"
 command = "<command>"
@@ -751,19 +761,26 @@ direct = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
-
-[[labels]]
-key = "<label key>"
-value = "<label valu>"
-
-[[bom]]
-name = "<dependency name>"
-
-[bom.metadata]
-# arbitrary metadata describing the dependency
 ```
 
-The buildpack MAY specify any number of processes, slices, labels, or bill-of-materials entries.
+The buildpack MAY specify any number of bill-of-materials entries, labels, processes, or slices.
+
+For each dependency contributed to the app image, the buildpack:
+
+- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
+  - `name` is REQUIRED.
+  - `metadata` MAY contain additional data describing the dependency.
+
+The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
+
+For each label, the buildpack:
+
+- MUST specify a `key` that is not identical to other labels provided by the same buildpack.
+- MUST specify a `value` to be set in the image label.
+
+The lifecycle MUST add each label as in image label on the created image metadata.
+
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
 
 For each process, the buildpack:
 
@@ -790,23 +807,6 @@ The lifecycle MUST accept slices that do not contain any files or directory. How
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
-For each label, the buildpack:
-
-- MUST specify a `key` that is not identical to other labels provided by the same buildpack.
-- MUST specify a `value` to be set in the image label.
-
-The lifecycle MUST add each label as in image label on the created image metadata.
-
-If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
-
-For each dependency contributed to the app image, the buildpack:
-
-- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
-  - `name` is REQUIRED.
-  - `metadata` MAY contain additional data describing the dependency.
-
-The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
-
 ### build.toml (TOML)
 
 ```toml
@@ -820,12 +820,12 @@ name = "<dependency name>"
 [[unmet.entries]]
 name = "<dependency name>"
 ```
-For each build-time dependency contributed by the buildpack, the buildpack:
 
+For each dependency contributed by the buildpack to the build environment, the buildpack:
 - SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
   - `name` is REQUIRED.
 
-For each unmet entry in the Buildpack Plan, the buildpack,
+For each unmet entry in the Buildpack Plan, the buildpack:
 - SHOULD add an entry to `unmet`.
 
 For each entry in `unmet`:
