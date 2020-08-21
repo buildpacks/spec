@@ -39,7 +39,8 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
   - [Phase #3: Build](#phase-3-build)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
-      - [Buildpack Plan Entry Refinements](#buildpack-plan-entry-refinements)
+      - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
+      - [Bills-of-Materials](#bills-of-materials)
       - [Layers](#layers)
   - [Phase #4: Export](#phase-4-export)
     - [Purpose](#purpose-3)
@@ -64,6 +65,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Requirements](#requirements)
   - [Data Format](#data-format)
     - [launch.toml (TOML)](#launchtoml-toml)
+    - [build.toml (TOML)](#buildtoml-toml)
     - [store.toml (TOML)](#storetoml-toml)
     - [Build Plan (TOML)](#build-plan-toml)
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
@@ -72,8 +74,8 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Buildpack Implementations](#buildpack-implementations)
       - [Order Buildpacks](#order-buildpacks)
   - [Deprecations](#deprecations)
-    - [`0.3`](#deprecations-buildpack-api-0.3)
-      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requires-version-key)
+    - [`0.3`](#03)
+      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
 This document specifies Buildpack API version `0.5`
@@ -126,7 +128,7 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
 ###  Build
 
-Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `<app[AI]>`
 
 | Input             | Description
 |-------------------|----------------------------------------------
@@ -140,8 +142,8 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | [exit status]                            | Success (0) or failure (1+)
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
-| `<plan>`                                 | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
+| `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
@@ -432,13 +434,13 @@ Correspondingly, each `/bin/build` executable:
 - MAY read or write to the `<app>` directory.
 - MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Buildpack Plan.
-- MAY augment the Buildpack Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
-- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/build` executables.
+- SHOULD write a list containing any unmet Buildpack Plan entries to `<layers>/build.toml` to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
+- SHOULD write BOM (Bill-of-Materials) entries to `<layers>/launch.toml` describing any contributions to the app image.
+- SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
@@ -447,19 +449,23 @@ Correspondingly, each `/bin/build` executable:
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
-#### Buildpack Plan Entry Refinements
+#### Unmet Buildpack Plan Entries
 
-A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
-The single entry MAY include additional metadata that could not be determined during the detection phase.
+The lifecycle SHALL assume that all requirements in the Buildpack Plan where met by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
-A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
+For each entry in `<plan>`:
+  - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
+    - MUST include the entry in the `<plan>` of the next buildpack that provided an entry with that name during the detection phase.
+  - **Else**, the lifecycle
+    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
 
-The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/build` to be available in subsequent buildpacks' `<plan>`s.
+#### Bills-of-Materials
 
-The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
+When the build is complete, a BOM (Bill-of-Materials) describing the app image MAY be generated for auditing purposes.
+If generated, this BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
-When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
+When the build is complete, a build BOM describing the build container MAY be generated for auditing purposes.
+If generated, this build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -749,9 +755,15 @@ paths = ["<app sub-path glob>"]
 [[labels]]
 key = "<label key>"
 value = "<label valu>"
+
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
 ```
 
-The buildpack MAY specify any number of processes, slices, or labels.
+The buildpack MAY specify any number of processes, slices, labels, or bill-of-materials entries.
 
 For each process, the buildpack:
 
@@ -786,6 +798,38 @@ For each label, the buildpack:
 The lifecycle MUST add each label as in image label on the created image metadata.
 
 If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
+
+For each dependency contributed to the app image, the buildpack:
+
+- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
+  - `name` is REQUIRED.
+  - `metadata` MAY contain additional data describing the dependency.
+
+The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
+
+### build.toml (TOML)
+
+```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+
+[[unmet]]
+[[unmet.entries]]
+name = "<dependency name>"
+```
+For each build-time dependency contributed by the buildpack, the buildpack:
+
+- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
+  - `name` is REQUIRED.
+
+For each unmet entry in the Buildpack Plan, the buildpack,
+- SHOULD add an entry to `unmet`.
+
+For each entry in `unmet`:
+- `name` MUST match an entry in the Buildpack Plan.
 
 ### store.toml (TOML)
 
