@@ -235,19 +235,19 @@ These buildpacks must be compatible with the app.
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
-1. **IF** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
-   **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
+1. **If** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
+   **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-2. **IF** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
-   1. **IF** the buildpack is not the last buildpack in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack in the group.
+2. **If** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
+   1. **If** the buildpack is not the last buildpack in the group, \
+      **Then** the lifecycle MUST proceed to the next buildpack in the group.
 
-   2. **IF** the buildpack is the last buildpack in the group,
-      1. **IF** no exit statuses from `/bin/detect` in the group are zero \
-         **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
+   2. **If** the buildpack is the last buildpack in the group,
+      1. **If** no exit statuses from `/bin/detect` in the group are zero \
+         **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-      2. **IF** at least one exit status from `/bin/detect` in the group is zero \
-         **THEN** the lifecycle MUST select this group and proceed to the analysis phase.
+      2. **If** at least one exit status from `/bin/detect` in the group is zero \
+         **Then** the lifecycle MUST select this group and proceed to the analysis phase.
 
 The selected group MUST be filtered to only include buildpacks with exit status zero.
 The order of the buildpacks in the group MUST otherwise be preserved.
@@ -413,15 +413,15 @@ This is achieved by:
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
-1. **IF** the exit status of `/bin/build` is non-zero, \
-   **THEN** the lifecycle MUST fail the build.
+1. **If** the exit status of `/bin/build` is non-zero, \
+   **Then** the lifecycle MUST fail the build.
 
-2. **IF** the exit status of `/bin/build` is zero,
-   1. **IF** there are additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
+2. **If** the exit status of `/bin/build` is zero,
+   1. **If** there are additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
 
-   2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the export phase.
+   2. **If** there are no additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the export phase.
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
@@ -500,19 +500,19 @@ The purpose of export is to create a new OCI image using a combination of remote
 - A reference to the old OCI image processed during the analysis phase, if available, and
 - A tag for a new OCI image,
 
-**IF** the run image, old OCI image, and new OCI image are not all present in the same image store, \
-**THEN** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
+**If** the run image, old OCI image, and new OCI image are not all present in the same image store, \
+**Then** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
 
 For each `<layers>/<layer>.toml` file that specifies `launch = true`,
 
-1. **IF** a corresponding `<layers>/<layer>` directory is present locally, \
-   **THEN** the lifecycle MUST
+1. **If** a corresponding `<layers>/<layer>` directory is present locally, \
+   **Then** the lifecycle MUST
    1. Convert this directory to a layer.
    2. Transfer the layer to the same image store as the old OCI image.
    3. Ensure the absolute path of `<layers>/<layer>` is preserved in the transferred layer.
    4. Collect a reference to the transferred layer.
-2. **IF** a corresponding `<layers>/<layer>` directory is not present locally, \
-   **THEN** the lifecycle MUST
+2. **If** a corresponding `<layers>/<layer>` directory is not present locally, \
+   **Then** the lifecycle MUST
    1. Attempt to locate the corresponding layer in the old OCI image.
    2. Collect a reference to the located layer or fail export if no such layer can be found.
 3. The lifecycle MUST store the `<layers>/<layer>.toml` file so that
@@ -562,18 +562,18 @@ To locate a start command, the lifecycle MUST follow the process outlined in the
 
 To choose an execution strategy,
 
-1. **IF** a buildpack-provided process type is chosen as the start command,
-   1. **IF** the process type has `direct` set to `false`,
-      1. **IF** the process has one or more `args`
-         **THEN** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
-      2. **IF** the process has zero `args`
-         **THEN** the lifecycle MUST invoke the value of `command` as a command using the shell.
+1. **If** a buildpack-provided process type is chosen as the start command,
+   1. **If** the process type has `direct` set to `false`,
+      1. **If** the process has one or more `args`
+         **Then** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
+      2. **If** the process has zero `args`
+         **Then** the lifecycle MUST invoke the value of `command` as a command using the shell.
 
-   2. **IF** the process type does have `direct` set to `true`,
-      **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
+   2. **If** the process type does have `direct` set to `true`,
+      **Then** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
 
-2. **IF** a user-defined process type is chosen as the start command,
-   **THEN** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
+2. **If** a user-defined process type is chosen as the start command,
+   **Then** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
 
 Given the start command and execution strategy,
 
@@ -938,7 +938,7 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 *Key: `api = "<buildpack API version>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
- - SHOULD indicate the lowest compatible `<minor>` IF buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
+ - SHOULD indicate the lowest compatible `<minor>` if buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
 
 #### Buildpack Implementations
 
