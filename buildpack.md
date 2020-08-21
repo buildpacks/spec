@@ -451,7 +451,7 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-The lifecycle SHALL assume that all requirements in the Buildpack Plan where met by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
+The lifecycle SHALL assume that all requirements in the Buildpack Plan were met by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
@@ -778,7 +778,7 @@ For each label, the buildpack:
 - MUST specify a `key` that is not identical to other labels provided by the same buildpack.
 - MUST specify a `value` to be set in the image label.
 
-The lifecycle MUST add each label as in image label on the created image metadata.
+The lifecycle MUST add each label as an image label on the created image metadata.
 
 If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
 
