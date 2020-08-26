@@ -767,7 +767,7 @@ The buildpack MAY specify any number of bill-of-materials entries, labels, proce
 
 For each dependency contributed to the app image, the buildpack:
 
-- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
+- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
   - `name` is REQUIRED.
   - `metadata` MAY contain additional data describing the dependency.
 
@@ -822,7 +822,7 @@ name = "<dependency name>"
 ```
 
 For each dependency contributed by the buildpack to the build environment, the buildpack:
-- SHOULD add a bill-of-materials entry to `bom` describing the dependency, where:
+- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
   - `name` is REQUIRED.
 
 For each unmet entry in the Buildpack Plan, the buildpack:
