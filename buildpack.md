@@ -697,7 +697,6 @@ If multiple operations apply to the same environment variable, all operations fo
 
 ##### Prepend
 
-If the environment variable file name has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable delimited by the OS path list separator.
 If the environment variable file name ends in `.prepend`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
 In either case, within that environment variable value,
 - Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
@@ -714,6 +713,7 @@ Within that environment variable value,
 
 ##### Override
 
+If the environment variable file name has no period-delimited suffix, then the value of the environment variable MUST be the file contents.
 If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents.
 For that environment variable value,
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
