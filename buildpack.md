@@ -387,7 +387,8 @@ During the build phase, typical buildpacks might:
 4. Compile the application source code into object code.
 5. Remove application source code that is not necessary for launch.
 6. Provide start command in `<layers>/launch.toml`.
-7. Refine the Buildpack Plan in `<plan>` with more exact metadata.
+7. Write a partial Bill-of-Material to `<layers>/launch.toml` describing any provided application dependencies.
+8. Write a partial Bill-of-Material to `<layers>/build.toml` describing any provided build dependencies.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -434,7 +435,7 @@ Correspondingly, each `/bin/build` executable:
 - MAY read or write to the `<app>` directory.
 - MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Buildpack Plan.
-- SHOULD write a list containing any unmet Buildpack Plan entries to `<layers>/build.toml` to defer those entries to subsequent `/bin/build` executables.
+- SHOULD write a list containing any [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries) to `<layers>/build.toml` to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -451,7 +452,8 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-The lifecycle SHALL assume that all requirements in the Buildpack Plan were met by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
+A buildpack SHOULD designate a Buildpack Plan entry as unmet if the buildpack did not satisfy the requirement described by the entry.
+The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
