@@ -817,7 +817,6 @@ name = "<dependency name>"
 # arbitrary metadata describing the dependency
 
 [[unmet]]
-[[unmet.entries]]
 name = "<dependency name>"
 ```
 
