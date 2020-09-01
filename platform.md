@@ -152,6 +152,7 @@ The platform MUST ensure that:
 - The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
 - The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
+- The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
@@ -162,6 +163,7 @@ The platform MUST ensure that:
 - The image config's `User` field is set to a user with the same user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID and primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+- The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
 ### Mixins
 
