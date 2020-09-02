@@ -186,7 +186,7 @@ The lifecycle MUST NOT assume that all platforms provide an identical environmen
 
 Run image rebasing allows for fast stack updates for already-exported OCI images with minimal data transfer when those images are stored on a Docker registry.
 When a new stack version with the same stack ID is available, the app layers and launch layers SHOULD be rebased on the new run image by updating the image's configuration to point at the new run image.
-Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded. 
+Once the new run image is present on the registry, filesystem layers SHOULD NOT be uploaded or downloaded.
 
 Rebasing MUST also ensure that the latest run image `io.buildpacks.stack.*` labels are updated on the app image.
 
