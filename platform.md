@@ -91,7 +91,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
-- The image config's `Label` field has the label `io.buildpacks.stack.version` set to the release number of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.version` set to the version of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.release_date` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
