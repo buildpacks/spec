@@ -724,7 +724,7 @@ If multiple operations apply to the same environment variable, all operations fo
 
 ##### Override
 
-The environment variable MUST be the file contents.
+The value of the environment variable MUST be the file contents.
 For that environment variable value,
 - Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
 - For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
