@@ -733,7 +733,7 @@ For that environment variable value,
 ##### Prepend
 
 The value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
-In either case, within that environment variable value,
+Within that environment variable value,
 - Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
 - **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` precede file contents in `<layers>/<layer>/env.launch/` or `<layers>/<layer>/env.build/`, which must precede `<layers>/<layer>/env/`.**
