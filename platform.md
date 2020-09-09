@@ -933,6 +933,13 @@ Where:
 tags = ["<tag reference>"]
 digest = "<image digest>"
 image-id = "<imageID>"
+
+[build]
+[[build.bom]]
+name = "<dependency name>"
+
+[build.bom.metadata]
+version = "<dependency version>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
@@ -940,6 +947,8 @@ Where:
   - `digest` MUST contain the image digest
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
+- **If** the app image was the result of a build operation
+  - `build.bom` MUST contain any build Bill-of-Materials entries returned by participating buildpacks
 
 #### `stack.toml` (TOML)
 
