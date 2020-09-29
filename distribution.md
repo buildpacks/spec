@@ -24,7 +24,7 @@ A buildpackage MUST exist as either an OCI image on an image registry, an OCI im
 
 A `.cnb` file MUST be an uncompressed tar archive containing an OCI image. Its file name SHOULD end in `.cnb`.
 
-Each FS layer blob in the buildpackage MUST contain a single buildpack at the following file path:
+Each FS layer blob in the buildpackage intended to be a buildpack MUST contain a single buildpack at the following file path:
 
 ```
 /cnb/buildpacks/<buildpack ID>/<buildpack version>/
