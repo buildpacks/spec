@@ -156,6 +156,16 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
+The platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
+- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+
 ### Run Image
 
 The platform MUST ensure that:
@@ -164,6 +174,16 @@ The platform MUST ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
+
+The platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
+- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
+- The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
 
 ### Mixins
 
@@ -662,6 +682,7 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
+    - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - Set the `created` time in image config to a constant
 
