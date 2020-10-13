@@ -528,7 +528,7 @@ To decide whether layer reuse is appropriate, the buildpack should consider:
 - Whether new application dependency versions have been made available since the layer was created.
 
 At the start of the build phase a buildpack MAY find:
-- Partial `<layers>/<layer>.toml` files describing layers from the previous builds. The restored Layer Content Metadata SHALL NOT contain `launch`, `build`, or `cache` booleans.
+- Partial `<layers>/<layer>.toml` files describing layers from the previous builds. The restored Layer Content Metadata SHALL NOT contain `launch`, `build`, or `cache` booleans even if those values were set on a previous build.
 - `<layers>/<layer>/` directories containing layer contents that have been restored from the cache.
 
 The buildpack:
