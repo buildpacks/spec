@@ -168,7 +168,7 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 
 - Whether the layer directory `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
 - Whether the layer directory `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
-- Whether the layer directory `<layers>/<layer>/` should be persisted to subsequent builds of the same OCI image (via the `cache` boolean).
+- Whether the layer directory `<layers>/<layer>/` should be persisted and made available to subsequent builds of the same OCI image (via the `cache` boolean).
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
@@ -398,7 +398,7 @@ During the build phase, typical buildpacks might:
 1. Provide the application with dependencies for launch in `<layers>/<layer>`.
 1. Reuse application dependencies from a previous image by appending by `launch = true` to `<layers>/<layer>.toml`.
 1. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
-1. Reuse cached build dependencies from a previous build by appending by `build = true` and `cache = true` to `<layers>/<layer>.toml`.
+1. Reuse cached build dependencies from a previous build by appending `build = true` and `cache = true` to `<layers>/<layer>.toml`.
 1. Compile the application source code into object code.
 1. Remove application source code that is not necessary for launch.
 1. Provide start command in `<layers>/launch.toml`.
