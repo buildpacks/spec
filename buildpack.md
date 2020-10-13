@@ -811,7 +811,7 @@ If multiple buildpacks define labels with the same key, the lifecycle MUST use t
 
 For each process, the buildpack:
 
-- MUST specify a `type`. `type`:
+- MUST specify a `type`, which:
   - MUST NOT be identical to other process types provided by the same buildpack.
   - MUST only contain numbers, letters, and the characters ., _, and -.
 - MUST specify a `command` that is either:
