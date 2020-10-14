@@ -811,7 +811,9 @@ If multiple buildpacks define labels with the same key, the lifecycle MUST use t
 
 For each process, the buildpack:
 
-- MUST specify a `type` that is not identical to other process types provided by the same buildpack.
+- MUST specify a `type`, which:
+  - MUST NOT be identical to other process types provided by the same buildpack.
+  - MUST only contain numbers, letters, and the characters ., _, and -.
 - MUST specify a `command` that is either:
   - A command sequence that is valid when executed using the shell, if `args` is not specified.
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
