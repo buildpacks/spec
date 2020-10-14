@@ -24,12 +24,12 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Key](#key)
     - [Detection](#detection)
     - [Build](#build)
+    - [Exec.d](#execd)
     - [Layer Types](#layer-types)
       - [Launch Layers](#launch-layers)
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
       - [Other Layers](#other-layers)
-  - [Exec.d Interface](#execd-interface)
   - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
@@ -163,6 +163,22 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
 | `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
 
+### Exec.d
+
+Executable: `<layers>/<layer>/exec.d/<executable>`, Working Dir: `<app[AI]>`
+
+| Input             | Description
+|-------------------|----------------------------------------------
+| `$0`              | Absolute path of the executable
+| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
+
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | Pass (0) or error (1+)
+| Standard output    | Logs (info)
+| Standard error     | Logs (warnings, errors)
+| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
+
 ### Layer Types
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
@@ -229,22 +245,6 @@ The lifecycle:
   - MUST NOT store the layer or the Layer Content Metadata in the cache.
 
 Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, that exist for the duration of a single build.
-
-## Exec.d Interface
-
-Executable: `<layers>/<layer>/exec.d/<executable>`, Working Dir: `<app[AR]>`
-
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of the executable
-| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
-
-| Output             | Description
-|--------------------|----------------------------------------------
-| [exit status]      | Pass (0) or error (1+)
-| Standard output    | Logs (info)
-| Standard error     | Logs (warnings, errors)
-| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ## App Interface
 
@@ -618,11 +618,11 @@ Given the start command and execution strategy,
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
 2. The lifecycle MUST
-   1. [execute](#execd-interface) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
-   2. [execute](#execd-interface) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
