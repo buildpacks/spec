@@ -223,7 +223,7 @@ Layers marked `launch = false`, `build = false`, and `cache = false` behave like
 
 At the end of each individual buildpack's build phase:
 - The lifecycle:
-  - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`.
+  - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`, in order to prevent subsequent buildpacks from accidentally depending on an ignored layer.
 
 The lifecycle restores all layers from previous builds as ignored layers. Buildpacks MUST set `launch`, `build`, and/or `cache` in `<layers>/<layer>.toml` to use a restored layer.
 
