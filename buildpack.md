@@ -167,6 +167,10 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 
 Executable: `<layers>/<layer>/exec.d/<executable>`, Working Dir: `<app[AI]>`
 
+OR
+
+Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
+
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of the executable
