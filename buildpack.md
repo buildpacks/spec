@@ -1010,11 +1010,13 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 
 A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
 
-Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
-
-The stack ID:
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
+Each stack in `stacks` either:
+- MUST identify a compatible stack:
+   - `id` MUST be set to a valid stack ID.
+   - `mixins` MAY contain one or more mixin names.
+- Or MUST indicate compatibility with any stack:
+   - `id` MUST be set to the special value `"*"`.
+   - `mixins` MUST be empty.
 
 #### Order Buildpacks
 
