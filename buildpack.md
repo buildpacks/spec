@@ -24,9 +24,11 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Key](#key)
     - [Detection](#detection)
     - [Build](#build)
+    - [Exec.d](#execd)
     - [Layer Types](#layer-types)
       - [Launch Layers](#launch-layers)
       - [Build Layers](#build-layers)
+      - [Cached Layers](#cached-layers)
       - [Other Layers](#other-layers)
   - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
@@ -73,6 +75,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
       - [Buildpack Implementations](#buildpack-implementations)
       - [Order Buildpacks](#order-buildpacks)
+    - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
     - [`0.3`](#03)
       - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
@@ -149,7 +152,9 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
-| `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for the launched process
+| `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type
+| `<layers>/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd-interface) before launch
+| `<layers>/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd-interface) before launch
 | `<layers>/<layer>/include/`              | C/C++ headers for subsequent buildpacks
 | `<layers>/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks
 | `<layers>/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks
@@ -157,6 +162,26 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
 | `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
 | `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
+
+### Exec.d
+
+Executable: `<layers>/<layer>/exec.d/<executable>`, Working Dir: `<app[AI]>`
+
+OR
+
+Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
+
+| Input             | Description
+|-------------------|----------------------------------------------
+| `$0`              | Absolute path of the executable
+| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
+
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | Pass (0) or error (1+)
+| Standard output    | Logs (info)
+| Standard error     | Logs (warnings, errors)
+| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ### Layer Types
 
@@ -596,7 +621,17 @@ Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
-2. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
+2. The lifecycle MUST
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+
+3. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
    1. source each file in each `<layers>/<layer>/profile.d` directory,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
@@ -607,7 +642,10 @@ Given the start command and execution strategy,
       3. Thirdly, in alphabetically ascending order by file name.
    3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
-3. The lifecycle MUST invoke the start command with the decided execution strategy.
+
+3. If using an execution strategy involving a shell, the lifecycle MUST source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+
+4. The lifecycle MUST invoke the start command with the decided execution strategy.
 
 [†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
@@ -656,12 +694,12 @@ In either case,
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                          | Detect | Build | Launch
-|-----------------|--------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                      | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for profile.d |        |       | [x]
-| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
+| Env Variable    | Description                                    | Detect | Build | Launch
+|-----------------|------------------------------------------------|--------|-------|--------
+| `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
+| `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
+| `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
+| `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
@@ -983,6 +1021,20 @@ The stack ID:
 A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+
+### Exec.d Output (TOML)
+```
+<name> = "<value>"
+```
+
+The output from an `exec.d` script MAY contain any number of top-level key/value pairs.
+
+Each `name`:
+* MUST be a [bare key](https://github.com/toml-lang/toml/blob/master/toml.md#keys).
+* MUST be a valid environment variable name on the runtime operating system.
+
+Each `key`:
+* MUST be a [basic string](https://github.com/toml-lang/toml/blob/master/toml.md#string).
 
 ## Deprecations
 This section describes all the features that are deprecated.
