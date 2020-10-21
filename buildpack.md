@@ -1012,7 +1012,7 @@ A buildpack descriptor that specifies `stacks` MUST describe a buildpack that im
 
 Each stack in `stacks` either:
 - MUST identify a compatible stack:
-   - `id` MUST be set to a valid stack ID.
+   - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
    - `mixins` MAY contain one or more mixin names.
 - Or MUST indicate compatibility with any stack:
    - `id` MUST be set to the special value `"*"`.
