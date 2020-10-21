@@ -50,6 +50,6 @@ When the specification refers to a path in the context of an OCI layer tar (e.g.
 
 These documents currently specify:
 
-- Buildpack API: `0.4`
+- Buildpack API: `0.5`
 - Distribution API: `0.2`
 - Platform API: `0.5`
