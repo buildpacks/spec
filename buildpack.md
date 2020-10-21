@@ -1,8 +1,8 @@
 # Buildpack Interface Specification
 
-This document specifies the interface between a single lifecycle and one or more buildpacks.
+This document specifies the interface between a lifecycle program and one or more buildpacks.
 
-A lifecycle is a program that uses buildpacks to transform application source code into an OCI image containing the compiled application.
+The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
 
 This is accomplished in four phases:
 
