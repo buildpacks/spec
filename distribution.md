@@ -17,7 +17,7 @@ This document specifies the artifact format, delivery mechanism, and order resol
 
 This document specifies Distribution API version `0.2`.
 
-Platform API versions:
+Distribution API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
