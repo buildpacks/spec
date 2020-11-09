@@ -1,6 +1,6 @@
 # Platform Interface Specification
 
-This document specifies the interface between a lifecycle and a platform.
+This document specifies the interface between implementations of a `lifecycle` program and a `platform` program.
 
 A platform orchestrates a lifecycle to make buildpack functionality available to end-users such as application developers.
 
