@@ -987,6 +987,10 @@ name = "<dependency name>"
 
 [build.bom.metadata]
 version = "<dependency version>"
+
+[build.bom.buildpack]
+id = "<buildpack ID>"
+version = "<buildpack version>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
