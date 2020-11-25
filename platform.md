@@ -25,6 +25,7 @@ Examples of a platform might include:
     - [Run Image](#run-image)
     - [Mixins](#mixins)
     - [Compatibility Guarantees](#compatibility-guarantees)
+    - [Stack Buildpacks](#stack-buildpacks)
   - [Lifecycle Interface](#lifecycle-interface)
     - [Platform API Compatibility](#platform-api-compatibility)
     - [Operations](#operations)
@@ -46,18 +47,21 @@ Examples of a platform might include:
       - [`builder`](#builder)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
-      - [`exporter`](#exporter)
+      - [`extender`](#extender)
         - [Inputs](#inputs-4)
         - [Outputs](#outputs-4)
-      - [`creator`](#creator)
+      - [`exporter`](#exporter)
         - [Inputs](#inputs-5)
         - [Outputs](#outputs-5)
-      - [`rebaser`](#rebaser)
+      - [`creator`](#creator)
         - [Inputs](#inputs-6)
         - [Outputs](#outputs-6)
-      - [`launcher`](#launcher)
+      - [`rebaser`](#rebaser)
         - [Inputs](#inputs-7)
         - [Outputs](#outputs-7)
+      - [`launcher`](#launcher)
+        - [Inputs](#inputs-8)
+        - [Outputs](#outputs-8)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
   - [Buildpacks](#buildpacks)
@@ -123,6 +127,8 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
+A **stack buildpack** is a type of buildpack that is provided by the stack and MUST run with root privileges.
+
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
 
@@ -145,6 +151,7 @@ A typical stack might specify:
 * OS packages installed in the launch environment.
 * Trusted CA certificates in the launch environment.
 * The default user and the build and launch environments.
+* A set of stack buildpacks.
 
 Stack authors SHOULD define the contract such that any stack images CVEs can be addressed with security patches without violating the [compatibility guarantees](#compatibility-guarantees).
 
@@ -223,6 +230,10 @@ Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](http
 
 During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
 
+### Stack Buildpacks
+
+A stack MAY provide stack buildpacks by including them in the `/cnb/stack/buildpacks` directory, and providing an `/cnb/stack/order.toml` (following the [`order.toml` schema](https://github.com/buildpacks/spec/blob/main/platform.md#ordertoml-toml)) to define their order of execution.
+
 ## Lifecycle Interface
 ### Platform API Compatibility
 
@@ -241,6 +252,7 @@ A single app image build* consists of the following phases:
 1. Analysis
 1. Cache Restoration
 1. Build*
+1. Extend
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
@@ -248,6 +260,7 @@ A platform MUST execute these phases either by invoking the following phase-spec
 1. `/cnb/lifecycle/analyzer`
 1. `/cnb/lifecycle/restorer`
 1. `/cnb/lifecycle/builder`
+1. `/cnb/lifecycle/extender`
 1. `/cnb/lifecycle/exporter`
 
 or by executing `/cnb/lifecycle/creator`.
@@ -258,10 +271,14 @@ or by executing `/cnb/lifecycle/creator`.
 #### Rebase
 When an updated run image with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
-When layers are rebased, any app image metadata referenceing to the original run image MUST be updated to reference to the new run image.
+When layers are rebased, any app image metadata referencing the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
+
+Before an app image is rebased, the platform MUST re-run any stack buildpacks—that were used to build the app image—against the new run-image. The rebase process MUST determine which stack buildpacks to run using a provided [`stack-group.toml`](#grouptoml-toml). The Buildpack Plan MUST BE stored in a `LABEL` of the app image, which MUST BE serialized back to a `plan.toml` during rebase. To each stack buildpack, it will pass the buildpack plan derived from the provided [`plan.toml`](https://github.com/buildpacks/spec/blob/main/platform.md#plantoml-toml).
+
+Then, the rebase operation can be performed as normal, while including the stack buildpack layers as part of the stack. This will be made possible by including the stack buildpack in the run-image, but because the stack buildpack detect phase is not run, the operation does not need access to the application source.
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
  
@@ -289,7 +306,11 @@ Usage:
   [-log-level <log-level>] \
   [-order <order>] \
   [-plan <plan>] \
-  [-platform <platform>]
+  [-platform <platform>] \
+  [-stack-buildpacks <stack-buildpacks>] \
+  [-stack-group <group>] \
+  [-stack-order <order>] \
+  [-stack-platform <stack-platform>]
 ```
 
 ##### Inputs
@@ -303,6 +324,10 @@ Usage:
 | `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| `<stack-buildpacks>`  | `CNB_STACK_BUILDPACKS_DIR`  | `/cnb/stack/buildpacks` | Path to stack buildpacks directory (see [Buildpacks Directory Layout]
+| `<stack-group>`       | `CNB_STACK_GROUP_PATH`      | `./stack-group.toml`    | Path to output group definition(#buildpacks-directory-layout))
+| `<stack-order>`.      | `CNB_STACK_ORDER_PATH`.     | `/cnb/stack/order.toml`| Path to order definition (see order.toml)
+| `<stack-platform>`   | `CNB_STACK_PLATFORM_DIR`    | `/stack-platform`       | Path to stack-specific platform directory
 
 ##### Outputs
 | Output             | Description
@@ -312,6 +337,7 @@ Usage:
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<group>`          | Detected buildpack group  (see [`group.toml`](#grouptoml-toml))
 | `<plan>`           | Resolved Build Plan (see [`plan.toml`](#plantoml-toml))
+| `<stack-group>`    | Detected stack buildpack group  (see [`group.toml`](#grouptoml-toml))
 
 | Exit Code | Result|
 |-----------|-------|
@@ -455,7 +481,10 @@ Usage:
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-plan <plan>] \
-  [-platform <platform>]
+  [-platform <platform>] \
+  [-stack-buildpacks <stack-buildpacks>] \
+  [-stack-group <stack-group>] \
+  [-stack-platform <stack-platform>]
 ```
 
 ##### Inputs
@@ -468,6 +497,9 @@ Usage:
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
 | `<plan>`       | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| `<stack-buildpacks>`  | `CNB_STACK_BUILDPACKS_DIR`  | `/cnb/stack/buildpacks` | Path to stack buildpacks directory (see [Buildpacks Directory Layout]
+| `<stack-group>`       | `CNB_STACK_GROUP_PATH`      | `./stack-group.toml`    | Path to output group definition(#buildpacks-directory-layout))
+| `<stack-platform>`   | `CNB_STACK_PLATFORM_DIR`    | `/stack-platform`       | Path to stack-specific platform directory
 
 ##### Outputs
 | Output                                     | Description
@@ -478,6 +510,8 @@ Usage:
 | `<layers>/<buildpack ID>/<layer>`          | Layer contents (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/<buildpack ID>/<layer>.toml`     | Layer metadata (see [Buildpack Interface Specfication](buildpack.md)
 | `<layers>/config/metadata.toml`            | Build metadata (see [`metadata.toml`](#metadatatoml-toml))
+| `<layers>/<buildpack ID>.tgz`              | Layer snapshot (see [Buildpack Interface Specfication](buildpack.md)
+| `<layers>/stack-layer.toml`                | Layer snaphot metadata
 
 | Exit Code | Result|
 |-----------|-------|
@@ -491,6 +525,51 @@ Usage:
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL aggregate all `processes`, `slices` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
+
+#### `extender`
+Usage:
+```
+/cnb/lifecycle/extender \
+  [-stack-buildpacks <stack-buildpacks>] \
+  [-stack-group <stack-group>] \
+  [-layers <layers>] \
+  [-log-level <log-level>] \
+  [-plan <plan>] \
+  [-stack-platform <stack-platform>]
+```
+
+##### Inputs
+| Input          | Env                   | Default Value     | Description
+|----------------|-----------------------|-------------------|----------------------
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`         | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`            | Log Level
+| `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
+| `<stack-platform>`   | `CNB_STACK_PLATFORM_DIR`    | `/stack-platform`       | Path to stack-specific platform directory
+| `<stack-buildpacks>`  | `CNB_STACK_BUILDPACKS_DIR`  | `/cnb/stack/buildpacks` | Path to stack buildpacks directory (see [Buildpacks Directory Layout]
+| `<stack-group>`       | `CNB_STACK_GROUP_PATH`      | `./stack-group.toml`    | Path to output group definition(#buildpacks-directory-layout))
+
+##### Outputs
+| Output                                     | Description
+|--------------------------------------------|----------------------------------------------
+| [exit status]                              | (see Exit Code table below for values)
+| `/dev/stdout`                              | Logs (info)
+| `/dev/stderr`                              | Logs (warnings, errors)
+| `<layers>/<buildpack ID>.tgz`              | Layer snapshot (see [Buildpack Interface Specfication](buildpack.md)
+| `<layers>/stack-layer.toml`                | Layer snaphot metadata
+| `<layers>/config/metadata.toml`            | Build metadata (see [`metadata.toml`](#metadatatoml-toml))
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `401`     | Buildpack build error
+| `400`, `402-499`|  Build-specific lifecycle errors
+
+- The lifecycle SHALL execute all stack buildpacks in the order defined in `<stack-group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
+- The lifecycle SHALL add all invoked stack buildpacks to`<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
 
 #### `exporter`
 Usage:
@@ -512,6 +591,8 @@ Usage:
   [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-stack <stack>] \
+  [-stack-group <stack-group>] \
+  [-stack-layers <stack-layers>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -536,6 +617,8 @@ Usage:
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
 | `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
+| `<stack-group>`     | `CNB_STACK_GROUP_PATH`      | `./stack-group.toml`      | Path to stack-group file (see [`group.toml`](#grouptoml-toml))
+| `<stack-layers>`    | `CNB_STACK_LAYERS_DIR`      | `/stack-layers`           | Path to stack layers directory from extend phase
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
@@ -658,9 +741,11 @@ Outputs produced by `creator` are identical to those produced by `exporter`, wit
 Usage:
 ```
 /cnb/lifecycle/rebaser \
+  [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-log-level <log-level>] \
+  [-plan <plan>] \
   [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-uid <uid>] \
@@ -670,12 +755,16 @@ Usage:
 ##### Inputs
 | Input               | Environment Variable  | Default Value          | Description
 |---------------------|-----------------------|------------------------|---------------------------------------
+| `<cache-image>`     | `CNB_CACHE_IMAGE`     |                        | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
+| `<plan>`       | `CNB_PLAN_PATH`       | `./plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
 | `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
+| `<stack-platform>`   | `CNB_STACK_PLATFORM_DIR`    | `/stack-platform`       | Path to stack-specific platform directory
+| `<stack-group>`     | `CNB_STACK_GROUP_PATH` | `./stack-group.toml`    | Path to group definition(#buildpacks-directory-layout)) of buildpacks that run during the extend phase that created the image being rebased.
 | `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
 
 - At least one `<image>` must be provided
