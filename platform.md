@@ -1064,8 +1064,8 @@ Where:
 - `buildpacks` MUST contain the detected group
 - `bom` MUST contain the Bill of Materials
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
-- `luancher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
-- `luancher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
+- `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
+- `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
 
 #### `io.buildpacks.lifecycle.metadata` (JSON)
 
