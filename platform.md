@@ -574,10 +574,7 @@ Usage:
     - **If** `<process-type>` matches a buildpack-provided process:
       - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
     - **If** `<process-type>` does not match a buildpack-provided process:
-      - **If** there is exactly one buildpack-provided process:
-        - MUST have `ENTRYPOINT=/cnb/process/<type>` where `<type>` matches the `type` of the process
-      - **Else**:
-        - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
+      - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
     - MUST contain the following `Env` entries
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
