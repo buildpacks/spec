@@ -8,9 +8,18 @@ This document specifies the artifact format, delivery mechanism, and order resol
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Distribution Specification](#distribution-specification)
   - [Table of Contents](#table-of-contents)
+  - [Distribution API Version](#distribution-api-version)
   - [Artifact Format](#artifact-format)
     - [Buildpack](#buildpack)
     - [Buildpackage](#buildpackage)
+
+## Distribution API Version
+
+This document specifies Distribution API version `0.2`.
+
+Distribution API versions:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
 ## Artifact Format
 
@@ -24,7 +33,11 @@ A buildpackage MUST exist as either an OCI image on an image registry, an OCI im
 
 A `.cnb` file MUST be an uncompressed tar archive containing an OCI image. Its file name SHOULD end in `.cnb`.
 
-Each FS layer blob in the buildpackage MUST contain a single buildpack at the following file path:
+[†](README.md#linux-only)For Linux buildpackages, all FS layers MUST be buildpack layers.
+
+[‡](README.md#windows-only)For Windows buildpackages, all FS layers MUST be either buildpack or OS layers.
+
+Each buildpack layer blob MUST contain a single buildpack at the following file path:
 
 ```
 /cnb/buildpacks/<buildpack ID>/<buildpack version>/
