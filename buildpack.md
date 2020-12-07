@@ -153,8 +153,8 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
 | `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type
-| `<layers>/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd-interface) before launch
-| `<layers>/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd-interface) before launch
+| `<layers>/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch
+| `<layers>/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch
 | `<layers>/<layer>/include/`              | C/C++ headers for subsequent buildpacks
 | `<layers>/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks
 | `<layers>/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks
