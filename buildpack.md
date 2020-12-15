@@ -152,6 +152,8 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
+#### Application Buildpack Outputs
+
 | Output                                   | Description
 |------------------------------------------|--------------------------------------
 | [exit status]                            | Success (0) or failure (1+)
@@ -159,7 +161,6 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
-| `<layers>/stack-layer.toml`              | Stack layer metadata (see [stack-layer.toml](#stack-layer-content-metadata-toml))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Application layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
@@ -175,6 +176,15 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
 | `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
 | `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
+
+#### Stack Buildpack Outputs
+
+| Output                                   | Description
+|------------------------------------------|--------------------------------------
+| [exit status]                            | Success (0) or failure (1+)
+| Standard output                          | Logs (info)
+| Standard error                           | Logs (warnings, errors)
+| `<layers>/stack-layer.toml`              | Stack layer metadata (see [stack-layer.toml](#stack-layer-content-metadata-toml))
 
 ### Exec.d
 
