@@ -27,7 +27,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Detection](#detection)
     - [Build](#build)
     - [Exec.d](#execd)
-    - [Userspace Layer Types](#userspace-layer-types)
+    - [Application Layer Types](#application-layer-types)
       - [Launch Layers](#launch-layers)
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
@@ -47,7 +47,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Process](#process-2)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
       - [Bills-of-Materials](#bills-of-materials)
-      - [Userspace Layers](#userspace-layers)
+      - [Application Layers](#application-layers)
   - [Phase #4: Extend](#phase-4-extend)
     - [Purpose](#purpose-3)
     - [Process](#process-3)
@@ -96,7 +96,7 @@ Buildpack API versions:
 
 ## Types of Buildpacks
 
-- `userspace buildpack` - a traditional buildpack that does not run as root, and has access to the app being built.
+- `application buildpack` - a traditional buildpack that does not run as root, and has access to the app being built.
 - `stack buildpack` - a type of buildpack that runs with root privileges against the stack image(s) instead of an app. Stack buildpacks must not make changes to the build and run images that either violate stack compatibility guarantees or violate the contract defined by that stack's author.
 
 ## Buildpack Interface
@@ -161,7 +161,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
 | `<layers>/stack-layer.toml`              | Stack layer metadata (see [stack-layer.toml](#stack-layer-content-metadata-toml))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
-| `<layers>/<layer>.toml`                  | Userspace layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
+| `<layers>/<layer>.toml`                  | Application layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
@@ -196,9 +196,9 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | Standard error     | Logs (warnings, errors)
 | FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
-### Userspace Layer Types
+### Application Layer Types
 
-The lifecycle MUST accept either [Userspace Layer Content Metadata](#layer-content-metadata-toml) defined in a set of `<layers>/<layer>.toml` files OR a `<layers>/stack-layer.toml` as output from a buildpack, but not both. Userspace layers are defined as layers created from a `<layers>/<layer>.toml` file.
+The lifecycle MUST accept either [Application Layer Content Metadata](#layer-content-metadata-toml) defined in a set of `<layers>/<layer>.toml` files OR a `<layers>/stack-layer.toml` as output from a buildpack, but not both. Application layers are defined as layers created from a `<layers>/<layer>.toml` file.
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
 
@@ -267,11 +267,11 @@ Layers marked `launch = false`, `build = false`, and `cache = false` behave like
 
 ### Stack Layers
 
-All changes made by a stack buildpack in the extend phase will be included in a single layer produced as output from the buildpack, which MUST be mounted into the `/run-layers` directory of the export container. Any changes performed by the stack buildpack to the build image MUST persist through execution of userspace buildpacks, but MUST NOT be exported as a layer.
+All changes made by a stack buildpack in the extend phase will be included in a single layer produced as output from the buildpack, which MUST be mounted into the `/run-layers` directory of the export container. Any changes performed by the stack buildpack to the build image MUST persist through execution of application buildpacks, but MUST NOT be exported as a layer.
 
 The stack buildpack's layer MAY be enriched by providing [Stack Layer Content Metadata](#stack-layer-content-metadata-toml) in a `<layers>/stack-layer.toml` file. The `<layers>/stack-layer.toml` MAY define globs of files to be excluded from the image when it is _exported_. Any excluded path MAY also be marked as _cached_, so that those excluded paths are recovered before the build or extend phase. The term _exported_ is defined as:
 
-* *Exported for build-time build*: A given path is excluded at userspace buildpack build-time, and recovered the next time the build image is extended with the stackpack.
+* *Exported for build-time build*: A given path is excluded at application buildpack build-time, and recovered the next time the build image is extended with the stackpack.
 * *Exported for build-time run*: A given path is excluded from the final image, and restored the next time the run image is extended with the stackpack (either rebase or rebuild).
 * *Exported for rebase run*: A given path is excluded from the rebased image, and recovered the next time the run image is extended with the stackpack (either rebase or rebuild).
 
@@ -336,7 +336,7 @@ A stack buildpack MAY NOT require any entries in the build plan.
 For a given buildpack group, a sequence of trials is generated by selecting a single potential Build Plan from each buildpack in a left-to-right, depth-first order.
 The group fails to detect if all trials fail to detect.
 
-Each dependency in the `requires` and `provides` MAY be a mixin. A dependency that does not specify a mixin is called a non-mixin dependency. A userspace buildpack MAY NOT provide mixins in the build plan. A userspace buildpack MAY require mixins in the build plan.
+Each dependency in the `requires` and `provides` MAY be a mixin. A dependency that does not specify a mixin is called a non-mixin dependency. A application buildpack MAY NOT provide mixins in the build plan. A application buildpack MAY require mixins in the build plan.
 
 For each trial,
 - If a required buildpack provides a non-mixin dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
@@ -525,7 +525,7 @@ Correspondingly, each `/bin/build` executable:
 - SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 
-Each `/bin/build` executable of a userspace buildpack:
+Each `/bin/build` executable of a application buildpack:
 
 - MAY read or write to the `<app>` directory.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
@@ -564,9 +564,9 @@ If generated, this BOM MUST contain all `bom` entries in each `launch.toml` at t
 When the build is complete, a build BOM describing the build container MAY be generated for auditing purposes.
 If generated, this build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
-#### Userspace Layers
+#### Application Layers
 
-A userspace buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files as specified in the [Layer Types](#layer-types) section.
+A application buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files as specified in the [Layer Types](#layer-types) section.
 
 To decide what layer operations are appropriate, the buildpack should consider:
 
@@ -629,7 +629,7 @@ After each `/bin/build` executable, the lifecycle MUST:
 
 #### Excluded Paths
 
-The following directories and files MUST be excluded from the stack layer created during the extend phase. 
+The following directories and files MUST be excluded from the stack layer created during the extend phase.
 
 - `/tmp`
 - `/cnb`
@@ -1100,7 +1100,7 @@ cache = false
 
 Where:
 
-* `paths` = a list of paths to exclude from the app image layer in the extend phase. During the build phase, these paths will be removed from the filesystem before executing any userspace buildpacks.
+* `paths` = a list of paths to exclude from the app image layer in the extend phase. During the build phase, these paths will be removed from the filesystem before executing any application buildpacks.
 * `cache` = if true, the paths will be cached even if they are removed from the filesystem.
 
 1. Paths not referenced by an `[[excludes]]` entry will be included in the app-image layer (default).
