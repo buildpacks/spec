@@ -356,7 +356,9 @@ Usage:
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
+  [-run-image <run-image>] \
   [-skip-layers <skip-layers>] \
+  [-stack <stack-id>] \
   [-uid <uid>] \
   <image>
 ```
@@ -373,6 +375,8 @@ Usage:
 | `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<run-image>`  | `CNB_RUN_IMAGE`       |                          | Location of the run-image
+| `<stack>`      | `CNB_STACK_ID`        |                          | Chosen stack ID
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
 | `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
 
