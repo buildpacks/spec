@@ -177,7 +177,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Run Image
 
@@ -196,7 +196,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Mixins
 
@@ -264,7 +264,7 @@ This entire operation is referred to as rebasing the app image.
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
- 
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher` SHALL be the `ENTRYPOINT` for all app images.
@@ -279,7 +279,7 @@ All lifecycle phases:
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
@@ -328,7 +328,7 @@ The lifecycle:
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
 #### `analyzer`
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
@@ -446,7 +446,7 @@ For each layer metadata file found in the `<layers>` directory, the lifecycle:
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/builder \
   [-app <app>] \
@@ -808,7 +808,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 |-----------------|--------------------------------------
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
-    
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
 | Env Variable      | Layer Path   | Contents
