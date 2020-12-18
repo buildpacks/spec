@@ -531,8 +531,6 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
-  [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
-  [-stack <stack>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -555,15 +553,12 @@ Usage:
 | `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-- **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of `stack`
 
 ##### Outputs
 | Output             | Description
