@@ -177,7 +177,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Run Image
 
@@ -196,7 +196,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Mixins
 
@@ -244,8 +244,8 @@ A single app image build* consists of the following phases:
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
-1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/analyzer`
+1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/restorer`
 1. `/cnb/lifecycle/builder`
 1. `/cnb/lifecycle/exporter`
@@ -264,7 +264,7 @@ This entire operation is referred to as rebasing the app image.
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
- 
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher` SHALL be the `ENTRYPOINT` for all app images.
@@ -279,7 +279,7 @@ All lifecycle phases:
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
@@ -295,6 +295,7 @@ Usage:
 ##### Inputs
 | Input         | Environment Variable    | Default Value             | Description
 |---------------|-------------------------|---------------------------|----------------------
+| `<analyzed>`    | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<app>`         | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
 | `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
 | `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to output group definition
@@ -303,6 +304,7 @@ Usage:
 | `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| `<stack>`       | `CNB_STACK_PATH`      | `/cnb/stack.toml`     | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 
 ##### Outputs
 | Output             | Description
@@ -328,7 +330,7 @@ The lifecycle:
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
 #### `analyzer`
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
@@ -446,7 +448,7 @@ For each layer metadata file found in the `<layers>` directory, the lifecycle:
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/builder \
   [-app <app>] \
@@ -808,7 +810,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 |-----------------|--------------------------------------
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
-    
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
 | Env Variable      | Layer Path   | Contents
@@ -871,6 +873,7 @@ For more information on build reproducibility see [https://reproducible-builds.o
 ```toml
 [image]
   reference = "<image reference>"
+  mixins = [ "<mixin name>" ]
 
 [metadata]
 # layer metadata
@@ -878,6 +881,7 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 Where:
 - `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `image.mixins` MUST contain mixin names for each mixin applied to the image
 - `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
@@ -1003,6 +1007,9 @@ Where:
 [run-image]
  image = "<image>"
  mirrors = ["<mirror>", "<mirror>"]
+
+[build-image]
+ mixins = [ "<mixin name>" ]
 ```
 
 Where:
@@ -1012,6 +1019,7 @@ Where:
 - All `run-image.mirrors`:
   - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
+- `build-image.mixins` MUST contain mixin names for each mixin applied to the build image
 
 ### Labels
 
