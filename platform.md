@@ -886,10 +886,14 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 ```toml
 [image]
+  os = "<operating system>"
+  arch = "<architecture>"
   reference = "<image reference>"
   mixins = [ "<mixin name>" ]
 
 [run-image]
+  os = "<operating system>"
+  arch = "<architecture>"
   reference = "<image reference>"
   mixins = [ "<mixin name>" ]
 
@@ -898,8 +902,12 @@ For more information on build reproducibility see [https://reproducible-builds.o
 ```
 
 Where:
+- `image.os` MUST contain the operating system identifier of the image
+- `image.arch` MUST contain the architecture identifier of the image
 - `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `image.mixins` MUST contain mixin names for each mixin applied to the image
+- `run-image.os` MUST contain the operating system identifier of the image
+- `run-image.arch` MUST contain the architecture identifier of the image
 - `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `run-image.mixins` MUST contain mixin names for each mixin applied to the image
 - `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
