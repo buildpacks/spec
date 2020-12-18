@@ -214,7 +214,7 @@ However, mixins MAY consist of any changes that follow the [Compatibility Guaran
 
 #### Mixin Resolution
 
-During analysis, a list of provided mixins MUST be retrived from the image being analyzed.
+During analysis, a list of provided mixins MUST be retrived from the provided run-image. The analyzer should either fail or ignore the previous image if the run-image is missing any mixins that were present on the previous image.
 
 During detection, a list of required mixins MUST be resolved against a list of provided mixins.
 
@@ -894,6 +894,10 @@ For more information on build reproducibility see [https://reproducible-builds.o
   reference = "<image reference>"
   mixins = [ "<mixin name>" ]
 
+[run-image]
+  reference = "<image reference>"
+  mixins = [ "<mixin name>" ]
+
 [metadata]
 # layer metadata
 ```
@@ -901,6 +905,8 @@ For more information on build reproducibility see [https://reproducible-builds.o
 Where:
 - `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `image.mixins` MUST contain mixin names for each mixin applied to the image
+- `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `run-image.mixins` MUST contain mixin names for each mixin applied to the image
 - `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
