@@ -157,6 +157,18 @@ The stack ID:
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - SHOULD use reverse domain name notation to avoid name collisions.
 
+### Stack Validation
+
+During analysis, the stack properties of the new image MUST be compared to the stack properties of the previous image. If any of the following are true, the analysis MUST fail:
+* A mixin listed on the previous image does not exist on the new run-image
+* The operating system of the previous image does not matches the new run-image
+* The architecture of the previous image does not matches the new run-image
+
+During detection, the stack properties of the build image MUST be compared to the stack properties of the run-image. If any of the following are true, the analysis MUST fail:
+* The stack ID of the build-image does not matches the run-image
+* The operating system of the build-image does not matches the run-image
+* The architecture of the build-image does not matches the run-image
+
 ### Build Image
 
 The platform MUST ensure that:
