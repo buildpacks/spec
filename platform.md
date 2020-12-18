@@ -252,8 +252,8 @@ If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifec
 #### Build
 A single app image build* consists of the following phases:
 
-1. Detection
 1. Analysis
+1. Detection
 1. Cache Restoration
 1. Build*
 1. Export
