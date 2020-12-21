@@ -4,12 +4,13 @@ This document specifies the interface between a lifecycle program and one or mor
 
 The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
 
-This is accomplished in four phases:
+This is accomplished in four required phases, and one optional phase:
 
 1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
-3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
-4. **Export,** where the remote layers are replaced by the generated layers.
+1. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
+1. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
+1. **Extend,** (optional) where privileged buildpacks generate OCI layers that will be made available at runtime.
+1. **Export,** where the remote layers are replaced by the generated layers.
 
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
@@ -19,17 +20,19 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
   - [Buildpack API Version](#buildpack-api-version)
+  - [Types of Buildpacks](#types-of-buildpacks)
   - [Buildpack Interface](#buildpack-interface)
     - [Buildpack API Compatibility](#buildpack-api-compatibility)
     - [Key](#key)
     - [Detection](#detection)
     - [Build](#build)
     - [Exec.d](#execd)
-    - [Layer Types](#layer-types)
+    - [Application Layer Types](#application-layer-types)
       - [Launch Layers](#launch-layers)
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
       - [Other Layers](#other-layers)
+    - [Stack Layers](#stack-layers)
   - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
@@ -44,13 +47,16 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Process](#process-2)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
       - [Bills-of-Materials](#bills-of-materials)
-      - [Layers](#layers)
-  - [Phase #4: Export](#phase-4-export)
+      - [Application Layers](#application-layers)
+  - [Phase #4: Extend](#phase-4-extend)
     - [Purpose](#purpose-3)
     - [Process](#process-3)
-  - [Launch](#launch)
+  - [Phase #5: Export](#phase-5-export)
     - [Purpose](#purpose-4)
     - [Process](#process-4)
+  - [Launch](#launch)
+    - [Purpose](#purpose-5)
+    - [Process](#process-5)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
       - [Buildpack Specific Variables](#buildpack-specific-variables)
@@ -87,6 +93,11 @@ This document specifies Buildpack API version `0.5`
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
+
+## Types of Buildpacks
+
+- `application buildpack` - a traditional buildpack that does not run as root, and has access to the app being built.
+- `stack buildpack` - a type of buildpack that runs with root privileges against the stack image(s) instead of an app. Stack buildpacks must not make changes to the build and run images that either violate stack compatibility guarantees or violate the contract defined by that stack's author.
 
 ## Buildpack Interface
 
@@ -141,6 +152,8 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
+#### Application Buildpack Outputs
+
 | Output                                   | Description
 |------------------------------------------|--------------------------------------
 | [exit status]                            | Success (0) or failure (1+)
@@ -149,7 +162,7 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
-| `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
+| `<layers>/<layer>.toml`                  | Application layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
@@ -163,6 +176,15 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
 | `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
 | `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
+
+#### Stack Buildpack Outputs
+
+| Output                                   | Description
+|------------------------------------------|--------------------------------------
+| [exit status]                            | Success (0) or failure (1+)
+| Standard output                          | Logs (info)
+| Standard error                           | Logs (warnings, errors)
+| `<layers>/stack-layer.toml`              | Stack layer metadata (see [stack-layer.toml](#stack-layer-content-metadata-toml))
 
 ### Exec.d
 
@@ -184,7 +206,9 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | Standard error     | Logs (warnings, errors)
 | FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
-### Layer Types
+### Application Layer Types
+
+Application layers are defined as layers created from a `<layers>/<layer>.toml` file. The lifecycle MUST accept either [Application Layer Content Metadata](#layer-content-metadata-toml) defined in a set of `<layers>/<layer>.toml` files OR a [Stack Layer](#stack-layer) defined by a `<layers>/stack-layer.toml` as output from a buildpack, but not both.
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
 
@@ -251,6 +275,15 @@ The lifecycle:
 
 Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, that exist for the duration of a single build.
 
+### Stack Layers
+
+All changes made by a stack buildpack in the extend phase MAY be included in a single layer produced as output from the buildpack, which MUST be mounted into the `/run-layers` directory of the export container. Any changes performed by the stack buildpack to the build image MUST persist through execution of application buildpacks, but MUST NOT be exported as a layer.
+
+The stack buildpack's layer MAY be enriched by providing [Stack Layer Content Metadata](#stack-layer-content-metadata-toml) in a `<layers>/stack-layer.toml` file. The `<layers>/stack-layer.toml` MAY define globs of files to be excluded from the image when it is _exported_. Any excluded path MAY also be marked as _cached_, so that those excluded paths are recovered before the build or extend phase. The term _excluded_ is defined as:
+
+* *Excluded during build phase*: Files at matching paths are removed from the filesystem before application buildpack execution. If cached, on subsequent build operations, the excluded files will be restored to the build-image filesystem before stackpack execution.
+* *Excluded during extend phase*: A given path is excluded from the snapshot layer (and thus from the final image). If cached, on subsequent build or rebase operations, the excluded files will be restored to the run-image filesystem before stackpack execution.
+
 ## App Interface
 
 | Output                 | Description
@@ -270,9 +303,12 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- A single group of stack buildpack resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- An ordered list of application buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
 - A shell, if needed,
+
+For each group in the ordered list of application buildpack groups, the stack buildpack group MAY be appended to the begining of the application buildpack group with the stack buildpacks as _optional_ buildpacks in the resulting group.
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
@@ -307,16 +343,18 @@ Each `requires` and `provides` section MUST be a list of entries formatted as de
 
 Each pairing of `requires` and `provides` sections (at the top level, or inside of an `or` array) is a potential Build Plan.
 
+A stack buildpack MAY NOT require any entries in the build plan.
+
 For a given buildpack group, a sequence of trials is generated by selecting a single potential Build Plan from each buildpack in a left-to-right, depth-first order.
 The group fails to detect if all trials fail to detect.
 
-Each dependency in the `requires` and `provides` MAY be a [mixin](platform.md#mixins). A dependency that does not specify a mixin is called a non-mixin dependency. A buildpack MAY NOT provide mixins in the build plan. A buildpack MAY require mixins in the build plan.
+Each dependency in the `requires` and `provides` MAY be a mixin. A dependency that does not specify a mixin is called a _non-mixin dependency_. A application buildpack MAY NOT provide mixins in the build plan. A application buildpack MAY require mixins in the build plan.
 
 For each trial,
-- If a required buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
-- If a required buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the trial MUST fail to detect.
-- If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
-- If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If a required buildpack provides a non-mixin dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
+- If a required buildpack requires a non-mixin dependency that is not provided by the same buildpack or a previous buildpack, the trial MUST fail to detect.
+- If an optional buildpack provides a non-mixin dependency that is not required by the same buildpack or a subsequent buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an optional buildpack requires a non-mixin dependency that is not provided by the same buildpack or a previous buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
 - Multiple buildpacks MAY require or provide the same dependency.
 - Any mixin dependencies MUST be resolved as described in [Mixin Resolution](#mixin-resolution), and the trail shall pass or fail detect accordingly.
 
@@ -392,8 +430,17 @@ Mixins MAY ONLY BE required from the following sources:
 
 Mixins MAY ONLY BE provided by the following sources:
 - The stack (run-image and/or build-image)
+- The [Buildpack Descriptor](#buildpacktoml-toml) of a buildpack
 
-If any required mixins are not also provided, then the group will fail to detect.
+If any required mixins are not also provided, then the group MUST fail to detect.
+
+If a stack provides mixins that are not required by any buildpacks, the group MAY pass detection.
+
+If a stack buildpack provides a mixin that is not required, the stack buildpack MAY pass detection. For each of the build and run phases:
+* If a stack buildpack provides mixins, and at least one of those mixins are required; it MAY pass
+* If a stack buildpack provides mixins, and none of those mixins are required; it MUST be skipped
+* If a stack buildpack provides mixins, and none of those mixins are required, but it also provides another dependency (non-mixin), which is required; it MAY pass following the normal build plan rules
+* If a stack buildpack does not provide mixins; it MAY pass
 
 If a mixin is required for a single stage only with the `build:` or `run:` prefix, it MUST NOT be included in the Buildpack Build Plan during the stage where it is not required. During the detect phase, the lifecycle MUST create a build plan containing only the entries required during that stage (build or run) without the stage-specifier prefix.
 * If a mixin is required for "run" stage only, it MUST NOT appear in the buildpack plan entries during build
@@ -483,7 +530,7 @@ For each buildpack in the group in order, the lifecycle MUST execute `/bin/build
       **Then** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
 
    2. **If** there are no additional buildpacks in the group, \
-      **Then** the lifecycle MUST proceed to the export phase.
+      **Then** the lifecycle MUST proceed to the next phase.
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
@@ -493,23 +540,33 @@ For each `/bin/build` executable in each buildpack, the lifecycle:
 
 Correspondingly, each `/bin/build` executable:
 
-- MAY read or write to the `<app>` directory.
 - MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Buildpack Plan.
 - SHOULD write a list containing any [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries) to `<layers>/build.toml` to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
+- SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
+- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
+
+Each `/bin/build` executable of a application buildpack:
+
+- MAY read or write to the `<app>` directory.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
 - SHOULD write BOM (Bill-of-Materials) entries to `<layers>/launch.toml` describing any contributions to the app image.
-- SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
-- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
+
+Each `/bin/build` executable of a stack buildpack:
+
+- MUST run with root privileges.
+- MUST NOT read or write to the `<app>` directory.
+- MUST NOT create layers using the `<layers>/<layer>` directories.
+- MAY enrich the stack layer by creating a `<layers>/stack-layer.toml`.
 
 #### Unmet Buildpack Plan Entries
 
@@ -530,9 +587,9 @@ If generated, this BOM MUST contain all `bom` entries in each `launch.toml` at t
 When the build is complete, a build BOM describing the build container MAY be generated for auditing purposes.
 If generated, this build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
-#### Layers
+#### Application Layers
 
-A buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files as specified in the [Layer Types](#layer-types) section.
+An application buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files as specified in the [Layer Types](#layer-types) section.
 
 To decide what layer operations are appropriate, the buildpack should consider:
 
@@ -545,13 +602,81 @@ Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `l
 Separate layers MUST be created during the export phase for each slice with one or more files or directories.
 This minimizes data transfer when the app directory contains a known set of files.
 
-## Phase #4: Export
+## Phase #4: Extend (optional)
+
+### Purpose
+
+The purpose of extend is to create app image layers that require changes to arbitrary locations on the filesystem.
+
+### Process
+
+**GIVEN:**
+- The final ordered group of stack buildpacks determined during the detection phase,
+- The Buildpack Plan, and
+- A shell, if needed,
+
+If the buildpack group is empty, the lifecycle MAY skip the extend phase.
+
+For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
+
+1. **If** the exit status of `/bin/build` is non-zero, \
+   **Then** the lifecycle MUST fail the build.
+
+2. **If** the exit status of `/bin/build` is zero,
+   1. **If** there are additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
+
+   2. **If** there are no additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the next phase.
+
+For each `/bin/build` executable in each stack buildpack, the lifecycle:
+- MUST provide path arguments to `/bin/build` as described in the [Buildpack Interface](#buildpack-interface) section.
+- MUST configure the build environment as described in the [Environment](#environment) section.
+- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
+
+Correspondingly, each `/bin/build` executable:
+- MUST run with root privileges.
+- MUST NOT read or write to the `<app>` directory.
+- MUST NOT create layers using the `<layers>/<layer>` directories.
+- MAY enrich the stack layer by creating a `<layers>/stack-layer.toml`.
+
+After each `/bin/build` executable, the lifecycle MUST:
+1. **If** a corresponding `<layers>/stack-layer.toml` is present locally, \
+   **Then** the lifecycle MUST
+   1. Add any excluded paths to the default list of excluded paths
+   2. Capture all changes made to the filesystem in non-excluded directories and store them in a snapshot.
+   3. Create an independent cache snapshot containing paths identified with `cache = true` in the `<layers>/stack-layer.toml`.
+2. **If** a corresponding `<layers>/stack-layer.toml` is not present locally, \
+   **Then** the lifecycle MUST
+   1. Capture all changes made to the filesystem in non-excluded directories and store them in a snapshot.
+
+#### Excluded Paths
+
+The following directories and files MUST be excluded from the stack layer created during the extend phase.
+
+- `/tmp`
+- `/cnb`
+- `/layers`
+- `/workspace`
+- `/dev`
+- `/sys`
+- `/proc`
+- `/var/run/secrets`
+- `/etc/hostname`
+- `/etc/hosts`
+- `/etc/mtab`
+- `/etc/resolv.conf`
+- `/.dockerenv`
+
+Changes made to these files will be ignored.
+
+## Phase #5: Export
 
 ![Export](img/export.svg)
 
 ### Purpose
 
-The purpose of export is to create a new OCI image using a combination of remote layers, local `<layers>/<layer>` layers, and the processed `<app>` directory.
+The purpose of export is to create a new OCI image using a combination of remote layers, local stack buildpack layers, local `<layers>/<layer>` layers, and the processed `<app>` directory.
 
 ### Process
 
@@ -565,6 +690,15 @@ The purpose of export is to create a new OCI image using a combination of remote
 
 **If** the run image, old OCI image, and new OCI image are not all present in the same image store, \
 **Then** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
+
+For each stack buildpack executed during the extend phase:
+
+1. Collect the associated snapshot generated during the extend phase and convert it to a layer.
+1. Transfer the layer to the same image store as the old OCI image.
+1. Ensure the absolute path are preserved in the transferred layer.
+1. Collect a reference to the transferred layer.
+
+Any cache snapshots produced by the stack buildpacks MAY be preserved for the next local build.
 
 For each `<layers>/<layer>.toml` file that specifies `launch = true`,
 
@@ -957,6 +1091,7 @@ mixin = "<mixin name>"
 ```toml
 [[entries]]
 name = "<dependency name>"
+mixin = "<mixin name>"
 
 [entries.metadata]
 # buildpack-specific data
@@ -978,6 +1113,22 @@ For a given layer, the buildpack MAY specify:
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
 
+### Stack Layer Content Metadata (TOML)
+
+```
+[[excludes]]
+paths = ["<sub-path glob>"]
+cache = false
+```
+
+Where:
+
+* `paths` = a list of paths to exclude from the app image layer in the extend phase. During the build phase, these paths will be removed from the filesystem before executing any application buildpacks.
+* `cache` = if true, the paths will be cached even if they are removed from the filesystem.
+
+1. Paths not referenced by an `[[excludes]]` entry will be included in the app-image layer (default).
+1. Any paths with an `[[excludes]]` entry and `cache = true` will be included in the cache image, but not the app image.
+1. Any paths with an `[[excludes]]` entry and `cache = false` will not be included in the cache image or the app image.
 
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
@@ -991,6 +1142,7 @@ name = "<buildpack name>"
 version = "<buildpack version>"
 homepage = "<buildpack homepage>"
 clear-env = false
+privileged = false
 
 [[order]]
 [[order.group]]
@@ -1004,11 +1156,23 @@ id = "<stack ID>"
 [stacks.requires]
 mixins = [ "<mixin name>" ]
 
+[stacks.provides]
+mixins = [ "<mixin name or *>" ]
+
 [metadata]
 # buildpack-specific data
 ```
 
-Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
+Where:
+
+In the `[buildpack]` table:
+
+* `id` - Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
+* `privileged` - when set to `true`, requires that the lifecycle run this buildpack with root privileges.
+
+In the `[stacks.provides]` table:
+
+* `mixins` - a list of names that match mixins provided by this buildpack, or the `*` representing all mixins.
 
 **The buildpack ID:**
 
