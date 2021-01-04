@@ -348,8 +348,8 @@ Usage:
 | Input          | Environment Variable  | Default Value            | Description
 |----------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Location of cache, provided as a directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Path to a cache directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
 | `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
