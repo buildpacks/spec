@@ -977,6 +977,7 @@ Where:
 tags = ["<tag reference>"]
 digest = "<image digest>"
 image-id = "<imageID>"
+manifest-size = "<manifest size in bytes>"
 
 [build]
 [[build.bom]]
@@ -993,6 +994,7 @@ Where:
 - `tags` MUST contain all tag references to the exported app image
 - **If** the app image was exported to an OCI registry
   - `digest` MUST contain the image digest
+  - `manifest-size` MUST contain the manifest size in bytes
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
 - **If** the app image was the result of a build operation
