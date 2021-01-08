@@ -157,6 +157,18 @@ The stack ID:
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - SHOULD use reverse domain name notation to avoid name collisions.
 
+### Stack Validation
+
+During the prepare phase, the stack properties of the new run-image MUST be compared to the stack properties of the previous run-image. If any of the following are true, the analysis MUST fail:
+* A mixin listed on the previous image does not exist on the new run-image
+* The operating system of the previous image does not matches the new run-image
+* The architecture of the previous image does not matches the new run-image
+
+During detection, the stack properties of the build image MUST be compared to the stack properties of the run-image. If any of the following are true, the analysis MUST fail:
+* The stack ID of the build-image does not matches the run-image
+* The operating system of the build-image does not matches the run-image
+* The architecture of the build-image does not matches the run-image
+
 ### Build Image
 
 The platform MUST ensure that:
@@ -177,7 +189,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Run Image
 
@@ -196,7 +208,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Mixins
 
@@ -211,6 +223,19 @@ A platform MAY support any number of mixins for a given stack in order to suppor
 
 Changes introduced by mixins SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
 However, mixins MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
+
+#### Mixin Resolution
+
+During the prepare phase, a list of provided mixins MUST be retrived from the provided run-image. The analyzer should either fail or ignore the previous image if the run-image is missing any mixins that were present on the previous image.
+
+During detection, a list of required mixins MUST be resolved against a list of provided mixins.
+
+The list of provided mixins MUST be resolved from the [`stack.toml`](#stacktoml-toml) for run-image and build-image mixins.
+
+The list of required mixins MUST be resolved by the following sources:
+- The [Buildpack Descriptor](#buildpacktoml-toml) of each buildpack
+
+If any required mixins are not also provided, then the group will fail to detect. If a mixin is required for a single stage only with the `build:` or `run:` prefix and it is provided for only that stage, then the group MAY pass detection.
 
 ### Compatibility Guarantees
 
@@ -237,6 +262,7 @@ If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifec
 #### Build
 A single app image build* consists of the following phases:
 
+1. Preparation
 1. Detection
 1. Analysis
 1. Cache Restoration
@@ -244,6 +270,7 @@ A single app image build* consists of the following phases:
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
+1. `/cnb/lifecycle/prepare`
 1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/analyzer`
 1. `/cnb/lifecycle/restorer`
@@ -264,7 +291,7 @@ This entire operation is referred to as rebasing the app image.
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
- 
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher` SHALL be the `ENTRYPOINT` for all app images.
@@ -276,10 +303,34 @@ All lifecycle phases:
 - MUST read `CNB_PLATFORM_API` from the execution environment and evaluate compatibility before attempting to parse other inputs (see [Platform API Compatibility](#platform-api-compatibility))
 - MUST give command line inputs precedence over other inputs
 
+#### `preparer`
+Usage:
+```
+/cnb/lifecycle/preparer \
+  [-log-level <log-level>] \
+  [-stack-id <stack-id>] \
+  [-stack-path <stack-path>]
+```
+
+##### Inputs
+| Input         | Environment Variable    | Default Value             | Description
+|---------------|-------------------------|---------------------------|----------------------
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<stack-id>`   | `CNB_STACK_ID`        |                          | Chosen stack ID
+| `<stack-path>` | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml)
+
+##### Outputs
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | (see Exit Code table below for values)
+| `/dev/stdout`      | Logs (info)
+| `/dev/stderr`      | Logs (warnings, errors)
+| `<stack>`          | Path to stack file (see [`stack.toml`](#stacktoml-toml)
+
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
@@ -303,6 +354,7 @@ Usage:
 | `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| `<stack>`       | `CNB_STACK_PATH`      | `/cnb/stack.toml`     | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 
 ##### Outputs
 | Output             | Description
@@ -328,7 +380,7 @@ The lifecycle:
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
 #### `analyzer`
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
@@ -446,7 +498,7 @@ For each layer metadata file found in the `<layers>` directory, the lifecycle:
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/builder \
   [-app <app>] \
@@ -808,7 +860,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 |-----------------|--------------------------------------
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
-    
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
 | Env Variable      | Layer Path   | Contents
@@ -1001,17 +1053,31 @@ Where:
 
 ```toml
 [run-image]
+ stack-id = "<stack ID>"
  image = "<image>"
  mirrors = ["<mirror>", "<mirror>"]
+ os = "<operating system>"
+ arch = "<architecture>"
+ reference = "<image reference>"
+ mixins = [ "<mixin name>" ]
+
+[build-image]
+ mixins = [ "<mixin name>" ]
 ```
 
 Where:
+- `run-image.stack-id` MUST contain the stack identifier of the image
 - `run-image.image` MAY be a reference to a run image in a docker registry
 - `run-image.mirrors` MUST NOT be present if `run-image.image` is not present
 - `run-image.mirrors` MAY contain one or more tag references to run images in docker registries
 - All `run-image.mirrors`:
   - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
+- `run-image.os` MUST contain the operating system identifier of the image
+- `run-image.arch` MUST contain the architecture identifier of the image
+- `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `run-image.mixins` MUST contain mixin names for each mixin applied to the image
+- `build-image.mixins` MUST contain mixin names for each mixin applied to the image
 
 ### Labels
 
