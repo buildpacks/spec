@@ -1058,7 +1058,7 @@ Where:
  mirrors = ["<mirror>", "<mirror>"]
  os = "<operating system>"
  arch = "<architecture>"
- reference = "<image reference>"
+ ref = "<image ref>"
  mixins = [ "<mixin name>" ]
 
 [build-image]
