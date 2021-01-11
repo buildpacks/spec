@@ -270,7 +270,7 @@ A single app image build* consists of the following phases:
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
-1. `/cnb/lifecycle/prepare`
+1. `/cnb/lifecycle/preparer`
 1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/analyzer`
 1. `/cnb/lifecycle/restorer`
