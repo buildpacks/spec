@@ -308,6 +308,7 @@ Usage:
 ```
 /cnb/lifecycle/preparer \
   [-log-level <log-level>] \
+  [-run-image <run-image>] \
   [-stack-id <stack-id>] \
   [-stack-path <stack-path>]
 ```
@@ -316,6 +317,7 @@ Usage:
 | Input         | Environment Variable    | Default Value             | Description
 |---------------|-------------------------|---------------------------|----------------------
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<run-image>`       | `CNB_RUN_IMAGE`  | resolved from `<stack>`   | Run image reference
 | `<stack-id>`   | `CNB_STACK_ID`        |                          | Chosen stack ID
 | `<stack-path>` | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 
