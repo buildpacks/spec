@@ -226,7 +226,7 @@ However, mixins MAY consist of any changes that follow the [Compatibility Guaran
 
 #### Mixin Resolution
 
-During the prepare phase, a list of provided mixins MUST be retrived from the provided run-image. The analyzer should either fail or ignore the previous image if the run-image is missing any mixins that were present on the previous image.
+During the prepare phase, a list of provided mixins MUST be retrived from the provided run-image. The preparer should either fail or ignore the previous image if the run-image is missing any mixins that were present on the previous image.
 
 During detection, a list of required mixins MUST be resolved against a list of provided mixins.
 
