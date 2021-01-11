@@ -161,7 +161,7 @@ The stack ID:
 
 During the prepare phase, the stack properties of the new run-image MUST be compared to the stack properties of the previous run-image. If any of the following are true, the analysis MUST fail:
 * A mixin listed on the previous image does not exist on the new run-image
-* The operating system of the previous image does not matches the new run-image
+* The operating system of the previous image does not match the new run-image
 * The architecture of the previous image does not matches the new run-image
 
 During detection, the stack properties of the build image MUST be compared to the stack properties of the run-image. If any of the following are true, the analysis MUST fail:
