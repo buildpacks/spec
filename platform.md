@@ -1,10 +1,9 @@
 # Platform Interface Specification
 
-This document specifies the interface between implementations of a `lifecycle` program and a `platform` program.
+This document specifies how to process buildpack lifecycle steps to ensure compatibility
+of end-user tools.
 
-A platform orchestrates a lifecycle to make buildpack functionality available to end-users such as application developers.
-
-Examples of a platform might include:
+Examples of a such end-user tools might include:
 
 1. A local CLI tool that uses buildpacks to create OCI images
 1. A plugin for a continuous integration service that uses buildpacks to create OCI images
