@@ -1,9 +1,9 @@
 # Platform Interface Specification
 
 This document specifies how to process buildpack lifecycle steps to ensure compatibility
-of end-user tools.
+between end-user tools.
 
-Examples of a such end-user tools might include:
+Examples of tools implementing Platform Interface might include:
 
 1. A local CLI tool that uses buildpacks to create OCI images
 1. A plugin for a continuous integration service that uses buildpacks to create OCI images
