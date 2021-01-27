@@ -300,7 +300,7 @@ Usage:
 | `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml`                    | Path to output group definition
 | `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`                                | Path to layers directory
 | `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                                   | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `<layers>/order.toml`, `/cnb/order.toml` | Path to order definition (see [`order.toml`](#ordertoml-toml))
+| `<order>`       | `CNB_ORDER_PATH`      | `<layers>/order.toml`:`/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))
 | `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`                     | Path to output resolved build plan
 | `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`                              | Path to platform directory
 
