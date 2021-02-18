@@ -124,7 +124,7 @@ The `createdBy` metadata is meant to contain the name and version of the tool th
 
 ```json
 {
-  "<buildpack id>": {
+  "<buildpack ID>": {
     "<buildpack version>": {
       "api": "<buildpack API>",
       "order": [
