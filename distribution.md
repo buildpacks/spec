@@ -71,4 +71,4 @@ For a given stack, the `mixins` list MUST enumerate mixins such that no included
 Fewer stack entries as well as additional mixins for a stack entry MAY be specified.
 
 ### Builders
-Buildpacks may be distributed using builders, described in the [builder extension spec](extensions/builder.md).
+Buildpacks may be distributed using builders, as described in the [builder extension spec](extensions/builder.md).

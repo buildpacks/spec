@@ -1,10 +1,35 @@
-# Builder
+# Builder Specification <!-- omit in toc -->
 
+This document specified the artifact format for a builder.
+
+A builder is an OCI image that provides a distributable build environment.
+
+A [platform][platform-spec] supporting the builder extension specification SHOULD allow users to configure the build environment with a provided builder.
+
+## Table of Contents <!-- omit in toc -->
+- [General Requirements](#general-requirements)
+  - [Builder API Version](#builder-api-version)
+  - [File/Directories](#filedirectories)
+  - [Environment Variables](#environment-variables)
+  - [Labels](#labels)
+- [Data Format](#data-format)
+  - [Labels](#labels-1)
+    - [`io.buildpacks.builder.metadata` (JSON)](#iobuildpacksbuildermetadata-json)
+    - [`io.buildpacks.buildpack.order` (JSON)](#iobuildpacksbuildpackorder-json)
+    - [`io.buildpacks.buildpack.layers` (JSON)](#iobuildpacksbuildpacklayers-json)
+    - [`io.buildpacks.lifecycle.apis` (JSON)](#iobuildpackslifecycleapis-json)
+
+## General Requirements
 A **builder** is an image that MUST contain an implementation of the lifecycle, and build-time environment, and MAY contain buildpacks. Platforms SHOULD use builders to ease the build process.
 
-## Table of Contents
+### Builder API Version
+This document specifies Builder API version `0.1`.
 
-## Required File/Directories
+Builder API versions:
+- MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+- When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
+
+### File/Directories
 A builder MUST have the following directories/files:
 - `/cnb/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
 - `/cnb/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
@@ -13,81 +38,90 @@ A builder MUST have the following directories/files:
 In addition, every buildpack blob contained on a builder MUST be stored at the following file path:
 - `/cnb/buildpacks/...<buildpack ID>/<buildpack version>/`
 
-## Environment Variables/Labels
-A builder's environment is the build-time environment of the stack, and as such, MUST fulfill all of the [build image specifications][build-image-specs].
+If the buildpack ID contains a `/`, it MUST be replaced with `_` in the directory name.
 
-The following variables MUST be set in the builder environment (through the image config's `Env` field):
+All specified files and directories are writeable by the build environment's User. 
 
-| Env Variable    | Description
-|-----------------|--------------------------------------
-| `WorkingDir`  | The working directory where buildpacks should default (eg: `/workspace`)
-| `CNB_APP_DIR`  | Application directory of the build environment (eg: `/app`)
-| `CNB_LAYERS_DIR`  | The directory to create and store `layers` in the build environment (eg: `/layers`)
-| `CNB_PLATFORM_DIR`  | The directory to create and store platform focused files in the build environment (eg: `/platform`)
+### Environment Variables
+A builder MUST be an extension of a build-image, and MUST retain all specified environment variables and labels set on the original build image, as specified in the [platform specifications][build-image-specs].
+
+The following environment variables MUST be set on the builder:
+
+| Env Variable       | Description                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `CNB_APP_DIR`      | Application directory of the build environment (eg: `/workspace`)                                   |
+| `CNB_LAYERS_DIR`   | The directory to create and store `layers` in the build environment (eg: `/layers`)                 |
+| `CNB_PLATFORM_DIR` | The directory to create and store platform focused files in the build environment (eg: `/platform`) |
 
 The following variables MAY be set in the builder environment (through the image config's `Env` field):
 
-| Env Variable    | Description
-|-----------------|--------------------------------------
-| `SERVICE_BINDING_ROOT`  | The directory where services are bound
+| Env Variable           | Description                            |
+| ---------------------- | -------------------------------------- |
+| `SERVICE_BINDING_ROOT` | The directory where services are bound |
 
+
+### Labels
 The following labels MUST be set in the builder environment (through the image config's `Labels` field):
 
-| Env Variable    | Description
-|-----------------|--------------------------------------
-| `io.buildpacks.builder.api`  | The Builder API this builder implements (at this point, **0.1**)
-| `io.buildpacks.builder.metadata`  | A JSON object representing [Builder Metadata](#iobuildpacksbuildermetadata)
-| `io.buildpacks.buildpack.order`  | A JSON object representing the [order of the buildpacks stored on the builder](#iobuildpacksbuildpackorder)
-| `io.buildpacks.buildpack.layers`  | A JSON object representing the [buildpack layers](#iobuildpacksbuildpacklayers)
-| `io.buildpacks.lifecycle.version`  | A string, representing the version of the lifecycle stored in the builder (greater than `0.9.0`)
-| `io.buildpacks.lifecycle.apis`  | A JSON object representing the [lifecycle APIs](#iobuildpackslifecycleapis) the lifecycle stored in the builder supports
+| Label                             | Description                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `io.buildpacks.builder.api`       | The [Builder API Version](#builder-api-version) this builder implements                                                  |
+| `io.buildpacks.builder.metadata`  | A JSON object representing [Builder Metadata](#iobuildpacksbuildermetadata)                                              |
+| `io.buildpacks.buildpack.order`   | A JSON object representing the [order of the buildpacks stored on the builder](#iobuildpacksbuildpackorder)              |
+| `io.buildpacks.buildpack.layers`  | A JSON object representing the [buildpack layers](#iobuildpacksbuildpacklayers)                                          |
+| `io.buildpacks.lifecycle.version` | A string, representing the version of the lifecycle stored in the builder                                                |
+| `io.buildpacks.lifecycle.apis`    | A JSON object representing the [lifecycle APIs](#iobuildpackslifecycleapis) the lifecycle stored in the builder supports |
 
-### `io.buildpacks.builder.metadata`
-The `io.buildpacks.builder.metadata` data should look like:
+## Data Format
+### Labels
+#### `io.buildpacks.builder.metadata` (JSON)
+
 ```json
 {
-  "description": "<Some description>",
+  "description": "<description>",
   "stack": {
     "runImage": {
-      "image": "<some/run-image>",
+      "image": "<run-image>",
       "mirrors": [
-        "<gcr.io/some/default>"
+        "<run-image-mirror>"
       ]
     }
   },
   "buildpacks": [
     {
-      "id": "<buildpack id>",
+      "id": "<buildpack ID>",
 	  "version": "<buildpack version>",
-	  "homepage": "http://geocities.com/top-bp"
+	  "homepage": "<buildpack homepage>"
 	}
   ],
   "createdBy": {
-    "name": "<creator of builder>",
-    "version": "<version of tool used to create builder>"
+    "name": "<tool name>",
+    "version": "<tool version>"
   }
 }
 ```
 
-### `io.buildpacks.buildpack.order`
-The `io.buildpacks.buildpack.order` data MUST look like:
+The `createdBy` metadata is meant to contain the name and version of the tool that created the builder. 
+
+#### `io.buildpacks.buildpack.order` (JSON)
+
 ```json
 [
 	{
 	  "group":
 		[
 		  {
-			"id": "<buildpack id>",
+			"id": "<buildpack ID>",
 			"version": "<buildpack version>",
-			"optional": "<bool>"
+			"optional": false
 		  }
 		]
 	}
 ]
 ```
 
-### `io.buildpacks.buildpack.layers`
-The `io.buildpacks.buildpack.layers` data should look like:
+#### `io.buildpacks.buildpack.layers` (JSON)
+
 ```json
 {
   "<buildpack id>": {
@@ -97,14 +131,14 @@ The `io.buildpacks.buildpack.layers` data should look like:
         {
           "group": [
             {
-              "id": "<inner buildpack>",
-              "version": "<inner bulidpacks version>"
+              "id": "<inner-buildpack>",
+              "version": "<inner-buildpack version>"
             }
           ]
         }
       ],
-      "layerDiffID": "sha256:test.nested.sha256",
-	  "homepage": "http://geocities.com/top-bp"
+      "layerDiffID": "<diff-ID>",
+	  "homepage": "<buildpack homepage>"
     }
   },
   "<inner buildpack>": {
@@ -116,15 +150,15 @@ The `io.buildpacks.buildpack.layers` data should look like:
           "mixins": ["<list of mixins required>"]
         }
       ],
-      "layerDiffID": "sha256:test.bp.one.sha256",
-	  "homepage": "http://geocities.com/cool-bp"
+      "layerDiffID": "<diff-ID>",
+	  "homepage": "<buildpack-homepage>"
     }
   }
 }
 ```
 
-### `io.buildpacks.lifecycle.apis`
-The `io.buildpacks.lifecycle.apis` data should look like:
+#### `io.buildpacks.lifecycle.apis` (JSON)
+
 ```json
 {
   "buildpack": {
@@ -140,6 +174,7 @@ The `io.buildpacks.lifecycle.apis` data should look like:
 
 [//]: <> (Links)
 [build-image-specs]: https://github.com/buildpacks/spec/blob/main/platform.md#build-image
+[platform-spec]: https://github.com/buildpacks/spec/blob/main/platform.md
 [order-toml-spec]: https://github.com/buildpacks/spec/blob/main/platform.md#ordertoml-toml
 [stack-toml-spec]: https://github.com/buildpacks/spec/blob/main/platform.md#stacktoml-toml
 [lifecycle-for-build]: https://github.com/buildpacks/spec/blob/main/platform.md#build
