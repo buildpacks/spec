@@ -318,7 +318,7 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
 | `100`     | All buildpacks groups have failed to detect w/o error
 | `101`     | All buildpack groups have failed to detect and at least one buildpack has errored
 | `102-199` | Detection-specific lifecycle errors
@@ -378,8 +378,8 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `200-299` | Analysis-specific lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
+| `40-59` | Analysis-specific lifecycle errors
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
@@ -435,8 +435,8 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `300-399` | Restoration-specific lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
+| `60-79` | Restoration-specific lifecycle errors
 
 ##### Layer restoration
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
@@ -484,7 +484,7 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
 | `401`     | Buildpack build error
 | `400`, `402-499`|  Build-specific lifecycle errors
 
@@ -557,8 +557,8 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `500-599`|  Export-specific lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
+| `100-119`|  Export-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
@@ -643,12 +643,12 @@ Outputs produced by `creator` are identical to those produced by `exporter`, wit
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `100-199`|  Detection-specific lifecycle errors
-| `200-299`|  Analysis-specific lifecycle errors
-| `300-399`|  Restoration-specific lifecycle errors
-| `400-499`|  Build-specific lifecycle errors
-| `500-599`|  Export-specific lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
+| `20-39`|  Detection-specific lifecycle errors
+| `40-59`|  Analysis-specific lifecycle errors
+| `60-79`|  Restoration-specific lifecycle errors
+| `80-99`|  Build-specific lifecycle errors
+| `100-119`|  Export-specific lifecycle errors
 
 
 #### `rebaser`
@@ -693,8 +693,8 @@ Usage:
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `600-699`|  Rebase-specific lifecycle errors
+| `1-10`, `13-19` | Generic lifecycle errors
+| `180-199`|  Rebase-specific lifecycle errors
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The rebased app image SHALL be identical to `<image>`, with the following modifications:
@@ -754,7 +754,7 @@ If the launcher errors before executing the process it will have one of the foll
 |-----------|-------|
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `700-799`|  Launch-specific lifecycle errors
+| `200-219`|  Launch-specific lifecycle errors
 
 Otherwise, the exit code shall be the exit code of the launched process.
 
