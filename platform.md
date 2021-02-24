@@ -32,13 +32,13 @@ Examples of a platform might include:
       - [Rebase](#rebase)
       - [Launch](#launch)
     - [Usage](#usage)
-      - [`detector`](#detector)
-        - [Inputs](#inputs)
-        - [Outputs](#outputs)
       - [`analyzer`](#analyzer)
         - [Inputs](#inputs-1)
         - [Outputs](#outputs-1)
         - [Layer analysis](#layer-analysis)
+      - [`detector`](#detector)
+        - [Inputs](#inputs)
+        - [Outputs](#outputs)
       - [`restorer`](#restorer)
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
@@ -237,15 +237,15 @@ If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifec
 #### Build
 A single app image build* consists of the following phases:
 
-1. Detection
 1. Analysis
+1. Detection
 1. Cache Restoration
 1. Build*
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
-1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/analyzer`
+1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/restorer`
 1. `/cnb/lifecycle/builder`
 1. `/cnb/lifecycle/exporter`
@@ -275,6 +275,69 @@ All lifecycle phases:
 
 - MUST read `CNB_PLATFORM_API` from the execution environment and evaluate compatibility before attempting to parse other inputs (see [Platform API Compatibility](#platform-api-compatibility))
 - MUST give command line inputs precedence over other inputs
+
+#### `analyzer`
+Usage: 
+```
+/cnb/lifecycle/analyzer \
+  [-analyzed <analyzed>] \
+  [-cache-image <cache-image>] \
+  [-daemon] \ # sets <daemon>
+  [-gid <gid>] \
+  [-group <group>] \
+  [-layers <layers>] \
+  [-log-level <log-level>] \
+  [-uid <uid>] \
+  <image>
+```
+
+##### Inputs
+| Input          | Environment Variable  | Default Value            | Description
+|----------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
+| `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
+| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
+
+- **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
+- **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
+- The lifecycle MUST accept valid references to non-existent images without error.
+
+##### Outputs
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | (see Exit Code table below for values)
+| `/dev/stdout`      | Logs (info)
+| `/dev/stderr`      | Logs (warnings, errors)
+| `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `200-299` | Analysis-specific lifecycle errors
+
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
+- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
+
+##### Layer analysis
+When analyzing a given layer the lifecycle SHALL:
+- **If** `build=true`, `cache=false`:
+    - Do nothing
+- **Else if** `launch=true`:
+    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
+- **Else if** `cache=true`:
+    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -327,85 +390,18 @@ The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
-#### `analyzer`
-Usage: 
+#### `restorer`
+Usage:
 ```
-/cnb/lifecycle/analyzer \
-  [-analyzed <analyzed>] \
+/cnb/lifecycle/restorer \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
-  [-daemon] \ # sets <daemon>
+  [-daemon] \ # sets <daemon> 
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
-  [-uid <uid>] \
-  <image>
-```
-
-##### Inputs
-| Input          | Environment Variable  | Default Value            | Description
-|----------------|-----------------------|--------------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Location of cache, provided as a directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
-| `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
-| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
-
-- **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
-- **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
-- The lifecycle MUST accept valid references to non-existent images without error.
-
-##### Outputs
-| Output             | Description
-|--------------------|----------------------------------------------
-| [exit status]      | (see Exit Code table below for values)
-| `/dev/stdout`      | Logs (info)
-| `/dev/stderr`      | Logs (warnings, errors)
-| `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
-
-| Exit Code | Result|
-|-----------|-------|
-| `0`       | Success
-| `11`      | Platform API incompatibility error
-| `12`      | Buildpack API incompatibility error
-| `1-10`, `13-99` | Generic lifecycle errors
-| `200-299` | Analysis-specific lifecycle errors
-
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
-- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
-- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-
-##### Layer analysis
-When analyzing a given layer the lifecycle SHALL:
-- **If** `build=true`, `cache=false`:
-    - Do nothing
-- **Else if** `launch=true`:
-    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
-- **Else if** `cache=true`:
-    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
-
-#### `restorer`
-Usage:
-```
-/cnb/lifecycle/restorer \
-  [-cache-dir <cache-dir>]
-  [-cache-image <cache-image>]
-  [-gid <gid>] \
-  [-group <group>] \
-  [-layers <layers>] \
-  [-log-level <log-level>] \
   [-uid <uid>]
 ```
 
@@ -414,21 +410,23 @@ Usage:
 |----------------|-----------------------|-----------------------|----------------------
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                       | Path to a cache directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                       | Reference to a cache image in an OCI image registry
+| `<daemon>`     | `CNB_USE_DAEMON`      | `false`               | Analyze image from docker daemon
 | `<gid>`        | `CNB_GROUP_ID`        |                       | Primary GID of the stack `User`
 | `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                       | UID of the stack `User`
-| `<layers>/<buidpack-id>/<layer>.sha`  ||                       | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` ||                       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`               | Do not perform layer analysis
 
 ##### Outputs
-| Output                             | Description
-|------------------------------------|----------------------------------------------
-| [exit status]                      | (see Exit Code table below for values)
-| `/dev/stdout`                      | Logs (info)
-| `/dev/stderr`                      | Logs (warnings, errors)
-| `<layers>/<buidpack-id>/<layer>/*` | Restored layer contents
+| Output                                | Description
+|---------------------------------------|----------------------------------------------
+| [exit status]                         | (see Exit Code table below for values)
+| `/dev/stdout`                         | Logs (info)
+| `/dev/stderr`                         | Logs (warnings, errors)
+| `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
+| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>/*`.   | Restored layer contents
 
 | Exit Code | Result|
 |-----------|-------|
