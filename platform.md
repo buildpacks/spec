@@ -380,9 +380,9 @@ The lifecycle:
 Usage:
 ```
 /cnb/lifecycle/restorer \
+  [-analyzed <analyzed>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
-  [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -392,17 +392,17 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Environment Variable  | Default Value         | Description
-|----------------|-----------------------|-----------------------|----------------------
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                       | Path to a cache directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                       | Reference to a cache image in an OCI image registry
-| `<daemon>`     | `CNB_USE_DAEMON`      | `false`               | Analyze image from docker daemon
-| `<gid>`        | `CNB_GROUP_ID`        |                       | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
-| `<uid>`        | `CNB_USER_ID`         |                       | UID of the stack `User`
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`               | Do not perform layer analysis
+| Input          | Environment Variable  | Default Value            | Description
+|----------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Path to a cache directory
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
+| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
 
 ##### Outputs
 | Output                                | Description
