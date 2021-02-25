@@ -267,7 +267,7 @@ To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or p
  
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
-`/cnb/lifecycle/launcher` SHALL be the `ENTRYPOINT` for all app images.
+`/cnb/lifecycle/launcher`, or a symlink to it (see [exporter outputs](#outputs-4)), SHALL be the `ENTRYPOINT` for all app images.
 
 ### Usage
 
