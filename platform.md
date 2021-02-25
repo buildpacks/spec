@@ -33,16 +33,15 @@ Examples of a platform might include:
       - [Launch](#launch)
     - [Usage](#usage)
       - [`analyzer`](#analyzer)
-        - [Inputs](#inputs-1)
-        - [Outputs](#outputs-1)
-        - [Layer analysis](#layer-analysis)
-      - [`detector`](#detector)
         - [Inputs](#inputs)
         - [Outputs](#outputs)
+      - [`detector`](#detector)
+        - [Inputs](#inputs-1)
+        - [Outputs](#outputs-1)
       - [`restorer`](#restorer)
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
-        - [Layer restoration](#layer-restoration)
+        - [Layer Restoration](#layer-restoration)
       - [`builder`](#builder)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
@@ -177,7 +176,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Run Image
 
@@ -196,7 +195,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Mixins
 
@@ -264,7 +263,7 @@ This entire operation is referred to as rebasing the app image.
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
- 
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher` SHALL be the `ENTRYPOINT` for all app images.
@@ -277,7 +276,7 @@ All lifecycle phases:
 - MUST give command line inputs precedence over other inputs
 
 #### `analyzer`
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
@@ -287,22 +286,22 @@ Usage:
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
-  [-uid <uid>] \
-  <image>
+  [-previous-image <previous-image> ] \
+  [-uid <uid>]
 ```
 
 ##### Inputs
-| Input          | Environment Variable  | Default Value            | Description
-|----------------|-----------------------|--------------------------|----------------------
-| `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
-| `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
+| Input             | Environment Variable  | Default Value            | Description
+|-------------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
+| `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
+| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<group>`         | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
+| `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
@@ -325,24 +324,11 @@ Usage:
 | `200-299` | Analysis-specific lifecycle errors
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
-- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
-- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-
-##### Layer analysis
-When analyzing a given layer the lifecycle SHALL:
-- **If** `build=true`, `cache=false`:
-    - Do nothing
-- **Else if** `launch=true`:
-    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
-- **Else if** `cache=true`:
-    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
@@ -396,7 +382,7 @@ Usage:
 /cnb/lifecycle/restorer \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
-  [-daemon] \ # sets <daemon> 
+  [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -436,7 +422,21 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `300-399` | Restoration-specific lifecycle errors
 
-##### Layer restoration
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
+- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
+
+
+##### Layer Restoration
+When analyzing a given layer the lifecycle SHALL:
+- **If** `build=true`, `cache=false`:
+    - Do nothing
+- **Else if** `launch=true`:
+    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
+- **Else if** `cache=true`:
+    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
+    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
+
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
 - MUST restore cached layer contents if the cache contains a layer with matching diffID
 - MUST remove layer metadata if `cache=true` AND the cache DOES NOT contain a layer with matching diffID
@@ -444,7 +444,7 @@ For each layer metadata file found in the `<layers>` directory, the lifecycle:
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/builder \
   [-app <app>] \
@@ -806,7 +806,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 |-----------------|--------------------------------------
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
-    
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
 | Env Variable      | Layer Path   | Contents
