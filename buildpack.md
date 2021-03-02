@@ -700,6 +700,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
 | `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
+| `CNB_ASSETS`    | Path to builder provided assets                | [x]    | [x]   |
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
@@ -979,6 +980,19 @@ optional = false
 id = "<stack ID>"
 mixins = ["<mixin name>"]
 
+[[assets]]
+sha256 = "(required)"
+name = "(optional)"
+id   = "(required)"
+version = "(required)"
+uri = "(optional)"
+licenses = ["(optional)"]
+description = "(optional)"
+homepage = "(optional)"
+stacks = ["(required)"]
+[assets.metadata]
+optional-key = "(optional value)"
+
 [metadata]
 # buildpack-specific data
 ```
@@ -1017,6 +1031,19 @@ Each stack in `stacks` either:
 - Or MUST indicate compatibility with any stack:
    - `id` MUST be set to the special value `"*"`.
    - `mixins` MUST be empty.
+
+Each asset in `assets` MUST:
+  - MUST contain a `sha256`.
+  - MUST contain a `id`
+  - MUST contain a `version`
+  - MUST contain a `stack` list of [valid stack IDs](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id)
+  - MAY contain a `name`
+  - MAY contain a `uri` used to download the asset 
+  - MAY contain a `licenses` list
+  - MAY contain a `description` = "(optional)"
+  - MAY contain a `homepage`
+  - MAY contain an arbitrary `metadata` mapping
+
 
 #### Order Buildpacks
 
