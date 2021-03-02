@@ -1,8 +1,8 @@
 # Buildpack Interface Specification
 
-This document specifies the interface between a single lifecycle and one or more buildpacks.
+This document specifies the interface between a lifecycle program and one or more buildpacks.
 
-A lifecycle is a program that uses buildpacks to transform application source code into an OCI image containing the compiled application.
+The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
 
 This is accomplished in four phases:
 
@@ -13,47 +13,91 @@ This is accomplished in four phases:
 
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
-Additionally, a lifecycle can use buildpacks to create a containerized environment for developing or testing application source code.
-
-This is accomplished in two phases:
-
-1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Development,** where the lifecycle uses those buildpacks to create a containerized development environment.
-
 ## Table of Contents
 
-1. [Buildpack Interface](#buildpack-interface)
-   1. [Key](#key)
-   2. [Detection](#detection)
-   3. [Build](#build)
-   4. [Development](#development)
-   5. [Layer Types](#layer-types)
-2. [App Interface](#app-interface)
-3. [Phase #1: Detection](#phase-1-detection)
-4. [Phase #2: Analysis](#phase-2-analysis)
-5. [Phase #3: Build](#phase-3-build)
-6. [Phase #4: Export](#phase-4-export)
-7. [Launch](#launch)
-8. [Development Setup](#development-setup)
-9. [Environment](#environment)
-   1. [Provided by the Lifecycle](#provided-by-the-lifecycle)
-   2. [Provided by the Platform](#provided-by-the-platform)
-   3. [Provided by the Buildpacks](#provided-by-the-buildpacks)
-10. [Security Considerations](#security-considerations)
-    1. [Assumptions of Trust](#assumptions-of-trust)
-    2. [Requirements](#requirements)
-11. [Data Format](#data-format)
-    1. [launch.toml (TOML)](#launchtoml-toml)
-    2. [Build Plan (TOML)](#build-plan-toml)
-    3. [Buildpack Plan (TOML)](#buildpack-plan-toml)
-    4. [Bill-of-Materials (TOML)](#bill-of-materials-toml)
-    5. [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
-    6. [buildpack.toml (TOML)](#buildpacktoml-toml)
+<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+- [Buildpack Interface Specification](#buildpack-interface-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Buildpack API Version](#buildpack-api-version)
+  - [Buildpack Interface](#buildpack-interface)
+    - [Buildpack API Compatibility](#buildpack-api-compatibility)
+    - [Key](#key)
+    - [Detection](#detection)
+    - [Build](#build)
+    - [Exec.d](#execd)
+    - [Layer Types](#layer-types)
+      - [Launch Layers](#launch-layers)
+      - [Build Layers](#build-layers)
+      - [Cached Layers](#cached-layers)
+      - [Other Layers](#other-layers)
+  - [App Interface](#app-interface)
+  - [Phase #1: Detection](#phase-1-detection)
+    - [Purpose](#purpose)
+    - [Process](#process)
+      - [Order Resolution](#order-resolution)
+  - [Phase #2: Analysis](#phase-2-analysis)
+    - [Purpose](#purpose-1)
+    - [Process](#process-1)
+  - [Phase #3: Build](#phase-3-build)
+    - [Purpose](#purpose-2)
+    - [Process](#process-2)
+      - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
+      - [Bills-of-Materials](#bills-of-materials)
+      - [Layers](#layers)
+  - [Phase #4: Export](#phase-4-export)
+    - [Purpose](#purpose-3)
+    - [Process](#process-3)
+  - [Launch](#launch)
+    - [Purpose](#purpose-4)
+    - [Process](#process-4)
+  - [Environment](#environment)
+    - [Provided by the Lifecycle](#provided-by-the-lifecycle)
+      - [Buildpack Specific Variables](#buildpack-specific-variables)
+      - [Layer Paths](#layer-paths)
+    - [Provided by the Platform](#provided-by-the-platform)
+    - [Provided by the Buildpacks](#provided-by-the-buildpacks)
+      - [Environment Variable Modification Rules](#environment-variable-modification-rules)
+        - [Append](#append)
+        - [Default](#default)
+        - [Delimiter](#delimiter)
+        - [Override](#override)
+        - [Prepend](#prepend)
+  - [Security Considerations](#security-considerations)
+    - [Assumptions of Trust](#assumptions-of-trust)
+    - [Requirements](#requirements)
+  - [Data Format](#data-format)
+    - [launch.toml (TOML)](#launchtoml-toml)
+    - [build.toml (TOML)](#buildtoml-toml)
+    - [store.toml (TOML)](#storetoml-toml)
+    - [Build Plan (TOML)](#build-plan-toml)
+    - [Buildpack Plan (TOML)](#buildpack-plan-toml)
+    - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
+    - [buildpack.toml (TOML)](#buildpacktoml-toml)
+      - [Buildpack Implementations](#buildpack-implementations)
+      - [Order Buildpacks](#order-buildpacks)
+    - [Exec.d Output (TOML)](#execd-output-toml)
+  - [Deprecations](#deprecations)
+    - [`0.3`](#03)
+      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
+
+## Buildpack API Version
+This document specifies Buildpack API version `0.5`
+
+Buildpack API versions:
+ - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
 ## Buildpack Interface
 
 The following specifies the interface implemented by executables in each buildpack.
 The lifecycle MUST invoke these executables as described in the Phase sections.
+
+### Buildpack API Compatibility
+Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
+- MUST either conform to the matching version of this specification when interfacing with the buildpack or
+- return an error to the platform if it does not support `<buildpack API Version>`
+
+The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
 ### Key
 
@@ -80,14 +124,14 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
-| `/dev/stdout`      | Logs (info)
-| `/dev/stderr`      | Logs (warnings, errors)
+| Standard output    | Logs (info)
+| Standard error     | Logs (warnings, errors)
 | `<plan>`           | Contributions to the the Build Plan (TOML)
 
 
 ###  Build
 
-Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `<app[AI]>`
 
 | Input             | Description
 |-------------------|----------------------------------------------
@@ -96,54 +140,48 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[E]>`, Working Dir: `<
 | `<platform>/env/` | User-provided environment variables for build
 | `<platform>/#`    | Platform-specific extensions
 
-| Output                         | Description
-|--------------------------------|-----------------------------------------------
-| [exit status]                  | Success (0) or failure (1+)
-| `/dev/stdout`                  | Logs (info)
-| `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
-| `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
-| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
-| `<layers>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
-| `<layers>/<layer>/pkgconfig/`  | Search path for pkg-config for subsequent buildpacks
-| `<layers>/<layer>/env/`        | Env vars for launch and/or subsequent buildpacks
-| `<layers>/<layer>/env.launch/` | Env vars for launch (after `env`, before `profile.d`)
-| `<layers>/<layer>/env.build/`  | Env vars for subsequent buildpacks (after `env`)
-| `<layers>/<layer>/*`           | Other content for launch and/or subsequent buildpacks
+| Output                                   | Description
+|------------------------------------------|--------------------------------------
+| [exit status]                            | Success (0) or failure (1+)
+| Standard output                          | Logs (info)
+| Standard error                           | Logs (warnings, errors)
+| `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
+| `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
+| `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
+| `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
+| `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
+| `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
+| `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
+| `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type
+| `<layers>/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch
+| `<layers>/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch
+| `<layers>/<layer>/include/`              | C/C++ headers for subsequent buildpacks
+| `<layers>/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks
+| `<layers>/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks
+| `<layers>/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)
+| `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
+| `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
+| `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
 
-### Development
+### Exec.d
 
-Executable: `/bin/develop <layers[EC]> <platform[AR]> <plan[E]>`, Working Dir: `<app[A]>`
+Executable: `<layers>/<layer>/exec.d/<executable>`, Working Dir: `<app[AI]>`
+
+OR
+
+Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
 
 | Input             | Description
 |-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/detect` executable
-| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
+| `$0`              | Absolute path of the executable
+| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
 
-| Output                         | Description
-|--------------------------------|----------------------------------------------
-| [exit status]                  | Success (0) or failure (1+)
-| `/dev/stdout`                  | Logs (info)
-| `/dev/stderr`                  | Logs (warnings, errors)
-| `<plan>`                       | Refinements to the [Buildpack Plan](#buildpack-plan-toml) (TOML)
-| `<layers>/launch.toml`         | App metadata (see [launch.toml](#launch.toml-toml))
-| `<layers>/store.toml`          | Persistent metadata (see [store.toml](#store.toml-toml))
-| `<layers>/<layer>.toml`        | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>/bin/`        | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`        | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`  | Scripts sourced by Bash before launch
-| `<layers>/<layer>/include/`    | C/C++ headers for subsequent buildpacks
-| `<layers>/<layer>/pkgconfig/`  | Search path for pkg-config for subsequent buildpacks
-| `<layers>/<layer>/env/`        | Env vars for launch and/or subsequent buildpacks
-| `<layers>/<layer>/env.launch/` | Env vars for launch (after `env`, before `profile.d`)
-| `<layers>/<layer>/env.build/`  | Env vars for subsequent buildpacks (after `env`)
-| `<layers>/<layer>/*`           | Other content for launch and/or subsequent buildpacks
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | Pass (0) or error (1+)
+| Standard output    | Logs (info)
+| Standard error     | Logs (warnings, errors)
+| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ### Layer Types
 
@@ -153,7 +191,7 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 - Whether the layer directory in `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
 - Whether and how the layer directory in `<layers>/<layer>/` should be persisted to subsequent builds of the same OCI image (via the `cache` boolean).
 
-This section does not apply to the Development Setup phase, which does not generate an OCI image.
+All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
 #### Launch Layers
 
@@ -165,20 +203,17 @@ The lifecycle MUST include each launch layer in the built OCI image.
 The lifecycle MUST also store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID.
 
 Before a given re-build:
-- If a launch layer is marked `cache = false`, the lifecycle:
+- If a launch layer is marked `cache = false` and `build = false`, the lifecycle:
   - MUST restore the entire `<layers>/<layer>.toml` file from the previous build to the same path and
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
-- If a launch layer is marked `cache = true`, the lifecycle:
-  - MUST either restore the entire `<layers>/<layer>.toml` file and corresponding `<layers>/<layer>/` directory from the previous build to the same paths or
-  - MUST restore neither the `<layers>/<layer>.toml` file nor corresponding `<layers>/<layer>/` directory.
 
 After a given re-build:
 - If a buildpack keeps `launch = true` in `<layers>/<layer>.toml` and leaves no `<layers>/<layer>/` directory, the lifecycle:
-  - MUST keep the corresponding layer from the previous build in the OCI image and
-  - MUST replace the `<layers>/<layer>.toml` in the OCI image with the version present after the re-build.
+  - MUST reuse the corresponding layer from the previous build in the OCI image and
+  - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
 - If a buildpack keeps `launch = true` in `<layers>/<layer>.toml` and leaves a `<layers>/<layer>/` directory, the lifecycle:
   - MUST replace the corresponding layer in the OCI image with the directory contents present after the re-build and
-  - MUST replace the `<layers>/<layer>.toml` in the OCI image with the version present after the re-build.
+  - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
 - If a buildpack removes `launch = true` from `<layers>/<layer>.toml` or deletes `<layers>/<layer>.toml`, then the lifecycle MUST NOT include any corresponding layer in the OCI image.
 
 #### Build Layers
@@ -188,22 +223,39 @@ A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by
 The lifecycle MUST make all build layers accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 Before the next re-build:
-- If the layer is marked `cache = true`, the lifecycle MAY restore the `<layers>/<layer>/` directory and Layer Content Metadata from any previous build to the same path.
-- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory or the Layer Content Metadata from any previous build.
+- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory or the `<layers>/<layer>.toml` file from any previous build.
+
+#### Cached Layers
+
+A buildpack MAY specify that a `<layers>/<layer>/` directory is a cached layer by placing `cache = true` in `<layers>/<layer>.toml`.
+
+If a cache is provided the lifecycle:
+- SHOULD store all cached layers after a successful build.
+- SHOULD store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID
+
+Before the next re-build:
+- The lifecycle:
+  - MUST either restore the entire `<layers>/<layer>.toml` file and corresponding `<layers>/<layer>/` directory from any previous build to the same paths or
+  - MUST restore neither the `<layers>/<layer>.toml` file nor corresponding `<layers>/<layer>/` directory.
 
 #### Other Layers
 
-For layers marked `launch = true` and `build = true`, the most strict requirements of each type apply.
+The lifecycle:
+- If `build = false`
+  - MUST NOT make the layer available to subesequent buildpacks.
+- If `launch = false`
+  - MUST NOT include the layer or the Layer Content Metadata in the OCI image.
+- If `cache = false`
+  - MUST NOT store the layer or the Layer Content Metadata in the cache.
 
-Therefore, the lifecycle MUST consider such layers to be launch layers that are also accessible to subsequent buildpacks as described in the [Environment](#environment) section.
-
-The lifecycle MUST consider layers that are marked `launch = false` and `build = false` to be build layers that are not accessible to subsequent buildpacks.
+Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, that exist for the duration of a single build.
 
 ## App Interface
 
-| Output           | Description
-|------------------|----------------------------------------------
-| `<app>/.profile` | Script sourced by bash before launch
+| Output                 | Description
+|------------------------|----------------------------------------------
+| `<app>/.profile`       | [†](README.md#linux-only) Bash-formatted script sourced by shell before launch
+| `<app>/.profile.bat`   | [‡](README.md#windows-only) BAT-formatted script sourced by shell before launch
 
 ## Phase #1: Detection
 
@@ -217,24 +269,25 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution) and
-- A directory containing application source code,
+- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- A directory containing application source code
+- A shell, if needed,
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
-1. **IF** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
-   **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
+1. **If** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
+   **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-2. **IF** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
-   1. **IF** the buildpack is not the last buildpack in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack in the group.
+2. **If** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
+   1. **If** the buildpack is not the last buildpack in the group, \
+      **Then** the lifecycle MUST proceed to the next buildpack in the group.
 
-   2. **IF** the buildpack is the last buildpack in the group,
-      1. **IF** no exit statuses from `/bin/detect` in the group are zero \
-         **THEN** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
+   2. **If** the buildpack is the last buildpack in the group,
+      1. **If** no exit statuses from `/bin/detect` in the group are zero \
+         **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-      2. **IF** at least one exit status from `/bin/detect` in the group is zero \
-         **THEN** the lifecycle MUST select this group and proceed to the analysis phase.
+      2. **If** at least one exit status from `/bin/detect` in the group is zero \
+         **Then** the lifecycle MUST select this group and proceed to the analysis phase.
 
 The selected group MUST be filtered to only include buildpacks with exit status zero.
 The order of the buildpacks in the group MUST otherwise be preserved.
@@ -374,7 +427,8 @@ During the build phase, typical buildpacks might:
 4. Compile the application source code into object code.
 5. Remove application source code that is not necessary for launch.
 6. Provide start command in `<layers>/launch.toml`.
-7. Refine the Buildpack Plan in `<plan>` with more exact metadata.
+7. Write a partial Bill-of-Material to `<layers>/launch.toml` describing any provided application dependencies.
+8. Write a partial Bill-of-Material to `<layers>/build.toml` describing any provided build dependencies.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -396,19 +450,19 @@ This is achieved by:
 - The Buildpack Plan,
 - Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
 - Any locally cached `<layers>/<layer>` directories, and
-- Bash version 3 or greater, if needed,
+- A shell, if needed,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
-1. **IF** the exit status of `/bin/build` is non-zero, \
-   **THEN** the lifecycle MUST fail the build.
+1. **If** the exit status of `/bin/build` is non-zero, \
+   **Then** the lifecycle MUST fail the build.
 
-2. **IF** the exit status of `/bin/build` is zero,
-   1. **IF** there are additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
+2. **If** the exit status of `/bin/build` is zero,
+   1. **If** there are additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the next buildpack's `/bin/build`.
 
-   2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the export phase.
+   2. **If** there are no additional buildpacks in the group, \
+      **Then** the lifecycle MUST proceed to the export phase.
 
 For each `/bin/build` executable in each buildpack, the lifecycle:
 
@@ -421,13 +475,13 @@ Correspondingly, each `/bin/build` executable:
 - MAY read or write to the `<app>` directory.
 - MAY read the build environment as described in the [Environment](#environment) section.
 - MAY read the Buildpack Plan.
-- MAY augment the Buildpack Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
-- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/build` executables.
+- SHOULD write a list containing any [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries) to `<layers>/build.toml` to defer those entries to subsequent `/bin/build` executables.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
+- SHOULD write BOM (Bill-of-Materials) entries to `<layers>/launch.toml` describing any contributions to the app image.
+- SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
@@ -436,19 +490,24 @@ Correspondingly, each `/bin/build` executable:
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
-#### Buildpack Plan Entry Refinements
+#### Unmet Buildpack Plan Entries
 
-A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
-The single entry MAY include additional metadata that could not be determined during the detection phase.
+A buildpack SHOULD designate a Buildpack Plan entry as unmet if the buildpack did not satisfy the requirement described by the entry.
+The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
-A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
+For each entry in `<plan>`:
+  - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
+    - MUST include the entry in the `<plan>` of the next buildpack that provided an entry with that name during the detection phase.
+  - **Else**, the lifecycle
+    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
 
-The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/build` to be available in subsequent buildpacks' `<plan>`s.
+#### Bills-of-Materials
 
-The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
+When the build is complete, a BOM (Bill-of-Materials) describing the app image MAY be generated for auditing purposes.
+If generated, this BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
-When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/build` execution.
+When the build is complete, a build BOM describing the build container MAY be generated for auditing purposes.
+If generated, this build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -483,19 +542,19 @@ The purpose of export is to create a new OCI image using a combination of remote
 - A reference to the old OCI image processed during the analysis phase, if available, and
 - A tag for a new OCI image,
 
-**IF** the run image, old OCI image, and new OCI image are not all present in the same image store, \
-**THEN** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
+**If** the run image, old OCI image, and new OCI image are not all present in the same image store, \
+**Then** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
 
 For each `<layers>/<layer>.toml` file that specifies `launch = true`,
 
-1. **IF** a corresponding `<layers>/<layer>` directory is present locally, \
-   **THEN** the lifecycle MUST
+1. **If** a corresponding `<layers>/<layer>` directory is present locally, \
+   **Then** the lifecycle MUST
    1. Convert this directory to a layer.
    2. Transfer the layer to the same image store as the old OCI image.
    3. Ensure the absolute path of `<layers>/<layer>` is preserved in the transferred layer.
    4. Collect a reference to the transferred layer.
-2. **IF** a corresponding `<layers>/<layer>` directory is not present locally, \
-   **THEN** the lifecycle MUST
+2. **If** a corresponding `<layers>/<layer>` directory is not present locally, \
+   **Then** the lifecycle MUST
    1. Attempt to locate the corresponding layer in the old OCI image.
    2. Collect a reference to the located layer or fail export if no such layer can be found.
 3. The lifecycle MUST store the `<layers>/<layer>.toml` file so that
@@ -537,158 +596,76 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- An optional process type specified by `CNB_PROCESS_TYPE`, and
-- Bash version 3 or greater, if needed,
+- A shell, if needed,
 
 First, the lifecycle MUST locate a start command and choose an execution strategy.
 
-To locate a start command,
-
-1. **IF** `CMD` in the container configuration is not empty,
-    **THEN** the value of `CMD` is chosen as the start command.
-
-2. **IF** `CMD` in the container configuration is empty,
-   1. **IF** the `CNB_PROCESS_TYPE` environment variable is set,
-      1. **IF** the value of `CNB_PROCESS_TYPE` corresponds to a process in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** the value of `CNB_PROCESS_TYPE` does not correspond to a process in `<layers>/launch.toml`, \
-         **THEN** launch fails.
-
-   2. **IF** the `CNB_PROCESS_TYPE` environment variable is not set,
-      1. **IF** there is a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** the lifecycle MUST choose the corresponding process as the start command.
-
-      2. **IF** there is not a process with a `web` process type in `<layers>/launch.toml`, \
-         **THEN** launch fails.
+To locate a start command, the lifecycle MUST follow the process outlined in the [Platform Interface Specification](platform.md).
 
 To choose an execution strategy,
 
-1. **IF** the value of `CMD` is chosen as the start command,
-   1. **IF** the first parameter of `CMD` is not `--`,
-      **THEN** the lifecycle MUST invoke the value as a command using Bash with subsequent entries as arguments.
+1. **If** a buildpack-provided process type is chosen as the start command,
+   1. **If** the process type has `direct` set to `false`,
+      1. **If** the process has one or more `args`
+         **Then** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
+      2. **If** the process has zero `args`
+         **Then** the lifecycle MUST invoke the value of `command` as a command using the shell.
 
-   2. **IF** the first parameter of `CMD` is `--` and the length of `CMD` is greater than one,
-      **THEN** the lifecycle MUST invoke the second entry using the `execve` syscall with subsequent entries as arguments.
+   2. **If** the process type does have `direct` set to `true`,
+      **Then** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
 
-
-2. **IF** a buildpack-provided process type is chosen as the start command,
-   1. **IF** the process type does not have `direct` set to `true`,
-      **THEN** the lifecycle MUST invoke the value of `command` as a command using Bash with values of `args` provided as arguments.
-
-   2. **IF** the process type does have `direct` set to `true`,
-      **THEN** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
+2. **If** a user-defined process type is chosen as the start command,
+   **Then** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
 
 Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
-2. If using an execution strategy involving Bash, the lifecycle MUST use a single Bash process to
+2. The lifecycle MUST
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+
+3. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
    1. source each file in each `<layers>/<layer>/profile.d` directory,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
-   2. source `<app>/.profile` if it is present.
+   2. source each file in each `<layers>/<layer>/profile.d/<process>` directory,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
-3. The lifecycle MUST invoke the start command with the decided execution strategy.
 
-When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
-When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
+3. If using an execution strategy involving a shell, the lifecycle MUST source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
-## Development Setup
+4. The lifecycle MUST invoke the start command with the decided execution strategy.
 
-### Purpose
+[†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
-The purpose of development setup is to create a containerized environment for developing or testing application source code.
+[†](README.md#linux-only)When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
 
-During the development setup phase, typical buildpacks might:
-
-1. Read the Buildpack Plan to determine what dependencies to provide.
-2. Provide dependencies in `<layers>/<layer>` for development commands and for subsequent buildpacks.
-3. Provide a command to start a development server in `<layers>/launch.toml`.
-4. Provide a command to run a test suite in `<layers>/launch.toml`.
-
-### Process
-
-**GIVEN:**
-- The final ordered group of buildpacks determined during the detection phase,
-- A directory containing application source code,
-- The Buildpack Plan,
-- The most recent local cached `<layers>/<layer>/` directories from a development setup of a version of the application source code, and
-- Bash version 3 or greater,
-
-For each buildpack in the group in order, the lifecycle MUST execute `/bin/develop`.
-
-1. **IF** the exit status of `/bin/develop` is non-zero, \
-   **THEN** the lifecycle MUST fail the development setup.
-
-2. **IF** the exit status of `/bin/develop` is zero,
-   1. **IF** there are additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to the next buildpack's `/bin/develop`.
-
-   2. **IF** there are no additional buildpacks in the group, \
-      **THEN** the lifecycle MUST proceed to executing a process type as specified in the [Launch](#launch) section.
-
-For each `/bin/develop` executable in each buildpack, the lifecycle:
-
-- MUST configure the build environment as described in the [Environment](#environment) section.
-- MUST provide path arguments to `/bin/develop` as described in the [Buildpack Interface](#buildpack-interface) section.
-- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
-
-Correspondingly, each `/bin/develop` executable:
-
-- MAY read from the app directory.
-- MAY write files to the app directory in an idempotent manner.
-- MAY read the build environment as described in the [Environment](#environment) section.
-- MAY read the Buildpack Plan.
-- MAY augment the Buildpack Plan with more refined metadata.
-- MAY remove entries with duplicate names in the Buildpack Plan to refine the metadata.
-- MAY remove all entries of the same name from the Buildpack Plan to defer those entries to subsequent `/bin/develop` executables.
-- MAY log output from the build process to `stdout`.
-- MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a list of possible commands for launch to `<layers>/launch.toml`.
-- MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
-- MAY modify or delete any existing `<layers>/<layer>` directories.
-- MAY modify or delete any existing `<layers>/<layer>.toml` files.
-- MAY create new `<layers>/<layer>` directories.
-- MAY create new `<layers>/<layer>.toml` files.
-- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
-- SHOULD NOT use the `<app>` directory to store provided dependencies.
-- SHOULD NOT specify any slices within `launch.toml`, as they are only used to generate OCI image layers.
-
-#### Buildpack Plan Entry Refinements
-
-A buildpack MAY refine entries in `<plan>` by replacing any entries of the same name with a single entry of that name.
-The single entry MAY include additional metadata that could not be determined during the detection phase.
-
-A buildpack MAY add extra entries to `<plan>` that do not correspond to entries added during the detection phase.
-
-The lifecycle MUST NOT allow any entries with names matching those in `<plan>` at the end of `/bin/develop` to be available in subsequent buildpacks' `<plan>`s.
-
-The lifecycle MUST defer any entries whose names were entirely removed from `<plan>` to the next buildpack that provided entries with those names during the detection phase.
-
-When the build is complete, a BOM (Bill-of-Materials) MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all entries in each `<plan>` at the end of each `/bin/develop` execution.
-
-#### Layers
-
-Layers designated `cache = true` in `<layers>/<layer>.toml` MAY be persisted to the next development setup.
-Layers not designated `cache = true` in `<layers>/<layer>.toml` MUST be deleted before the next development setup.
-Layers designated `launch = true` in `<layers>/<layer>.toml` MUST be made accessible to the development commands as described in the [Environment](#environment) section.
-Layers designated `build = true` in `<layers>/<layer>.toml` MUST be made accessible to subsequent buildpacks as described in the [Environment](#environment) section.
-
-A buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files.
-
-To decide what layer operations are appropriate, the buildpack should consider:
-
-- Whether files in the `<app>` directory have changed since the layer was created.
-- Whether the environment has changed since the layer was created.
-- Whether the buildpack version has changed since the layer was created.
-- Whether new application dependency versions have been made available since the layer was created.
+[‡](README.md#windows-only)When executing a process with Command Prompt, the lifecycle SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
 
 ## Environment
 
 ### Provided by the Lifecycle
+
+#### Buildpack Specific Variables
+
+The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
+
+These variables MAY differ between buildpacks.
+
+| Env Variable        | Description                          | Detect | Build | Launch
+|---------------------|--------------------------------------|--------|-------|--------
+| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
 
 #### Layer Paths
 
@@ -702,26 +679,27 @@ In either case,
 
 - The lifecycle MUST order all `<layer>` paths to reflect the reversed order of the buildpack group.
 - The lifecycle MUST order all `<layer>` paths provided by a given buildpack alphabetically ascending.
-- The lifecycle MUST separate each path with the OS path list separator (e.g., `:` on Linux).
+- The lifecycle MUST separate each path with the OS path list separator (e.g. `:` on Linux, `;` on Windows).
 
-| Env Variable      | Layer Path   | Contents         | Build | Launch
-|-------------------|--------------|------------------|-------|--------
-| `PATH`            | `/bin`       | binaries         | [x]   | [x]
-| `LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]
-| `LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |
-| `CPATH`           | `/include`   | header files     | [x]   |
-| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         | [x]   |
+| Env Variable                               | Layer Path   | Contents         | Build | Launch |
+|--------------------------------------------|--------------|------------------|-------|--------|
+| `PATH`                                     | `/bin`       | binaries         | [x]   | [x]    |
+| [†](README.md#linux-only)`LD_LIBRARY_PATH` | `/lib`       | shared libraries | [x]   | [x]    |
+| [†](README.md#linux-only)`LIBRARY_PATH`    | `/lib`       | static libraries | [x]   |        |
+| `CPATH`                                    | `/include`   | header files     | [x]   |        |
+| `PKG_CONFIG_PATH`                          | `/pkgconfig` | pc files         | [x]   |        |
+
 
 ### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                          | Detect | Build | Launch
-|-----------------|--------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                      | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for profile.d |        |       | [x]
-| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]
+| Env Variable    | Description                                    | Detect | Build | Launch
+|-----------------|------------------------------------------------|--------|-------|--------
+| `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
+| `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
+| `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
+| `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
@@ -749,44 +727,54 @@ For each file written to `<layers>/<layer>/env.launch/` by `/bin/build`, the lif
 The lifecycle MUST consider the name of the environment variable to be the name of the file up to the first period (`.`) or to the end of the name if no periods are present.
 In all cases, file contents MUST NOT be evaluated by a shell or otherwise modified before inclusion in environment variable values.
 
-##### Delimiter
+For each environment variable file the period-delimited suffix SHALL determine the modification behavior as follows.
 
-If the environment variable file name ends in `.delim`, then the file contents MUST be used to delimit any concatenation within the same layer involving that environment variable.
-This delimiter MUST override the delimiters below.
-If multiple operations apply to the same environment variable, all operations for a given layer containing environment variable files MUST be applied before subsequent layers are considered.
-
-##### Prepend
-
-If the environment variable file name has no period-delimited suffix, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable delimited by the OS path list separator.
-If the environment variable file name ends in `.prepend`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
-In either case, within that environment variable value,
-- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
-- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` precede file contents in `<layers>/<layer>/env/`.
+| Suffix     | Modification Behavior
+|------------|-------------------------------------------
+| none       | [Override](#override)
+| `.append`  | [Append](#append)
+| `.default` | [Default](#default)
+| `.delim`   | [Delimeter](#delimiter)
+| `.override`| [Override](#override)
+| `.prepend` | [Prepend](#prepend)
 
 ##### Append
 
-If the environment variable file name ends in `.append`, then the value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
+The value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
 Within that environment variable value,
 - Earlier buildpacks' environment variable file contents MUST precede later buildpacks' environment variable file contents.
 - Environment variable file contents originating from the same buildpack MUST be sorted alphabetically ascending by associated layer name.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
-
-##### Override
-
-If the environment variable file name ends in `.override`, then the value of the environment variable MUST be the file contents.
-For that environment variable value,
-- Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
-- For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
-- Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` override file contents in `<layers>/<layer>/env/`.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` precede file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which must precede file contents in `<layers>/<layer>/env.launch/<process>/`.**
 
 ##### Default
 
-If the environment variable file name ends in `.default`, then the value of the environment variable MUST only be the file contents if the environment variable is empty.
+The value of the environment variable MUST only be the file contents if the environment variable is empty.
 For that environment variable value,
 - Earlier buildpacks' environment default variable file contents MUST override later buildpacks' environment variable file contents.
 - For default environment variable file contents originating from the same buildpack, file contents that are earlier (when sorted alphabetically ascending by associated layer name) MUST override file contents that are later.
-- Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in  `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/`.
+- **Default environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env/` override file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env.launch/<process>/`.**
+
+##### Delimiter
+
+The file contents MUST be used to delimit any concatenation within the same layer involving that environment variable.
+This delimiter MUST override the delimiters below.
+If multiple operations apply to the same environment variable, all operations for a given layer containing environment variable files MUST be applied before subsequent layers are considered.
+
+##### Override
+
+The value of the environment variable MUST be the file contents.
+For that environment variable value,
+- Later buildpacks' environment variable file contents MUST override earlier buildpacks' environment variable file contents.
+- For environment variable file contents originating from the same buildpack, file contents that are later (when sorted alphabetically ascending by associated layer name) MUST override file contents that are earlier.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` override file contents in `<layers>/<layer>/env.build/` or `<layers>/<layer>/env.launch/` which override file contents in `<layers>/<layer>/env/`.**
+
+##### Prepend
+
+The value of the environment variable MUST be a concatenation of the file contents and the contents of other files representing that environment variable.
+Within that environment variable value,
+- Later buildpacks' environment variable file contents MUST precede earlier buildpacks' environment variable file contents.
+- Environment variable file contents originating from the same buildpack MUST be sorted alphabetically descending by associated layer name.
+- **Environment variable file contents originating in the same layer MUST be sorted such that file contents in `<layers>/<layer>/env.launch/<process>/` precede file contents in `<layers>/<layer>/env.launch/` or `<layers>/<layer>/env.build/`, which must precede `<layers>/<layer>/env/`.**
 
 ## Security Considerations
 
@@ -820,6 +808,16 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 ### launch.toml (TOML)
 
 ```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+
+[[labels]]
+key = "<label key>"
+value = "<label valu>"
+
 [[processes]]
 type = "<process type>"
 command = "<command>"
@@ -830,13 +828,32 @@ direct = false
 paths = ["<app sub-path glob>"]
 ```
 
-The buildpack MAY specify any number of processes or slices.
+The buildpack MAY specify any number of bill-of-materials entries, labels, processes, or slices.
+
+For each dependency contributed to the app image, the buildpack:
+
+- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
+  - `name` is REQUIRED.
+  - `metadata` MAY contain additional data describing the dependency.
+
+The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
+
+For each label, the buildpack:
+
+- MUST specify a `key` that is not identical to other labels provided by the same buildpack.
+- MUST specify a `value` to be set in the image label.
+
+The lifecycle MUST add each label as an image label on the created image metadata.
+
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
 
 For each process, the buildpack:
 
-- MUST specify a `type` that is not identical to other process types provided by the same buildpack.
+- MUST specify a `type`, which:
+  - MUST NOT be identical to other process types provided by the same buildpack.
+  - MUST only contain numbers, letters, and the characters ., _, and -.
 - MUST specify a `command` that is either:
-  - A command sequence that is valid when executed using the Bash 3+ shell, if `args` is not specified.
+  - A command sequence that is valid when executed using the shell, if `args` is not specified.
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
@@ -857,6 +874,29 @@ The lifecycle MUST accept slices that do not contain any files or directory. How
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
+### build.toml (TOML)
+
+```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+
+[[unmet]]
+name = "<dependency name>"
+```
+
+For each dependency contributed by the buildpack to the build environment, the buildpack:
+- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
+  - `name` is REQUIRED.
+
+For each unmet entry in the Buildpack Plan, the buildpack:
+- SHOULD add an entry to `unmet`.
+
+For each entry in `unmet`:
+- `name` MUST match an entry in the Buildpack Plan.
+
 ### store.toml (TOML)
 
 ```toml
@@ -872,7 +912,6 @@ name = "<dependency name>"
 
 [[requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [requires.metadata]
 # buildpack-specific data
@@ -884,7 +923,6 @@ name = "<dependency name>"
 
 [[or.requires]]
 name = "<dependency name>"
-version = "<dependency version>"
 
 [or.requires.metadata]
 # buildpack-specific data
@@ -896,22 +934,6 @@ version = "<dependency version>"
 ```toml
 [[entries]]
 name = "<dependency name>"
-version = "<dependency version>"
-
-[entries.metadata]
-# buildpack-specific data
-```
-
-### Bill-of-Materials (TOML)
-
-```toml
-[[entries]]
-name = "<dependency name>"
-version = "<dependency version>"
-
-[[entries.buildpacks]]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 
 [entries.metadata]
 # buildpack-specific data
@@ -935,14 +957,16 @@ For a given layer, the buildpack MAY specify:
 
 
 ### buildpack.toml (TOML)
+This section describes the 'Buildpack descriptor'.
 
 ```toml
-api = "<buildpack api>"
+api = "<buildpack API version>"
 
 [buildpack]
 id = "<buildpack ID>"
 name = "<buildpack name>"
 version = "<buildpack version>"
+homepage = "<buildpack homepage>"
 clear-env = false
 
 [[order]]
@@ -961,33 +985,102 @@ mixins = ["<mixin name>"]
 
 Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.ruby".
 
-The buildpack ID:
+**The buildpack ID:**
+
+*Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
+The buildpack version:
+- MUST be in the form `<X>.<Y>.<Z>` where `X`, `Y`, and `Z` are non-negative integers and must not contain leading zeros.
+   - Each element MUST increase numerically.
+   - Buildpack authors will define what changes will increment `X`, `Y`, and `Z`.
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
-The buildpack API:
+**The buildpack API:**
+
+*Key: `api = "<buildpack API version>"`*
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
- - SHALL indicate compatibility with a given lifecycle according to the following rules:
-    - When `<major>` is `0`, the buildpack is only compatible with lifecycles implementing that exact buildpack API.
-    - When `<major>` is greater than `0`, the buildpack is only compatible with lifecycles implementing buildpack API `<major>.<minor>`, where `<major>` of the lifecycle equals `<major>` of the buildpack and `<minor>` of the lifecycle is greater than or equal to `<minor>` of the buildpack.
+ - SHOULD indicate the lowest compatible `<minor>` if buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
 
 #### Buildpack Implementations
 
 A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
 
-Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
-
-The stack ID:
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
+Each stack in `stacks` either:
+- MUST identify a compatible stack:
+   - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
+   - `mixins` MAY contain one or more mixin names.
+- Or MUST indicate compatibility with any stack:
+   - `id` MUST be set to the special value `"*"`.
+   - `mixins` MUST be empty.
 
 #### Order Buildpacks
 
 A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+
+### Exec.d Output (TOML)
+```
+<name> = "<value>"
+```
+
+The output from an `exec.d` script MAY contain any number of top-level key/value pairs.
+
+Each `name`:
+* MUST be a [bare key](https://github.com/toml-lang/toml/blob/master/toml.md#keys).
+* MUST be a valid environment variable name on the runtime operating system.
+
+Each `key`:
+* MUST be a [basic string](https://github.com/toml-lang/toml/blob/master/toml.md#string).
+
+## Deprecations
+This section describes all the features that are deprecated.
+
+### `0.3`
+
+#### Build Plan (TOML) `requires.version` Key
+
+The `requires.version` and `or.requires.version` keys are deprecated.
+
+```toml
+[[requires]]
+name = "<dependency name>"
+version = "<dependency version>"
+
+[[or.requires]]
+name = "<dependency name>"
+version = "dependency version>"
+```
+
+To upgrade, buildpack authors SHOULD set `requires.version` as `requires.metadata.version` and `or.requires.version` as `or.requires.metadata.version`.
+
+```toml
+[[requires]]
+name = "<dependency name>"
+
+[requires.metadata]
+version = "<dependency version>"
+
+[[or.requires]]
+name = "<dependency name>"
+
+[or.requires.metadata]
+version = "<dependency version>"
+```
+
+If `requires.version` and `requires.metadata.version` or `or.requires.version` and `or.requires.metadata.version` are both defined then lifecycle will fail.
+
+For backwards compatibility, the lifecycle will produce a Buildpack Plan (TOML) that puts `version` in `entries.metadata` as long as `version` does not exist in `requires.metadata`.
+
+```toml
+[[entries]]
+name = "<dependency name>"
+
+[entries.metadata]
+version = "<dependency version>"
+```
