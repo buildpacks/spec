@@ -174,14 +174,15 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | Input             | Description
 |-------------------|----------------------------------------------
 | `$0`              | Absolute path of the executable
-| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
+| [†](README.md#linux-only)FD 3              | A third open file descriptor
+| [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE`            | Hex representation of an open file handle
 
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | Pass (0) or error (1+)
 | Standard output    | Logs (info)
 | Standard error     | Logs (warnings, errors)
-| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
+| [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ### Layer Types
 
