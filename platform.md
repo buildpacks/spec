@@ -488,9 +488,11 @@ Usage:
 | `401`     | Buildpack build error
 | `400`, `402-499`|  Build-specific lifecycle errors
 
-- The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according process outlined in the [Buildpack Interface Specification](buildpack.md).
+- The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL aggregate all `processes`, `slices` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
+    - The lifecycle SHALL treat `web` processes defined by buildpacks implementing buildpack API < 0.6 as `default = true`.
 
 #### `exporter`
 Usage:
@@ -573,8 +575,10 @@ Usage:
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
     - **If** `<process-type>` matches a buildpack-provided process:
       - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
-    - **If** `<process-type>` does not match a buildpack-provided process:
-      - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
+    - **Else if** `<process-type>` does not match a buildpack-provided process:
+      - MUST fail
+    - **Else if** there is a buildpack-provided default process type in [`metadata.toml`](#metadatatoml-toml):
+      - MUST have `ENTRYPOINT=/cnb/process/<buildpack-default-process-type>`
     - MUST contain the following `Env` entries
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
@@ -893,6 +897,8 @@ Where:
 
 #### `metadata.toml` (TOML)
 ```toml
+buildpack-default-process-type = "<process type>"
+
 [[buildpacks]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
@@ -1085,7 +1091,7 @@ Where:
   },
   "buildpacks": [
     {
-      "key": "<buldpack-id>",
+      "key": "<buildpack-id>",
       "version": "<buildpack-version>",
       "layers": {
         "<layer-name>": {
