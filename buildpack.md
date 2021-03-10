@@ -823,6 +823,7 @@ type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
 direct = false
+default = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -857,6 +858,9 @@ For each process, the buildpack:
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
+- MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
+
+An individual buildpack may only specify one process type with `default = true`. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list. The lifecycle MUST select the last process type with `default = true` as the buildpack-provided default.
 
 For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
