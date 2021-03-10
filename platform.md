@@ -575,10 +575,12 @@ Usage:
     - MUST contain a layer that includes `<layers>/config/metadata.toml`
     - **If** `<process-type>` matches a buildpack-provided process:
       - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
-    - **Else if** `<process-type>` does not match a buildpack-provided process:
+    - **Else if** `<process-type>` is provided and does not match a buildpack-provided process:
       - MUST fail
     - **Else if** there is a buildpack-provided default process type in `<layers>/config/metadata.toml`:
       - MUST have `ENTRYPOINT=/cnb/process/<buildpack-default-process-type>`
+    - **Else**:
+      - MUST have `ENTRYPOINT` set to `/cnb/lifecycle/launcher`
     - MUST contain the following `Env` entries
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
