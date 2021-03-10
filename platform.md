@@ -577,7 +577,7 @@ Usage:
       - MUST have `ENTRYPOINT=/cnb/process/<process-type>`
     - **Else if** `<process-type>` does not match a buildpack-provided process:
       - MUST fail
-    - **Else if** there is a buildpack-provided default process type in [`metadata.toml`](#metadatatoml-toml):
+    - **Else if** there is a buildpack-provided default process type in `<layers>/config/metadata.toml`:
       - MUST have `ENTRYPOINT=/cnb/process/<buildpack-default-process-type>`
     - MUST contain the following `Env` entries
       - `CNB_LAYERS_DIR=<layers>`
