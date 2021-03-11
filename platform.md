@@ -579,6 +579,7 @@ Usage:
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
       - `PATH=/cnb/process:$PATH` where `$PATH` is the value of `$PATH` on the run-image.
+    - MUST have the working directory set to the value of `<app>`.
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
