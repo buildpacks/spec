@@ -280,7 +280,6 @@ Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
-  [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
@@ -288,9 +287,6 @@ Usage:
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
-  [-run-image <run-image> ] \
-  [-stack-id <stack-id> ] \
-  [-stack <stack> ] \
   [-uid <uid>]
 ```
 
@@ -298,7 +294,6 @@ Usage:
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-dir>`     | `CNB_CACHE_DIR`       |                          | Path to a cache directory
 | `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
@@ -306,14 +301,10 @@ Usage:
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
-| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
-| `<stack-id>`      | `CNB_STACK_ID`        |                          | Path to stack file (see [`stack.toml`](#stacktoml-toml))
-| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Chosen stack ID
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
-- **If** `<run-image>` is not provided by the platform the value will be resolved from the contents of stack
 - The lifecycle MUST accept valid references to non-existent images without error.
 
 ##### Outputs
