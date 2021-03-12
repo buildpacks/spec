@@ -182,7 +182,7 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | [exit status]      | Pass (0) or error (1+)
 | Standard output    | Logs (info)
 | Standard error     | Logs (warnings, errors)
-| [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
+| [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`<handle>` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ### Layer Types
 
