@@ -171,11 +171,12 @@ OR
 
 Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of the executable
-| [†](README.md#linux-only)FD 3              | A third open file descriptor
-| [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE`            | Hex representation of an open file handle
+| Input                                          | Description
+|------------------------------------------------|----------------------------------------------
+| `$0`                                           | Absolute path of the executable
+| [†](README.md#linux-only)FD 3                  | A third open file descriptor
+| [‡](README.md#windows-only) `<handle>`         | An additional open handle
+| [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Hexidecimal number for `<handle>`
 
 | Output             | Description
 |--------------------|----------------------------------------------
