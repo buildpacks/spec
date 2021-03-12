@@ -420,9 +420,9 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `300-399` | Restoration-specific lifecycle errors
 
+- For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
-- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-
+- **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 
 ##### Layer Restoration
 When restoring a given layer the lifecycle SHALL:
@@ -431,12 +431,13 @@ When restoring a given layer the lifecycle SHALL:
 - **Else if** `launch=true`:
     - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
     - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
+- **Else if** `cache=true` AND the cache DOES NOT contain a layer with matching diffID
+    - Must not write layer metadata
 - **Else if** `cache=true`:
     - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
 
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
 - MUST restore cached layer contents if the cache contains a layer with matching diffID
-- MUST remove layer metadata if `cache=true` AND the cache DOES NOT contain a layer with matching diffID
 
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
