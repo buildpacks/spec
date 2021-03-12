@@ -280,7 +280,6 @@ Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
-  [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
@@ -294,7 +293,6 @@ Usage:
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<group>`         | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
@@ -402,7 +400,7 @@ Usage:
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
 
 ##### Outputs
 | Output                                | Description
@@ -410,7 +408,7 @@ Usage:
 | [exit status]                         | (see Exit Code table below for values)
 | `/dev/stdout`                         | Logs (info)
 | `/dev/stderr`                         | Logs (warnings, errors)
-| `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
+| `<layers>/<buidpack-id>/store.toml`   | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>/*`.   | Restored layer contents
 
@@ -422,12 +420,12 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `300-399` | Restoration-specific lifecycle errors
 
-- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
 - **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 
 
 ##### Layer Restoration
-When analyzing a given layer the lifecycle SHALL:
+When restoring a given layer the lifecycle SHALL:
 - **If** `build=true`, `cache=false`:
     - Do nothing
 - **Else if** `launch=true`:
@@ -435,7 +433,6 @@ When analyzing a given layer the lifecycle SHALL:
     - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
 - **Else if** `cache=true`:
     - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
 
 For each layer metadata file found in the `<layers>` directory, the lifecycle:
 - MUST restore cached layer contents if the cache contains a layer with matching diffID
