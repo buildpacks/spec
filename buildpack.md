@@ -487,7 +487,8 @@ Correspondingly, each `/bin/build` executable:
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
-- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
+- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem and the ones noted below.
+- MUST NOT create `<layers>/<layer>` directories with `<layer>` names `build`, `launch` or `store`.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
 #### Unmet Buildpack Plan Entries
