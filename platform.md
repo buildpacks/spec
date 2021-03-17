@@ -293,16 +293,16 @@ Usage:
 ```
 
 ##### Inputs
-| Input         | Environment Variable    | Default Value             | Description
-|---------------|-------------------------|---------------------------|----------------------
-| `<app>`         | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
-| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to output group definition
-| `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
-| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
-| `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
-| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| Input         | Environment Variable    | Default Value                                          | Description
+|---------------|-------------------------|--------------------------------------------------------|-------
+| `<app>`         | `CNB_APP_DIR`         | `/workspace`                                           | Path to application directory
+| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml`                                  | Path to output group definition
+| `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`                                              | Path to layers directory
+| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                                                 | Log Level
+| `<order>`       | `CNB_ORDER_PATH`      | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))
+| `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`                                   | Path to output resolved build plan
+| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`                                            | Path to platform directory
 
 ##### Outputs
 | Output             | Description
@@ -579,6 +579,7 @@ Usage:
       - `CNB_LAYERS_DIR=<layers>`
       - `CNB_APP_DIR=<app>`
       - `PATH=/cnb/process:$PATH` where `$PATH` is the value of `$PATH` on the run-image.
+    - MUST have the working directory set to the value of `<app>`.
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
