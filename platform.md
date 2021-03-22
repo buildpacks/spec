@@ -280,12 +280,17 @@ Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
+  [-cache-dir <cache-dir>] \
+  [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
+  [-run-image <run-image> ] \
+  [-stack-id <stack-id> ] \
+  [-stack <stack> ] \
   [-uid <uid>]
 ```
 
@@ -293,17 +298,25 @@ Usage:
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-dir>`     | `CNB_CACHE_DIR`       |                          | Path to a cache directory
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<group>`         | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
+| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
+| `<stack-id>`      | `CNB_STACK_ID`        |                          | Path to stack file (see [`stack.toml`](#stacktoml-toml))
+| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Chosen stack ID
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
+- **If** `<run-image>` is not provided by the platform the value will be resolved from the contents of stack
 - The lifecycle MUST accept valid references to non-existent images without error.
+- The lifecycle MUST ensure that the `<run-image>` is compatible with the `<previous-image>`.
+- DRAFT: The lifecycle MUST ensure registry read/write access to `<run-image>`, `<previous-image>`
 
 ##### Outputs
 | Output             | Description
@@ -321,7 +334,8 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `200-299` | Analysis-specific lifecycle errors
 
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<previous-image>` is accessible.
+- DRAFT: The lifecycle MUST write additional stack [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<stack-id>`,`<stack>`, and `<run-image>` are accessible.
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -863,6 +877,8 @@ For more information on build reproducibility see [https://reproducible-builds.o
 ### Files
 
 #### `analyzed.toml` (TOML)
+
+DRAFT: How should we store run-image(s) data and stack build image data? Mixins, stack-id, identifier etc.
 
 ```toml
 [image]
