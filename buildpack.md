@@ -198,6 +198,32 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
+`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
+----------|----------|----------|--------------------------|---------------------
+T         | T        | T        | Yes - from the app image | Yes - from the cache
+T         | T        | F        | Yes - from the cache     | Yes - from the cache
+T         | F        | T        | No                       | No
+T         | F        | F        | No                       | No
+F         | T        | T        | Yes - from the app image | Yes - from the cache
+F         | T        | F        | Yes - from the cache     | Yes - from the cache
+F         | F        | T        | Yes - from the app image | No
+F         | F        | F        | No                       | No
+
+Notes:
+* The metadata and layer are restored only if they match each other (the cache can be changed/deleted).
+* The layer is restored only from the cache due to performance reasons.
+
+Examples:
+* `build == T, cache == T, launch == F`: Java buildpack.  
+If the version of the jdk in the cache is the one that is needed, a downstream buildpack will use it.  
+* `build == T, cache == F, launch == T`: Ruby buildback.  
+A downstream buildpack needs it in order to start the app, but the cache isn't used for some reason.
+There is no reason to restore only the metadata since the layer is needed (and layers aren't restored from the app image).
+* `build == T, cache == F, launch == F`: CA-certificates buildback.
+Downstream buildpacks need it, but don't ever want to store it for next builds (always read it from the bindings).
+* `build == F, cache == F, launch == T`: Java buildpack.  
+If the version of the jre in the previous app image is the one that is needed, there is no need to download it again.
+
 #### Launch Layers
 
 A buildpack MAY specify that a `<layers>/<layer>/` directory is a launch layer by placing `launch = true` in `<layers>/<layer>.toml`.
@@ -234,7 +260,7 @@ Before the next re-build:
 
 A buildpack MAY specify that a `<layers>/<layer>/` directory is a cached layer by placing `cache = true` in `<layers>/<layer>.toml`.
 
-If a cache is provided the lifecycle:
+If a cache is provided, the lifecycle:
 - SHOULD store all cached layers after a successful build.
 - SHOULD store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID
 
@@ -969,9 +995,10 @@ name = "<dependency name>"
 ### Layer Content Metadata (TOML)
 
 ```toml
-launch = false
-build = false
-cache = false
+[types]
+  launch = false
+  build = false
+  cache = false
 
 [metadata]
 # buildpack-specific data
