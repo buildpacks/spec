@@ -320,7 +320,18 @@ The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is unavailable in the container.
+The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
+
+#### Mixin Satisfaction
+A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
+
+1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
+2) the stack provides the mixin `build:<mixin>` and the buildpack requires `build:<mixin>`
+3) the stack provides the mixin `<mixin>` and the buildpack requires `<mixin>`
+4) the stack provides the mixin `<mixin>` and the buildpack requires `build:<mixin>`
+5) the stack provides the mixin `<mixin>` and the buildpack requires `run:<mixin>`
+6) the stack provides the mixin `<mixin>` and the buildpack requires both `run:<mixin>` and `build:<mixin>`
+7) the stack provides the mixins `build:<mixin>` and `run:<mixin>` the buildpack requires `<mixin>`
 
 #### Order Resolution
 

@@ -206,6 +206,7 @@ A mixin name MUST only contain a `:` character as part of an optional stage spec
 
 A mixin prefixed with the `build:` stage specifier only affects the build image and does not need to be specified on the run image.
 A mixin prefixed with the `run:` stage specifier only affects the run image and does not need to be specified on the build image.
+A mixin WITHOUT a `build:` or `run:` prefix affects both the build and the run images.
 
 A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
