@@ -198,6 +198,8 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
+The following table illustrates the behavior depending on the value of each flag:
+
 `build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
 ----------|----------|----------|--------------------------|---------------------
 T         | T        | T        | Yes - from the app image | Yes - from the cache
@@ -214,15 +216,14 @@ Notes:
 * The layer is restored only from the cache due to performance reasons.
 
 Examples:
-* `build == T, cache == T, launch == F`: Java buildpack.  
-If the version of the jdk in the cache is the one that is needed, a downstream buildpack will use it.  
-* `build == T, cache == F, launch == T`: Ruby buildback.  
-A downstream buildpack needs it in order to start the app, but the cache isn't used for some reason.
-There is no reason to restore only the metadata since the layer is needed (and layers aren't restored from the app image).
-* `build == T, cache == F, launch == F`: CA-certificates buildback.
-Downstream buildpacks need it, but don't ever want to store it for next builds (always read it from the bindings).
-* `build == F, cache == F, launch == T`: Java buildpack.  
-If the version of the jre in the previous app image is the one that is needed, there is no need to download it again.
+* `build == T, cache == T, launch == F`:  
+A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
+* `build == T, cache == F, launch == T`:  
+A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime. If the Ruby layer is not cached, the layer metadata will not be restored as the Ruby buildpack will always need to re-download Ruby (and layers are not restored from the previous image).
+* `build == T, cache == F, launch == F`:  
+A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
+* `build == F, cache == F, launch == T`:  
+A Java buildpack might read the restored layer metadata to determine if the version of the JRE included in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the previous image to avoid re-downloading the JRE.
 
 #### Launch Layers
 
