@@ -219,7 +219,7 @@ Examples:
 * `build == T, cache == T, launch == F`:  
 A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
 * `build == T, cache == F, launch == T`:  
-A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime. If the Ruby layer is not cached, the layer metadata will not be restored as the Ruby buildpack will always need to re-download Ruby (and layers are not restored from the previous image).
+A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime. If the Ruby layer is not cached, the layer metadata will not be restored as the Ruby buildpack will always need to re-download Ruby (layers are not restored from the previous image).
 * `build == T, cache == F, launch == F`:  
 A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
 * `build == F, cache == F, launch == T`:  
