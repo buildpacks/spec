@@ -203,14 +203,14 @@ Note that the lifecycle only restores layers from the cache due to performance r
 
 `build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
 ----------|----------|----------|--------------------------|---------------------
-T         | T        | T        | Yes - from the app image | Yes* - from the cache
-T         | T        | F        | Yes - from the cache     | Yes - from the cache
-T         | F        | T        | No                       | No
-T         | F        | F        | No                       | No
-F         | T        | T        | Yes - from the app image | Yes* - from the cache
-F         | T        | F        | Yes - from the cache     | Yes - from the cache
-F         | F        | T        | Yes - from the app image | No
-F         | F        | F        | No                       | No
+true      | true     | true     | Yes - from the app image | Yes* - from the cache
+true      | true     | false    | Yes - from the cache     | Yes - from the cache
+true      | false    | true     | No                       | No
+true      | false    | false    | No                       | No
+false     | true     | true     | Yes - from the app image | Yes* - from the cache
+false     | true     | false    | Yes - from the cache     | Yes - from the cache
+false     | false    | true     | Yes - from the app image | No
+false     | false    | false    | No                       | No
 
 \* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
 
