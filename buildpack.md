@@ -199,7 +199,7 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
 The following table illustrates the behavior depending on the value of each flag.
-Note that the lifecycle only restores layers from the cache due to performance reasons.
+Note that the lifecycle only restores layers from the cache, never from the previous image.
 
 `build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
 ----------|----------|----------|--------------------------|---------------------
@@ -215,13 +215,13 @@ false     | false    | false    | No                       | No
 \* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
 
 Examples:
-* `build == T, cache == T, launch == F`:  
+* `build = true, cache = true, launch = true`:
+A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime.
+* `build = true, cache = true, launch = false`:
 A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
-* `build == T, cache == F, launch == T`:  
-A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime. If the Ruby layer is not cached, the layer metadata will not be restored as the Ruby buildpack will always need to re-download Ruby (layers are not restored from the previous image).
-* `build == T, cache == F, launch == F`:  
+* `build = true, cache = false, launch = false`:
 A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
-* `build == F, cache == F, launch == T`:  
+* `build = false, cache = false, launch = true`:
 A Java buildpack might read the restored layer metadata to determine if the version of the JRE included in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the previous image to avoid re-downloading the JRE.
 
 #### Launch Layers
@@ -276,8 +276,6 @@ Layers marked `launch = false`, `build = false`, and `cache = false` behave like
 At the end of each individual buildpack's build phase:
 - The lifecycle:
   - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`, in order to prevent subsequent buildpacks from accidentally depending on an ignored layer.
-
-The lifecycle restores all layers from previous builds as ignored layers. Buildpacks MUST set `launch`, `build`, and/or `cache` in `<layers>/<layer>.toml` to use a restored layer.
 
 ## App Interface
 
