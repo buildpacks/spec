@@ -1017,7 +1017,7 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
 The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpack licenses where:
 
 - `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
-- `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to type to point to the license.
+- `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
 #### Buildpack Implementations
 
