@@ -973,6 +973,12 @@ name = "<buildpack name>"
 version = "<buildpack version>"
 homepage = "<buildpack homepage>"
 clear-env = false
+description = "<buildpack description>"
+keywords = [ "<string>" ]
+
+[[buildpack.licenses]]
+type = "<string>"
+uri = "<uri>"
 
 [[order]]
 [[order.group]]
@@ -1010,6 +1016,13 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
  - SHOULD indicate the lowest compatible `<minor>` if buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
+
+**The buildpack licenses:**
+
+The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpack licenses where:
+
+- `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
+- `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
 #### Buildpack Implementations
 
