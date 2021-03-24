@@ -198,22 +198,21 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
 
-The following table illustrates the behavior depending on the value of each flag:
+The following table illustrates the behavior depending on the value of each flag.
+Note that the lifecycle only restores layers from the cache due to performance reasons.
 
 `build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
 ----------|----------|----------|--------------------------|---------------------
-T         | T        | T        | Yes - from the app image | Yes - from the cache
+T         | T        | T        | Yes - from the app image | Yes* - from the cache
 T         | T        | F        | Yes - from the cache     | Yes - from the cache
 T         | F        | T        | No                       | No
 T         | F        | F        | No                       | No
-F         | T        | T        | Yes - from the app image | Yes - from the cache
+F         | T        | T        | Yes - from the app image | Yes* - from the cache
 F         | T        | F        | Yes - from the cache     | Yes - from the cache
 F         | F        | T        | Yes - from the app image | No
 F         | F        | F        | No                       | No
 
-Notes:
-* The metadata and layer are restored only if they match each other (the cache can be changed/deleted).
-* The layer is restored only from the cache due to performance reasons.
+\* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
 
 Examples:
 * `build == T, cache == T, launch == F`:  
