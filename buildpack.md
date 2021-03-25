@@ -190,7 +190,7 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 
 ### Layer Types
 
-Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
+Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in the `[types]` table of a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
 
 - Whether the layer directory `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
 - Whether the layer directory `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
@@ -629,7 +629,7 @@ Subsequently,
    - The executable component of the lifecycle that implements the launch phase, and
    - An `ENTRYPOINT` set to that component.
 
-Finally, any `<layers>/<layer>` directories specify `cache = true` under `[types]` in `<layers>/<layer>.toml` MAY be preserved for the next local build.
+Finally, any `<layers>/<layer>` directories specified as `cache = true` under `[types]` in `<layers>/<layer>.toml` MAY be preserved for the next local build.
 For any `<layers>/<layer>.toml` files specifying both `cache = true` and `launch = true` under `[types]`, the lifecycle SHOULD store a checksum of the corresponding `<layers>/<layer>` directory so that it is associated with the locally cached directory.
 This allows the analysis phase to efficiently compare the locally cached layer with the corresponding old OCI image layer before the next build.
 
