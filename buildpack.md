@@ -235,7 +235,7 @@ The lifecycle MUST also store the Layer Content Metadata associated with each la
 
 Before a given re-build:
 - If a launch layer is marked `cache = false` and `build = false` in the previous image metadata, the lifecycle:
-  - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `launch`, `build`, and `cache` booleans.
+  - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
 
 After a given re-build:
@@ -266,12 +266,12 @@ If a cache is provided, the lifecycle:
 
 Before the next re-build:
 - The lifecycle MUST do both or neither of the following:
-  - Restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `launch`, `build`, and `cache` booleans.
+  - Restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
   - Restore layer contents to the `<layers>/<layer>/` directory.
 
 #### Ignored Layers
 
-Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, existing for the duration of a single build.
+Layers marked `launch = false`, `build = false`, and `cache = false` (or when the `[types]` table does not exist) behave like temporary directories, available only to the authoring buildpack, existing for the duration of a single build.
 
 At the end of each individual buildpack's build phase:
 - The lifecycle:
@@ -994,9 +994,9 @@ name = "<dependency name>"
 
 ```toml
 [types]
-  launch = false
-  build = false
-  cache = false
+  launch = true
+  build = true
+  cache = true
 
 [metadata]
 # buildpack-specific data
