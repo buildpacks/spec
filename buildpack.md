@@ -197,6 +197,7 @@ Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a b
 - Whether the layer directory `<layers>/<layer>/` should be persisted and made available to subsequent builds of the same OCI image (via the `cache` boolean).
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
+The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `build = false`, `cache = false` layer.
 
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
@@ -271,7 +272,7 @@ Before the next re-build:
 
 #### Ignored Layers
 
-Layers marked `launch = false`, `build = false`, and `cache = false` (or when the `[types]` table does not exist) behave like temporary directories, available only to the authoring buildpack, existing for the duration of a single build.
+Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, existing for the duration of a single build.
 
 At the end of each individual buildpack's build phase:
 - The lifecycle:
@@ -994,9 +995,9 @@ name = "<dependency name>"
 
 ```toml
 [types]
-  launch = true
-  build = true
-  cache = true
+  launch = false
+  build = false
+  cache = false
 
 [metadata]
 # buildpack-specific data
