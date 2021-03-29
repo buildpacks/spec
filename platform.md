@@ -280,8 +280,6 @@ Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
-  [-cache-dir <cache-dir>] \
-  [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
@@ -291,15 +289,15 @@ Usage:
   [-run-image <run-image> ] \
   [-stack-id <stack-id> ] \
   [-stack <stack> ] \
-  [-uid <uid>]
+  [-tag <tag>...] \
+  [-uid <uid>] \
+  <image>
 ```
 
 ##### Inputs
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-dir>`     | `CNB_CACHE_DIR`       |                          | Path to a cache directory
-| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Location of cache, provided as an image
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<group>`         | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
@@ -307,16 +305,19 @@ Usage:
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
-| `<stack-id>`      | `CNB_STACK_ID`        |                          | Path to stack file (see [`stack.toml`](#stacktoml-toml))
-| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Chosen stack ID
+| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
+| `<tag>...`        |                       |                          | Additional tag to apply to exported image
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
 - **If** `<run-image>` is not provided by the platform the value will be resolved from the contents of stack
 - The lifecycle MUST accept valid references to non-existent images without error.
-- The lifecycle MUST ensure that the `<run-image>` is compatible with the `<previous-image>`.
-- DRAFT: The lifecycle MUST ensure registry read/write access to `<run-image>`, `<previous-image>`
+- The lifecycle MUST ensure that the `<run-image>` is compatible with the `<previous-image>`. To be compatible, the following conditions must be met:
+  - Stack IDs must match
+  - Platform/Architecture must be the same
+  - `<run-image>` `mixins` must be a superset of `<previous-image>` mixins
+- The lifecycle MUST ensure registry read/write access to `<run-image>`, `<previous-image>`, `<tag>`
 
 ##### Outputs
 | Output             | Description
@@ -334,8 +335,7 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `200-299` | Analysis-specific lifecycle errors
 
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<previous-image>` is accessible.
-- DRAFT: The lifecycle MUST write additional stack [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<stack-id>`,`<stack>`, and `<run-image>` are accessible.
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`.
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -878,19 +878,22 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 #### `analyzed.toml` (TOML)
 
-DRAFT: How should we store run-image(s) data and stack build image data? Mixins, stack-id, identifier etc.
-
 ```toml
-[image]
+[previous-image]
   reference = "<image reference>"
-
-[metadata]
-# layer metadata
+[previous-image.metadata]
+  # previous image layer metadata
+[run-image]
+  reference = "<image reference>"
+  mixins = ["libgc", "libpq"]
+[build-image]
+  mixins = ["jq", "libgc", "libpq"]
 ```
 
 Where:
-- `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
-- `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
+- `previous-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
 
@@ -1015,6 +1018,9 @@ Where:
 [run-image]
  image = "<image>"
  mirrors = ["<mirror>", "<mirror>"]
+[build-image]
+ stack-id = "<string>"
+ mixins = ["jq", "libgc", "libpq"]
 ```
 
 Where:
@@ -1024,6 +1030,7 @@ Where:
 - All `run-image.mirrors`:
   - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
+- `build-image.stack-id` MUST be a valid [stack ID](#stack-id)
 
 ### Labels
 
