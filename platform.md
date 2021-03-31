@@ -333,7 +333,7 @@ Usage:
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
 | `1-10`, `13-99` | Generic lifecycle errors
-| `200-299` | Analysis-specific lifecycle errors
+| `30-39` | Analysis-specific lifecycle errors
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`.
 
@@ -432,7 +432,7 @@ Usage:
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
 | `1-10`, `13-99` | Generic lifecycle errors
-| `300-399` | Restoration-specific lifecycle errors
+| `40-49` | Restoration-specific lifecycle errors
 
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
