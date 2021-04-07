@@ -631,7 +631,7 @@ Usage:
 ```
 
 ##### Inputs
-Running `creator` SHALL be equivalent to running `detector`, `analzyer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
+Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
 
 | Input             | Environment Variable| Default Value| Description
 |-------------------|---------------------|--------------|----------------------
