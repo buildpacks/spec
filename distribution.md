@@ -69,6 +69,3 @@ Each stack ID MUST only be present once.
 For a given stack, the `mixins` list MUST enumerate mixins such that no included buildpacks are missing a mixin for the stack.
 
 Fewer stack entries as well as additional mixins for a stack entry MAY be specified.
-
-### Builders
-Buildpacks may be distributed using builders, as described in the [builder extension spec](extensions/builder.md).

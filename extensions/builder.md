@@ -31,12 +31,12 @@ Builder API versions:
 
 ### File/Directories
 A builder MUST have the following directories/files:
-- `/cnb/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
-- `/cnb/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
-- `/cnb/lifecycle/<lifecycle binaries>` &rarr; An implementation of the lifecycle, which contains the required lifecycle binaries for [building images][lifecycle-for-build].
+- `<CNB_BUILDPACKS_DIR>/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
+- `<CNB_BUILDPACKS_DIR>/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
+- `<CNB_BUILDPACKS_DIR>/lifecycle/<lifecycle binaries>` &rarr; An implementation of the lifecycle, which contains the required lifecycle binaries for [building images][lifecycle-for-build].
 
 In addition, every buildpack blob contained on a builder MUST be stored at the following file path:
-- `/cnb/buildpacks/...<buildpack ID>/<buildpack version>/`
+- `<CNB_BUILDPACKS_DIR>/buildpacks/...<buildpack ID>/<buildpack version>/`
 
 If the buildpack ID contains a `/`, it MUST be replaced with `_` in the directory name.
 
@@ -55,10 +55,10 @@ The following environment variables MUST be set on the builder:
 
 The following variables MAY be set in the builder environment (through the image config's `Env` field):
 
-| Env Variable           | Description                            |
-| ---------------------- | -------------------------------------- |
-| `SERVICE_BINDING_ROOT` | The directory where services are bound |
-
+| Env Variable           | Description                            | Default |
+| ---------------------- | -------------------------------------- | ---- |
+| `SERVICE_BINDING_ROOT` | The directory where services are bound | - |
+| `CNB_BUILDPACKS_DIR` | The directory where CNB required files are | `/cnb` |
 
 ### Labels
 The following labels MUST be set in the builder environment (through the image config's `Labels` field):
@@ -81,9 +81,9 @@ The following labels MUST be set in the builder environment (through the image c
   "description": "<description>",
   "stack": {
     "runImage": {
-      "image": "<run-image>",
+      "image": "<run image>",
       "mirrors": [
-        "<run-image-mirror>"
+        "<run image mirror>"
       ]
     }
   },
@@ -131,8 +131,8 @@ The `createdBy` metadata is meant to contain the name and version of the tool th
         {
           "group": [
             {
-              "id": "<inner-buildpack>",
-              "version": "<inner-buildpack version>"
+              "id": "<inner buildpack ID>",
+              "version": "<inner buildpack version>"
             }
           ]
         }
@@ -142,7 +142,7 @@ The `createdBy` metadata is meant to contain the name and version of the tool th
     }
   },
   "<inner buildpack>": {
-    "<inner buildpacks version>": {
+    "<inner buildpack version>": {
       "api": "<buildpack API>",
       "stacks": [
         {
@@ -151,7 +151,7 @@ The `createdBy` metadata is meant to contain the name and version of the tool th
         }
       ],
       "layerDiffID": "<diff-ID>",
-	  "homepage": "<buildpack-homepage>"
+	  "homepage": "<buildpack homepage>"
     }
   }
 }
