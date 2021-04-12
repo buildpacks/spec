@@ -276,18 +276,19 @@ All lifecycle phases:
 - MUST give command line inputs precedence over other inputs
 
 #### `analyzer`
+The platform MUST execute `analyzer` in the **build environment**
+
 Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
-  [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
+  [-order <order>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
-  [-stack-id <stack-id> ] \
   [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
@@ -300,9 +301,10 @@ Usage:
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
-| `<group>`         | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<order>`         | `CNB_ORDER_PATH`      | `/cnb/order.toml`        | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
@@ -311,13 +313,11 @@ Usage:
 
 - **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
-- **If** `<run-image>` is not provided by the platform the value will be resolved from the contents of stack
+- **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
+- **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent images without error.
-- The lifecycle MUST ensure that the `<run-image>` is compatible with the `<previous-image>`. To be compatible, the following conditions must be met:
-  - Stack IDs must match
-  - Platform/Architecture must be the same
-  - `<run-image>` `mixins` must be a superset of `<previous-image>` mixins
-- The lifecycle MUST ensure registry read/write access to `<run-image>`, `<previous-image>`, `<tag>`
+- The lifecycle MUST fail if the stack ID of the `<run-image>` does not match `<stack-id>`
+- The lifecycle MUST ensure registry write access to `<image>` and any provided `<tag>`s.
 
 ##### Outputs
 | Output             | Description
@@ -336,6 +336,13 @@ Usage:
 | `30-39` | Analysis-specific lifecycle errors
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`.
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
+ -  `build-image` MUST match the values provided in `<stack>`
+ -  `run-image` MUST describe the `<run-image>`
+ - **If** the `<previous-image>` is compatible with the `<run-image>` `previous-image` MUST describe `<previous-image>`.  `<previous-image>` is compatible with `<run-image>` if:
+   - The stack IDs match
+   - `<run-image>` `mixins` are a superset of `<previous-image>` mixins
+ - **Else** the lifecycle MUST omit `previous-image.reference` and `previous-image.metadata`
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -439,19 +446,7 @@ Usage:
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 
 ##### Layer Restoration
-When restoring a given layer the lifecycle SHALL:
-- **If** `build=true`, `cache=false`:
-    - Do nothing
-- **Else if** `launch=true`:
-    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
-- **Else if** `cache=true` AND the cache DOES NOT contain a layer with matching diffID
-    - Must not write layer metadata
-- **Else if** `cache=true`:
-    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-
-For each layer metadata file found in the `<layers>` directory, the lifecycle:
-- MUST restore cached layer contents if the cache contains a layer with matching diffID
+lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
 
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
@@ -521,7 +516,6 @@ Usage:
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
-  [-stack <stack>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -545,7 +539,6 @@ Usage:
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
@@ -887,7 +880,8 @@ For more information on build reproducibility see [https://reproducible-builds.o
   reference = "<image reference>"
   mixins = ["libgc", "libpq"]
 [build-image]
-  mixins = ["jq", "libgc", "libpq"]
+  stack-id = "<string>"
+  mixins = ["mixin name"]
 ```
 
 Where:
@@ -1020,7 +1014,7 @@ Where:
  mirrors = ["<mirror>", "<mirror>"]
 [build-image]
  stack-id = "<string>"
- mixins = ["jq", "libgc", "libpq"]
+ mixins = ["mixin name"]
 ```
 
 Where:
