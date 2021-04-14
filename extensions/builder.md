@@ -58,7 +58,7 @@ The following variables MAY be set in the builder environment (through the image
 | Env Variable           | Description                            | Default |
 | ---------------------- | -------------------------------------- | ---- |
 | `SERVICE_BINDING_ROOT` | The directory where services are bound | - |
-| `CNB_BUILDPACKS_DIR` | The directory where CNB required files are | `/cnb` |
+| `CNB_BUILDPACKS_DIR` | The directory where buildpacks are located | `/cnb/buildpacks` |
 
 ### Labels
 The following labels MUST be set in the builder environment (through the image config's `Labels` field):
