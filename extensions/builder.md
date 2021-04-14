@@ -31,12 +31,12 @@ Builder API versions:
 
 ### File/Directories
 A builder MUST have the following directories/files:
-- `<CNB_BUILDPACKS_DIR>/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
-- `<CNB_BUILDPACKS_DIR>/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
-- `<CNB_BUILDPACKS_DIR>/lifecycle/<lifecycle binaries>` &rarr; An implementation of the lifecycle, which contains the required lifecycle binaries for [building images][lifecycle-for-build].
+- `/cnb/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
+- `/cnb/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
+- `/cnb/lifecycle/<lifecycle binaries>` &rarr; An implementation of the lifecycle, which contains the required lifecycle binaries for [building images][lifecycle-for-build].
 
 In addition, every buildpack blob contained on a builder MUST be stored at the following file path:
-- `<CNB_BUILDPACKS_DIR>/buildpacks/...<buildpack ID>/<buildpack version>/`
+- `<CNB_BUILDPACKS_DIR>/<buildpack ID>/<buildpack version>/`
 
 If the buildpack ID contains a `/`, it MUST be replaced with `_` in the directory name.
 
