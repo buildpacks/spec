@@ -276,7 +276,6 @@ All lifecycle phases:
 - MUST give command line inputs precedence over other inputs
 
 #### `analyzer`
-The platform MUST execute `analyzer` in the **build environment**
 
 Usage:
 ```
@@ -352,6 +351,7 @@ Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
+  [-analyzed <analyzed>] \
   [-buildpacks <buildpacks>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -364,14 +364,15 @@ Usage:
 ##### Inputs
 | Input         | Environment Variable    | Default Value             | Description
 |---------------|-------------------------|---------------------------|----------------------
-| `<app>`         | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
-| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
-| `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to output group definition
-| `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
-| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                | Log Level
-| `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`     | Path to order definition (see [`order.toml`](#ordertoml-toml))
-| `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`  | Path to output resolved build plan
-| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
+| `<app>`         | `CNB_APP_DIR`         | `/workspace`              | Path to application directory
+| `<analyzed>`    | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`         | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml`     | Path to output group definition
+| `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`                 | Path to layers directory
+| `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                    | Log Level
+| `<order>`       | `CNB_ORDER_PATH`      | `/cnb/order.toml`         | Path to order definition (see [`order.toml`](#ordertoml-toml))
+| `<plan>`        | `CNB_PLAN_PATH`       | `<layers>/plan.toml`      | Path to output resolved build plan
+| `<platform>`    | `CNB_PLATFORM_DIR`    | `/platform`               | Path to platform directory
 
 ##### Outputs
 | Output             | Description
@@ -395,6 +396,7 @@ Usage:
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
+- SHALL compare the list of mixins that are statically required by all buildpacks with the static list of mixins provided in `<analyzed>` and fail if required mixins are not met.
 
 #### `restorer`
 Usage:
