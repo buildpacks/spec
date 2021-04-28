@@ -312,7 +312,7 @@ Usage:
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
-- **If** `<daemon>` is `false`, and `<previous-image>`, if provided,  MUST be a valid image reference
+- **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent images without error.
