@@ -9,7 +9,7 @@ A [platform][platform-spec] supporting the builder extension specification SHOUL
 ## Table of Contents <!-- omit in toc -->
 - [General Requirements](#general-requirements)
   - [Builder API Version](#builder-api-version)
-  - [File/Directories](#filedirectories)
+  - [Filesystem](#filesystem)
   - [Environment Variables](#environment-variables)
   - [Labels](#labels)
 - [Data Format](#data-format)
@@ -29,7 +29,7 @@ Builder API versions:
 - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
 - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
-### File/Directories
+### Filesystem
 A builder MUST have the following directories/files:
 - `/cnb/order.toml` &rarr; As defined in the [platform specification][order-toml-spec]
 - `/cnb/stack.toml` &rarr; As defined in the [platform specification][stack-toml-spec]
