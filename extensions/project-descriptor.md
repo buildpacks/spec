@@ -10,15 +10,15 @@ A project descriptor is a file that MAY contain configuration for apps, services
   - [API Version](#api-version)
   - [Special Value Types](#special-value-types)
   - [Top Level Tables](#top-level-tables)
-    - [`_`](#_)
-      - [`_.licenses`](#_licenses)
-      - [`_.metadata`](#_metadata)
     - [Non-`_` Tables](#non-_-tables)
-    - [`io.buildpacks`](#iobuildpacks)
-      - [`io.buildpacks.build.include` and `io.buildpacks.build.exclude`](#iobuildpacksbuildinclude-and-iobuildpacksbuildexclude)
-    - [`[build.include]` and `[build.exclude]`](#buildinclude-and-buildexclude)
-      - [`io.buildpacks.build.buildpacks`](#iobuildpacksbuildbuildpacks)
-      - [`io.buildpacks.build.env`](#iobuildpacksbuildenv)
+    - [`_`](#_)
+      - [`_.licenses` (optional)](#_licenses-optional)
+      - [`_.metadata` (optional)](#_metadata-optional)
+    - [`io.buildpacks` (optional)](#iobuildpacks-optional)
+      - [`io.buildpacks.build.builder` (optional)](#iobuildpacksbuildbuilder-optional)
+      - [`io.buildpacks.build.include` (optional) and `io.buildpacks.build.exclude` (optional)](#iobuildpacksbuildinclude-optional-and-iobuildpacksbuildexclude-optional)
+      - [`io.buildpacks.build.buildpacks` (optional)](#iobuildpacksbuildbuildpacks-optional)
+      - [`io.buildpacks.build.env` (optional)](#iobuildpacksbuildenv-optional)
   - [Example](#example)
 
 ## API Version
@@ -29,10 +29,14 @@ The API version format follows the form of [Buildpack API Version](https://githu
 
 ## Special Value Types
 
-* `api` - A string that follows the formot of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
+* `api` - A string that follows the format of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
 * `uri` - A string that follows the format of [RFC3986](https://tools.ietf.org/html/rfc3986).
 
 ## Top Level Tables
+
+### Non-`_` Tables
+
+All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `api` field. All these tables are optional.
 
 ### `_`
 
@@ -77,9 +81,9 @@ source-url = "<uri>"
 * `documentation-url` - (optional) a URL to the documentation for the project.
 * `source-url` - (optional) a URL to the source code for the project
 
-#### `_.licenses`
+#### `_.licenses` (optional)
 
-An optional list of project licenses.
+This table MAY contain project licenses.
 
 ```toml
 [[_.licenses]]
@@ -90,21 +94,17 @@ uri = "<uri>"
 * `type` - This MAY use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
 * `uri` - If this project is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
+#### `_.metadata` (optional)
 
-#### `_.metadata`
-
-This is an optional free form table for users to use as they see fit. The Keys in this table are not validated.
+This is a free form table for users to use as they see fit. The keys in this table are not validated.
 
 ```toml
 [_.metadata.foo]
 checksum = "a28a0d7772df1f918da2b1102da4ff35"
 ```
 
-### Non-`_` Tables
 
-All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `api` field. All these tables are optional.
-
-### `io.buildpacks`
+### `io.buildpacks` (optional)
 
 This is the Cloud Native Buildpacks' section of the project descriptor. It contains a different API version from [`_`](#_). The TOML schema is the following:
 
@@ -112,6 +112,7 @@ This is the Cloud Native Buildpacks' section of the project descriptor. It conta
 [io.buildpacks]
 
 [io.buildpacks.build]
+builder = "<string>"
 include = ["<string>"]
 exclude = ["<string>"]
 
@@ -127,15 +128,14 @@ value = "<string>"
 
 * `api` - version identifier for the schema of the `io.buildpacks` table.
 
-#### `io.buildpacks.build.include` and `io.buildpacks.build.exclude`
+#### `io.buildpacks.build.builder` (optional)
 
-The top-level `[build]` table MAY contain configuration about how to build the project. It MAY include the following keys and others defined below in their individual sub-sections - 
+This is the builder image to use (ex. "cnbs/sample-builder:bionic").
 
-* `builder` - (optional) the builder image to use (ex. "cnbs/sample-builder:bionic")
-
-### `[build.include]` and `[build.exclude]`
+#### `io.buildpacks.build.include` (optional) and `io.buildpacks.build.exclude` (optional)
 
 An optional list of files to include in the build (while excluding everything else):
+This MAY contain a list of files to include in the build (while excluding everything else):
 
 ```toml
 [io.buildpacks.build]
@@ -162,9 +162,9 @@ Any files that are excluded (either via `include` or `exclude`) MUST BE excluded
 
 If both `exclude` and `include` are defined, the build process MUST result in an error.
 
-#### `io.buildpacks.build.buildpacks`
+#### `io.buildpacks.build.buildpacks` (optional)
 
-An optional build table containining an array of buildpacks. The schema for this table is:
+This table MAY contain an array of buildpacks. The schema for this table is:
 
 ```toml
 [[io.buildpacks.build.buildpacks]]
@@ -177,9 +177,9 @@ This defines the buildpacks that a platform should use on the repo.
 
 Either an `id` or a `uri` MUST be included, but MUST NOT include both. If `uri` is provided, `version` MUST NOT be allowed.
 
-#### `io.buildpacks.build.env`
+#### `io.buildpacks.build.env` (optional)
 
-An optional table used to set environment variables at build time, for example:
+This table MAY be used to set environment variables at build time, for example:
 
 ```toml
 [[io.buildpacks.build.env]]
