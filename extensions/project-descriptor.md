@@ -7,7 +7,7 @@ A project descriptor is a file that MAY contain configuration for apps, services
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Project Descriptor](#project-descriptor)
   - [Table of Contents](#table-of-contents)
-  - [API Version](#api-version)
+  - [Schema Version API Version](#schema-version-api-version)
   - [Special Value Types](#special-value-types)
   - [Top Level Tables](#top-level-tables)
     - [Non-`_` Tables](#non-_-tables)
@@ -21,9 +21,9 @@ A project descriptor is a file that MAY contain configuration for apps, services
       - [`io.buildpacks.build.env` (optional)](#iobuildpacksbuildenv-optional)
   - [Example](#example)
 
-## API Version
+## Schema Version API Version
 
-This document specifies Project Descriptor API Version `0.2`.
+This document specifies Project Descriptor Schema API Version `0.2`.
 
 The API version format follows the form of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
 
@@ -36,7 +36,7 @@ The API version format follows the form of [Buildpack API Version](https://githu
 
 ### Non-`_` Tables
 
-All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `api` field. All these tables are optional.
+All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `schema_version` field. All these tables are optional.
 
 ### `_`
 
@@ -44,7 +44,7 @@ The TOML schema of the project section of the project descriptor:
 
 ```toml
 [_]
-api = "<api>"
+schema_version = "<api>"
 id = "<string>" # machine readable
 name = "<string>" # human readable
 version = "<string>"
@@ -60,11 +60,11 @@ uri = "<uri>"
 # additional arbitrary keys allowed
 ```
 
-The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `api`  to denote which version of this API the descriptor is using.
+The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema_version`  to denote which version of this API the descriptor is using.
 
 ```toml
 [_]
-api = "<string>"
+schema_version = "<string>"
 id = "<string>"
 name = "<string>"
 version = "<string>"
@@ -73,7 +73,7 @@ documentation-url = "<uri>"
 source-url = "<uri>"
 ```
 
-* `api` - version identifier for the schema of the `_` table and structure of the project descriptor file. This version format follows the rules of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
+* `schema_version` - version identifier for the schema of the `_` table and structure of the project descriptor file.
 * `id` - (optional) the machine readable identifier of the project (ex. "com.example.myservice")
 * `name` - (optional) the human readable name of the project (ex. "My Example Service")
 * `version` - (optional) and arbitrary string representing the version of the project
@@ -106,7 +106,7 @@ checksum = "a28a0d7772df1f918da2b1102da4ff35"
 
 ### `io.buildpacks` (optional)
 
-This is the Cloud Native Buildpacks' section of the project descriptor. It contains a different API version from [`_`](#_). The TOML schema is the following:
+This is the Cloud Native Buildpacks' section of the project descriptor. The TOML schema is the following:
 
 ```
 [io.buildpacks]
@@ -125,8 +125,6 @@ uri = "<string>"
 name = "<string>"
 value = "<string>"
 ```
-
-* `api` - version identifier for the schema of the `io.buildpacks` table.
 
 #### `io.buildpacks.build.builder` (optional)
 
