@@ -36,7 +36,7 @@ The API version format follows the form of [Buildpack API Version](https://githu
 
 ### Non-`_` Tables
 
-All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `schema_version` field. All these tables are optional.
+All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `schema-version` field. All these tables are optional.
 
 ### `_`
 
@@ -44,7 +44,7 @@ The TOML schema of the project section of the project descriptor:
 
 ```toml
 [_]
-schema_version = "<api>"
+schema-version = "<api>"
 id = "<string>" # machine readable
 name = "<string>" # human readable
 version = "<string>"
@@ -60,11 +60,11 @@ uri = "<uri>"
 # additional arbitrary keys allowed
 ```
 
-The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema_version`  to denote which version of this API the descriptor is using.
+The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema-version`  to denote which version of this API the descriptor is using.
 
 ```toml
 [_]
-schema_version = "<string>"
+schema-version = "<string>"
 id = "<string>"
 name = "<string>"
 version = "<string>"
@@ -73,7 +73,7 @@ documentation-url = "<uri>"
 source-url = "<uri>"
 ```
 
-* `schema_version` - version identifier for the schema of the `_` table and structure of the project descriptor file.
+* `schema-version` - version identifier for the schema of the `_` table and structure of the project descriptor file.
 * `id` - (optional) the machine readable identifier of the project (ex. "com.example.myservice")
 * `name` - (optional) the human readable name of the project (ex. "My Example Service")
 * `version` - (optional) and arbitrary string representing the version of the project
