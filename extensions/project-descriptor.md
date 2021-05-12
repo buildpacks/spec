@@ -44,7 +44,7 @@ The TOML schema of the project section of the project descriptor:
 
 ```toml
 [_]
-schema-version = "<api>"
+schema-version = "<schema-version>"
 id = "<string>" # machine readable
 name = "<string>" # human readable
 version = "<string>"
