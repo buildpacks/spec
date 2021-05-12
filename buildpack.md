@@ -29,7 +29,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Launch Layers](#launch-layers)
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
-      - [Other Layers](#other-layers)
+      - [Ignored Layers](#ignored-layers)
   - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
@@ -44,6 +44,9 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
       - [Bills-of-Materials](#bills-of-materials)
       - [Layers](#layers)
+        - [Providing Layers](#providing-layers)
+        - [Reusing Layers](#reusing-layers)
+        - [Slice Layers](#slice-layers)
   - [Phase #4: Export](#phase-4-export)
     - [Purpose](#purpose-3)
     - [Process](#process-3)
@@ -171,31 +174,60 @@ OR
 
 Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of the executable
-| FD 3              | A third open file [†](README.md#linux-only)descriptor or [‡](README.md#windows-only)handle
+| Input                                          | Description
+|------------------------------------------------|----------------------------------------------
+| `$0`                                           | Absolute path of the executable
+| [†](README.md#linux-only)FD 3                  | A third open file descriptor
+| [‡](README.md#windows-only) `<handle>`         | An additional open handle
+| [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Hexidecimal number for `<handle>`
 
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | Pass (0) or error (1+)
 | Standard output    | Logs (info)
 | Standard error     | Logs (warnings, errors)
-| FD 3               | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
+| [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`<handle>` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
 ### Layer Types
 
-Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
+Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in the `[types]` table of a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
 
-- Whether the layer directory in `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
-- Whether the layer directory in `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
-- Whether and how the layer directory in `<layers>/<layer>/` should be persisted to subsequent builds of the same OCI image (via the `cache` boolean).
+- Whether the layer directory `<layers>/<layer>/` should be available to the app (via the `launch` boolean).
+- Whether the layer directory `<layers>/<layer>/` should be available to subsequent buildpacks (via the `build` boolean).
+- Whether the layer directory `<layers>/<layer>/` should be persisted and made available to subsequent builds of the same OCI image (via the `cache` boolean).
 
 All combinations of `launch`, `build`, and `cache` booleans are valid. When a layer declares more than one type (e.g. `launch = true` and `cache = true`), the requirements of each type apply.
+The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `build = false`, `cache = false` layer.
+
+The following table illustrates the behavior depending on the value of each flag.
+Note that the lifecycle only restores layers from the cache, never from the previous image.
+
+`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
+----------|----------|----------|--------------------------|---------------------
+true      | true     | true     | Yes - from the app image | Yes* - from the cache
+true      | true     | false    | Yes - from the cache     | Yes - from the cache
+true      | false    | true     | No                       | No
+true      | false    | false    | No                       | No
+false     | true     | true     | Yes - from the app image | Yes* - from the cache
+false     | true     | false    | Yes - from the cache     | Yes - from the cache
+false     | false    | true     | Yes - from the app image | No
+false     | false    | false    | No                       | No
+
+\* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
+
+Examples:
+* `build = true, cache = true, launch = true`:
+A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime.
+* `build = true, cache = true, launch = false`:
+A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
+* `build = true, cache = false, launch = false`:
+A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
+* `build = false, cache = false, launch = true`:
+A Java buildpack might read the restored layer metadata to determine if the version of the JRE included in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the previous image to avoid re-downloading the JRE.
 
 #### Launch Layers
 
-A buildpack MAY specify that a `<layers>/<layer>/` directory is a launch layer by placing `launch = true` in `<layers>/<layer>.toml`.
+A buildpack MAY specify that a `<layers>/<layer>/` directory is a launch layer by placing `launch = true` under `[types]` in `<layers>/<layer>.toml`.
 
 The lifecycle MUST make all launch layers accessible to the app as described in the [Environment](#environment) section.
 
@@ -203,22 +235,22 @@ The lifecycle MUST include each launch layer in the built OCI image.
 The lifecycle MUST also store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID.
 
 Before a given re-build:
-- If a launch layer is marked `cache = false` and `build = false`, the lifecycle:
-  - MUST restore the entire `<layers>/<layer>.toml` file from the previous build to the same path and
+- If a launch layer is marked `cache = false` and `build = false` in the previous image metadata, the lifecycle:
+  - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
 
 After a given re-build:
-- If a buildpack keeps `launch = true` in `<layers>/<layer>.toml` and leaves no `<layers>/<layer>/` directory, the lifecycle:
+- If a buildpack adds `launch = true` under `[types]` in `<layers>/<layer>.toml` and leaves no `<layers>/<layer>/` directory, the lifecycle:
   - MUST reuse the corresponding layer from the previous build in the OCI image and
   - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
-- If a buildpack keeps `launch = true` in `<layers>/<layer>.toml` and leaves a `<layers>/<layer>/` directory, the lifecycle:
+- If a buildpack adds `launch = true` under `[types]` in `<layers>/<layer>.toml` and leaves a `<layers>/<layer>/` directory, the lifecycle:
   - MUST replace the corresponding layer in the OCI image with the directory contents present after the re-build and
   - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
-- If a buildpack removes `launch = true` from `<layers>/<layer>.toml` or deletes `<layers>/<layer>.toml`, then the lifecycle MUST NOT include any corresponding layer in the OCI image.
+- If a buildpack does not add `launch = true` under `[types]` in `<layers>/<layer>.toml` or deletes `<layers>/<layer>.toml`, then the lifecycle MUST NOT include any corresponding layer in the OCI image.
 
 #### Build Layers
 
-A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by placing `build = true` in `<layers>/<layer>.toml`.
+A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by placing `build = true` under `[types]` in `<layers>/<layer>.toml`.
 
 The lifecycle MUST make all build layers accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
@@ -227,28 +259,24 @@ Before the next re-build:
 
 #### Cached Layers
 
-A buildpack MAY specify that a `<layers>/<layer>/` directory is a cached layer by placing `cache = true` in `<layers>/<layer>.toml`.
+A buildpack MAY specify that a `<layers>/<layer>/` directory is a cached layer by placing `cache = true` under `[types]` in `<layers>/<layer>.toml`.
 
-If a cache is provided the lifecycle:
+If a cache is provided, the lifecycle:
 - SHOULD store all cached layers after a successful build.
 - SHOULD store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID
 
 Before the next re-build:
+- The lifecycle MUST do both or neither of the following:
+  - Restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
+  - Restore layer contents to the `<layers>/<layer>/` directory.
+
+#### Ignored Layers
+
+Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, existing for the duration of a single build.
+
+At the end of each individual buildpack's build phase:
 - The lifecycle:
-  - MUST either restore the entire `<layers>/<layer>.toml` file and corresponding `<layers>/<layer>/` directory from any previous build to the same paths or
-  - MUST restore neither the `<layers>/<layer>.toml` file nor corresponding `<layers>/<layer>/` directory.
-
-#### Other Layers
-
-The lifecycle:
-- If `build = false`
-  - MUST NOT make the layer available to subesequent buildpacks.
-- If `launch = false`
-  - MUST NOT include the layer or the Layer Content Metadata in the OCI image.
-- If `cache = false`
-  - MUST NOT store the layer or the Layer Content Metadata in the cache.
-
-Layers marked `launch = false`, `build = false`, and `cache = false` behave like temporary directories, available only to the authoring buildpack, that exist for the duration of a single build.
+  - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`, in order to prevent subsequent buildpacks from accidentally depending on an ignored layer.
 
 ## App Interface
 
@@ -401,13 +429,9 @@ The lifecycle MUST skip analysis and proceed to the build phase if no such image
 - A reference to the previously created OCI image described above and
 - The final ordered group of buildpacks determined during the detection phase,
 
-For each buildpack in the group,
-
-1. All `<layers>/<layer>.toml` files with `cache = true` and corresponding `<layers>/<layer>` directories from any previous build are restored to their same filesystem locations.
-2. Each `<layers>/<layer>.toml` file with `launch = true` and `cache = false` that was present at the end of the build of the previously created OCI image is retrieved.
-3. A given `<layers>/<layer>.toml` file with `launch = true` and `cache = true` and corresponding  `<layers>/<layer>` directory are both removed if either do not match their contents in the previously created OCI image.
-
-Finally, the contents of `<layers>/store.toml` from the build of the previously created OCI image are restored.
+For each buildpack in the group, the lifecycle
+1. MUST restore `<layers>/<layer>.toml` files from the previous build as described in [Layer Types](#layer-types).
+2. MUST restore `<layers>/store.toml`.
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
@@ -422,13 +446,15 @@ The purpose of build is to transform application source code into runnable artif
 During the build phase, typical buildpacks might:
 
 1. Read the Buildpack Plan in `<plan>` to determine what dependencies to provide.
-2. Provide the application with dependencies for launch in `<layers>/<layer>`.
-3. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
-4. Compile the application source code into object code.
-5. Remove application source code that is not necessary for launch.
-6. Provide start command in `<layers>/launch.toml`.
-7. Write a partial Bill-of-Material to `<layers>/launch.toml` describing any provided application dependencies.
-8. Write a partial Bill-of-Material to `<layers>/build.toml` describing any provided build dependencies.
+1. Provide the application with dependencies for launch in `<layers>/<layer>`.
+1. Reuse application dependencies from a previous image by appending `[types]` and `launch = true` to `<layers>/<layer>.toml`.
+1. Provide subsequent buildpacks with dependencies in `<layers>/<layer>`.
+1. Reuse cached build dependencies from a previous build by appending `[types]`, `build = true` and `cache = true` to `<layers>/<layer>.toml`.
+1. Compile the application source code into object code.
+1. Remove application source code that is not necessary for launch.
+1. Provide start command in `<layers>/launch.toml`.
+1. Write a partial Bill-of-Material to `<layers>/launch.toml` describing any provided application dependencies.
+1. Write a partial Bill-of-Material to `<layers>/build.toml` describing any provided build dependencies.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -487,7 +513,8 @@ Correspondingly, each `/bin/build` executable:
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
-- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem.
+- MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem and the ones noted below.
+- MUST NOT create `<layers>/<layer>` directories with `<layer>` names `build`, `launch` or `store`.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
 
 #### Unmet Buildpack Plan Entries
@@ -511,14 +538,35 @@ If generated, this build BOM MUST contain all `bom` entries in each `build.toml`
 
 #### Layers
 
-A buildpack MAY create, modify, or delete `<layers>/<layer>/` directories and `<layers>/<layer>.toml` files as specified in the [Layer Types](#layer-types) section.
+##### Providing Layers
+A buildpack MAY create a new layer by creating a `<layers>/<layer>/` directories and `<layers>/<layer>.toml` file as specified in the [Layer Types](#layer-types) section.
 
-To decide what layer operations are appropriate, the buildpack should consider:
+##### Reusing Layers
+
+The lifecycle provides a mechanism for buildpacks to explicitly opt into reusing layers from a previous build. The buildpack may modify cached layers before reusing them.
+
+To decide whether layer reuse is appropriate, the buildpack should consider:
 
 - Whether files in the `<app>` directory have changed since the layer was created.
 - Whether the environment has changed since the layer was created.
 - Whether the buildpack version has changed since the layer was created.
 - Whether new application dependency versions have been made available since the layer was created.
+
+At the start of the build phase a buildpack MAY find:
+- Partial `<layers>/<layer>.toml` files describing layers from the previous builds. The restored Layer Content Metadata SHALL NOT contain `launch`, `build`, or `cache` booleans even if those values were set on a previous build.
+- `<layers>/<layer>/` directories containing layer contents that have been restored from the cache.
+
+The buildpack:
+ - MAY set `launch = true` under `[types]` in the restored `<layers>/<layer>.toml` file in order to include the layer in the final image.
+ - MAY modify `metadata` in  `<layers>/<layer>.toml`
+ - **If** layer contents have been restored to the `<layers>/<layer>/` directory
+     - MAY set `build = true` under `[types]` in the restored `<layers>/<layer>.toml` to expose to layer to subsequent buildpacks.
+     - MAY set `cache = true` under `[types]` in the restored `<layers>/<layer>.toml` to persist the layer to subsequent builds.
+     - MAY modify the contents of `<layers>/<layer>/`.
+
+If the buildpack does not set `launch`, `build`, or `cache` under `[types]` in the restored `<layers>/<layer>.toml` the layer SHALL be ignored.
+
+##### Slice Layers
 
 Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `launch.toml`.
 Separate layers MUST be created during the export phase for each slice with one or more files or directories.
@@ -545,7 +593,7 @@ The purpose of export is to create a new OCI image using a combination of remote
 **If** the run image, old OCI image, and new OCI image are not all present in the same image store, \
 **Then** the lifecycle SHOULD fail the export process or inform the user that export performance is degraded.
 
-For each `<layers>/<layer>.toml` file that specifies `launch = true`,
+For each `<layers>/<layer>.toml` file that specifies `launch = true` under `[types]`,
 
 1. **If** a corresponding `<layers>/<layer>` directory is present locally, \
    **Then** the lifecycle MUST
@@ -582,8 +630,8 @@ Subsequently,
    - The executable component of the lifecycle that implements the launch phase, and
    - An `ENTRYPOINT` set to that component.
 
-Finally, any `<layers>/<layer>` directories specified as `cache = true` in `<layers>/<layer>.toml` MAY be preserved for the next local build.
-For any `<layers>/<layer>.toml` files specifying both `cache = true` and `launch = true`, the lifecycle SHOULD store a checksum of the corresponding `<layers>/<layer>` directory so that it is associated with the locally cached directory.
+Finally, any `<layers>/<layer>` directories specified as `cache = true` under `[types]` in `<layers>/<layer>.toml` MAY be preserved for the next local build.
+For any `<layers>/<layer>.toml` files specifying both `cache = true` and `launch = true` under `[types]`, the lifecycle SHOULD store a checksum of the corresponding `<layers>/<layer>` directory so that it is associated with the locally cached directory.
 This allows the analysis phase to efficiently compare the locally cached layer with the corresponding old OCI image layer before the next build.
 
 ## Launch
@@ -721,7 +769,7 @@ During the build phase, buildpacks MAY write environment variable files to `<lay
 
 For each `<layers>/<layer>/` designated as a build layer, for each file written to `<layers>/<layer>/env/` or `<layers>/<layer>/env.build/` by `/bin/build`, the lifecycle MUST modify an environment variable in subsequent executions of `/bin/build` according to the modification rules below.
 
-For each file written to `<layers>/<layer>/env.launch/` by `/bin/build`, the lifecycle MUST modify an environment variable when the OCI image is launched according to the modification rules below.
+For each file written to `<layers>/<layer>/env/` or `<layers>/<layer>/env.launch/` by `/bin/build`, the lifecycle MUST modify an environment variable during the launch phase according to the modification rules below (see [launcher](platform.md#launcher)).
 
 #### Environment Variable Modification Rules
 
@@ -824,6 +872,7 @@ type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
 direct = false
+default = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -858,6 +907,9 @@ For each process, the buildpack:
   - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
+- MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
+
+An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 
 For each slice, buildpacks MUST specify zero or more path globs such that each path is either:
 
@@ -943,9 +995,10 @@ name = "<dependency name>"
 ### Layer Content Metadata (TOML)
 
 ```toml
-launch = false
-build = false
-cache = false
+[types]
+  launch = false
+  build = false
+  cache = false
 
 [metadata]
 # buildpack-specific data
@@ -969,6 +1022,12 @@ name = "<buildpack name>"
 version = "<buildpack version>"
 homepage = "<buildpack homepage>"
 clear-env = false
+description = "<buildpack description>"
+keywords = [ "<string>" ]
+
+[[buildpack.licenses]]
+type = "<string>"
+uri = "<uri>"
 
 [[order]]
 [[order.group]]
@@ -1019,6 +1078,13 @@ If an `order` is specified, then `stacks` MUST NOT be specified.
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - MUST describe the implemented buildpack API.
  - SHOULD indicate the lowest compatible `<minor>` if buildpack behavior is consistent with multiple `<minor>` versions of a given `<major>`
+
+**The buildpack licenses:**
+
+The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpack licenses where:
+
+- `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
+- `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
 #### Buildpack Implementations
 
