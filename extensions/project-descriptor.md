@@ -29,7 +29,7 @@ The API version format follows the form of [Buildpack API Version](https://githu
 
 ## Special Value Types
 
-* `api` - A string that follows the format of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
+* `schema-version` - A string that follows the format of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
 * `uri` - A string that follows the format of [RFC3986](https://tools.ietf.org/html/rfc3986).
 
 ## Top Level Tables
