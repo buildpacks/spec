@@ -291,8 +291,7 @@ Usage:
   [-run-image <run-image> ] \
   [-stack <stack> ] \
   [-tag <tag>...] \
-  [-uid <uid>] \
-  <image>
+  [-uid <uid>]
 ```
 
 ##### Inputs
@@ -302,7 +301,6 @@ Usage:
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
-| `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<order>`         | `CNB_ORDER_PATH`      | `/cnb/order.toml`        | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
@@ -311,14 +309,13 @@ Usage:
 | `<tag>...`        |                       |                          | Additional tag to apply to exported image
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
 
--`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
 - **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent images without error.
 - The lifecycle MUST fail if the stack ID of the `<run-image>` does not match `<stack-id>`
-- The lifecycle MUST ensure registry write access to `<image>` and any provided `<tag>`s.
+- The lifecycle MUST ensure registry write access to `<previous-image>` and any provided `<tag>`s.
 
 ##### Outputs
 | Output             | Description
