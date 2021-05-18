@@ -40,20 +40,20 @@ In addition, every buildpack blob contained on a builder MUST be stored at the f
 
 If the buildpack ID contains a `/`, it MUST be replaced with `_` in the directory name.
 
-All specified files and directories are writeable by the build environment's User. 
+The `CNB_APP_DIR` and `CNB_LAYERS_DIR` MUST be writeable by the build environment's User.
 
 ### Environment Variables
 A builder MUST be an extension of a build-image, and MUST retain all specified environment variables and labels set on the original build image, as specified in the [platform specifications][build-image-specs].
 
-The following environment variables MUST be set on the builder:
+The following environment variables MUST be set on the builder (through the image config's `Env` field):
 
-| Env Variable       | Description                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| `CNB_APP_DIR`      | Application directory of the build environment (eg: `/workspace`)                                   |
-| `CNB_LAYERS_DIR`   | The directory to create and store `layers` in the build environment (eg: `/layers`)                 |
-| `CNB_PLATFORM_DIR` | The directory to create and store platform focused files in the build environment (eg: `/platform`) |
+| Env Variable       | Description                                                                       | Default |
+| ------------------ | ----------------------------------------------------------------------------------| ---- |
+| `CNB_APP_DIR`      | Application directory of the build environment                                    | `/workspace` |
+| `CNB_LAYERS_DIR`   | The directory to create and store `layers` in the build environment               | `/layers`    |
+| `CNB_PLATFORM_DIR` | The directory to create and store platform focused files in the build environment | `/platform` |
 
-The following variables MAY be set in the builder environment (through the image config's `Env` field):
+The following variables MAY be set on the builder (through the image config's `Env` field):
 
 | Env Variable           | Description                            | Default |
 | ---------------------- | -------------------------------------- | ---- |
