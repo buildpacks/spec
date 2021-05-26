@@ -15,10 +15,10 @@ A project descriptor is a file that MAY contain configuration for apps, services
       - [`_.licenses` (optional)](#_licenses-optional)
       - [`_.metadata` (optional)](#_metadata-optional)
     - [`io.buildpacks` (optional)](#iobuildpacks-optional)
-      - [`io.buildpacks.build.builder` (optional)](#iobuildpacksbuildbuilder-optional)
-      - [`io.buildpacks.build.include` (optional) and `io.buildpacks.build.exclude` (optional)](#iobuildpacksbuildinclude-optional-and-iobuildpacksbuildexclude-optional)
-      - [`io.buildpacks.build.buildpacks` (optional)](#iobuildpacksbuildbuildpacks-optional)
-      - [`io.buildpacks.build.env` (optional)](#iobuildpacksbuildenv-optional)
+      - [`io.buildpacks.builder` (optional)](#iobuildpacksbuilder-optional)
+      - [`io.buildpacks.include` (optional) and `io.buildpacks.exclude` (optional)](#iobuildpacksinclude-optional-and-iobuildpacksexclude-optional)
+      - [`io.buildpacks.group` (optional)](#iobuildpacksgroup-optional)
+      - [`io.buildpacks.env.build` (optional)](#iobuildpacksenvbuild-optional)
   - [Example](#example)
 
 ## Schema Version API Version
@@ -110,13 +110,11 @@ This is the Cloud Native Buildpacks' section of the project descriptor. The TOML
 
 ```
 [io.buildpacks]
-
-[io.buildpacks.build]
 builder = "<string>"
 include = ["<string>"]
 exclude = ["<string>"]
 
-[[io.buildpacks.build.buildpacks]]
+[[io.buildpacks.group]]
 id = "<string>"
 version = "<string>"
 uri = "<string>"
@@ -126,17 +124,17 @@ name = "<string>"
 value = "<string>"
 ```
 
-#### `io.buildpacks.build.builder` (optional)
+#### `io.buildpacks.builder` (optional)
 
 This is the builder image to use (ex. "cnbs/sample-builder:bionic").
 
-#### `io.buildpacks.build.include` (optional) and `io.buildpacks.build.exclude` (optional)
+#### `io.buildpacks.include` (optional) and `io.buildpacks.exclude` (optional)
 
 An optional list of files to include in the build (while excluding everything else):
 This MAY contain a list of files to include in the build (while excluding everything else):
 
 ```toml
-[io.buildpacks.build]
+[io.buildpacks]
 include = [
     "cmd/",
     "go.mod",
@@ -148,7 +146,7 @@ include = [
 A list of files to exclude from the build (while including everything else):
 
 ```toml
-[io.buildpacks.build]
+[io.buildpacks]
 exclude = [
     "spec/"
 ]
@@ -160,12 +158,12 @@ Any files that are excluded (either via `include` or `exclude`) MUST BE excluded
 
 If both `exclude` and `include` are defined, the build process MUST result in an error.
 
-#### `io.buildpacks.build.buildpacks` (optional)
+#### `io.buildpacks.group` (optional)
 
 This table MAY contain an array of buildpacks. The schema for this table is:
 
 ```toml
-[[io.buildpacks.build.buildpacks]]
+[[io.buildpacks.group]]
 id = "<buildpack ID (optional)>"
 version = "<buildpack version (optional default=latest)>"
 uri = "<url or path to the buildpack (optional default=urn:buildpack:<id>)"
@@ -175,12 +173,12 @@ This defines the buildpacks that a platform should use on the repo.
 
 Either an `id` or a `uri` MUST be included, but MUST NOT include both. If `uri` is provided, `version` MUST NOT be allowed.
 
-#### `io.buildpacks.build.env` (optional)
+#### `io.buildpacks.env.build` (optional)
 
 This table MAY be used to set environment variables at build time, for example:
 
 ```toml
-[[io.buildpacks.build.env]]
+[[io.buildpacks.env.build]]
 name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
@@ -198,7 +196,7 @@ foo = "bar"
 [_.metadata.fizz]
 buzz = ["a", "b", "c"]
 
-[io.buildpacks.build]
+[io.buildpacks]
 builder = "cnbs/sample-builder:bionic"
 include = [
     "cmd/",
@@ -207,11 +205,11 @@ include = [
     "*.go"
 ]
 
-[[io.buildpacks.build.buildpacks]]
+[[io.buildpacks.group]]
 id = "io.buildpacks/java"
 version = "1.0"
 
-[[io.buildpacks.build.buildpacks]]
+[[io.buildpacks.gruop]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
 ```
