@@ -748,7 +748,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
 | `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
-| `CNB_ASSETS`    | Path to builder provided assets                | [x]    | [x]   |
+| `CNB_ASSETS`    | Path to vendored assets                | [x]    | [x]   |
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
