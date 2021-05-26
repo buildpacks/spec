@@ -10,6 +10,7 @@ This document specifies the artifact format, delivery mechanism, and order resol
   - [Table of Contents](#table-of-contents)
   - [Distribution API Version](#distribution-api-version)
   - [Artifact Format](#artifact-format)
+    - [Asset Package](#asset-package)
     - [Buildpack](#buildpack)
     - [Buildpackage](#buildpackage)
 
@@ -23,6 +24,56 @@ Distribution API versions:
 
 ## Artifact Format
 
+### Asset Package 
+
+An Asset Package MUST exist as and OCI image on a registry, and OCI image in a Docker daemon or as an uncompressed tar archive containing an OCI image.
+
+- For Linux asset packages, all FS layers MUST contain one or more assets.
+    
+- For Windows asset packages, all FS layers MUST be an OS layer or either contain one or more assets.
+
+FS asset layers MUST contain only asset files at the following file path:
+
+```
+/cnb/assets/<asset-sha256>
+```
+
+where `asset-sha256` is the `sha256` digest of the asset file.
+
+In the resulting asset package image all layers MUST be alphabetically sorted by diffID to allow for reproducability.
+
+#### Label
+
+Asset Package Image must contain the following two labels with the following contents:
+
+`io.buildpacks.asset.layers`
+{
+  "name": "asset-package-org/asset-package-name"
+}
+
+Each asset in an asset package image must have an entry in the below label.
+`io.buildpacks.asset.metadata`:
+```
+{
+  "<asset-sha256>": {
+    "name": "(optional)",
+    "id": "(required)",
+    "version": "(required)",
+    "layerDiffID": "(required)",
+    "uri": "(optional)",
+    "licenses" : ["(optional)"],
+    "description" : "(optional)",
+    "homepage" : "(optional)",
+    "stacks": [
+      "(optional)",
+      "..."
+    ],
+    "metadata": {
+      "(optional)": "(optional)"
+    }
+  }
+}
+```
 ### Buildpack
 
 A buildpack MUST contain a [`buildpack.toml`](buildpack.md#buildpacktoml-toml) file at its root directory.
