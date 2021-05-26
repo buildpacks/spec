@@ -34,6 +34,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
+      - [Mixin Satisfaction](#mixin-satisfaction)
       - [Order Resolution](#order-resolution)
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
@@ -118,11 +119,12 @@ The lifecycle MAY return an error to the platform if two or more buildpacks with
 
 Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/detect` executable
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
+| Input                        | Description
+|------------------------------|----------------------------------------------
+| `$0`                         | Absolute path of `/bin/detect` executable
+| `<platform>/env/`            | User-provided environment variables for build
+| `<platform>/#`               | Platform-specific extensions
+| `$CNB_ASSETS/<asset-sha256>` | Any assets provided by the platform to a buildpack. Both the `$CNB_ASSETS` environment variable and any specific asset are optional.
 
 | Output             | Description
 |--------------------|----------------------------------------------
@@ -136,12 +138,13 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
 Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `<app[AI]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/build` executable
-| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
+| Input                        | Description
+|------------------------------|----------------------------------------------
+| `$0`                         | Absolute path of `/bin/build` executable
+| `<plan>`                     | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
+| `<platform>/env/`            | User-provided environment variables for build
+| `<platform>/#`               | Platform-specific extensions
+| `$CNB_ASSETS/<asset-sha256>` | Any assets provided by the platform to a buildpack. Both the `$CNB_ASSETS` environment variable and any specific asset are optional.
 
 | Output                                   | Description
 |------------------------------------------|--------------------------------------
@@ -202,7 +205,7 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
+`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored
 ----------|----------|----------|--------------------------|---------------------
 true      | true     | true     | Yes - from the app image | Yes* - from the cache
 true      | true     | false    | Yes - from the cache     | Yes - from the cache
@@ -759,6 +762,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
 | `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
+| `CNB_ASSETS`    | Path to vendored assets                        | [x]    | [x]   |
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
@@ -1049,6 +1053,19 @@ optional = false
 id = "<stack ID>"
 mixins = ["<mixin name>"]
 
+[[assets]]
+sha256 = "(required)"
+name = "(optional)"
+id   = "(required)"
+version = "(required)"
+uri = "(optional)"
+licenses = ["(optional)"]
+description = "(optional)"
+homepage = "(optional)"
+stacks = ["(required)"]
+[assets.metadata]
+# asset-specific data
+
 [metadata]
 # buildpack-specific data
 ```
@@ -1094,6 +1111,19 @@ Each stack in `stacks` either:
 - Or MUST indicate compatibility with any stack:
    - `id` MUST be set to the special value `"*"`.
    - `mixins` MUST be empty.
+
+Each asset in `assets` MUST:
+  - MUST contain a `sha256`.
+  - MUST contain a `id`
+  - MUST contain a `version`
+  - MUST contain a `stack` list of [valid stack IDs](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id)
+  - MAY contain a `name`
+  - MAY contain a `uri` used to download the asset
+  - MAY contain a `licenses` list
+  - MAY contain a `description` = "(optional)"
+  - MAY contain a `homepage`
+  - MAY contain an arbitrary `metadata` mapping
+
 
 #### Order Buildpacks
 
