@@ -832,6 +832,12 @@ The following variables SHOULD be set in the lifecycle execution environment and
 
 The platform SHOULD NOT assume any other stack-provided environment variables are inherited by the buildpack.
 
+##### Builder-Provided Variables
+The following variables MAY be set in the lifecycle execution environment and SHALL be directly inherited by the buildpack without modification:
+| Env Variable    | Description
+|-----------------|--------------------------------------
+| `CNB_ASSETS`    | Location of assets provided by asset packages
+
 ##### User-Provided Variables
 User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
