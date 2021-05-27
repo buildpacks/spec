@@ -194,9 +194,12 @@ id = "io.buildpacks.my-app"
 version = "0.1"
 
 [_.metadata]
-foo = "bar"
+cdn = "https://cdn.example.com"
 
-[_.metadata.fizz]
+[[_.metadata.assets]]
+url = "https://cdn.example.com/assets/foo.jar"
+checksum = "3b1b39893d8e34a6d0bd44095afcd5c4"
+
 buzz = ["a", "b", "c"]
 
 [io.buildpacks]
