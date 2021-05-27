@@ -25,7 +25,10 @@ A project descriptor is a file that MAY contain configuration for apps, services
 
 This document specifies Project Descriptor Schema API Version `0.2`.
 
-The API version format follows the form of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
+The Schema API version format follows the form of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version):
+
+* MUST be in form <major>.<minor> or <major>, where <major> is equivalent to <major>.0
+* When <major> is greater than 0 increments to <minor> SHALL exclusively indicate additive changes
 
 ## Special Value Types
 
