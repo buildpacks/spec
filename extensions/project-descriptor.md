@@ -7,7 +7,7 @@ A project descriptor is a file that MAY contain configuration for apps, services
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Project Descriptor](#project-descriptor)
   - [Table of Contents](#table-of-contents)
-  - [Schema Version API Version](#schema-version-api-version)
+  - [Schema Version](#schema-version)
   - [Special Value Types](#special-value-types)
   - [Top Level Tables](#top-level-tables)
     - [Non-`_` Tables](#non-_-tables)
@@ -21,11 +21,11 @@ A project descriptor is a file that MAY contain configuration for apps, services
       - [`io.buildpacks.env.build` (optional)](#iobuildpacksenvbuild-optional)
   - [Example](#example)
 
-## Schema Version API Version
+## Schema Version
 
-This document specifies Project Descriptor Schema API Version `0.2`.
+This document specifies Project Descriptor Schema Version `0.2`.
 
-The Schema API version format follows the form of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version):
+The Schema Version format follows the form of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version):
 
 * MUST be in form <major>.<minor> or <major>, where <major> is equivalent to <major>.0
 * When <major> is greater than 0 increments to <minor> SHALL exclusively indicate additive changes
@@ -39,7 +39,7 @@ The Schema API version format follows the form of the [Buildpack API Version](ht
 
 ### Non-`_` Tables
 
-All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version API number using the `schema-version` field. All these tables are optional.
+All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version number using the `schema-version` field. All these tables are optional.
 
 ### `_`
 
@@ -63,7 +63,7 @@ uri = "<uri>"
 # additional arbitrary keys allowed
 ```
 
-The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema-version`  to denote which version of this API the descriptor is using.
+The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema-version`  to denote which schema version the descriptor is using.
 
 ```toml
 [_]
