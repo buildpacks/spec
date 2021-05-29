@@ -186,7 +186,7 @@ This defines the buildpacks that a platform should use on the repo.
 
 Either an `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
 
-The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the inline buildpack this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
+The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the [inline buildpack](#Definitions) this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
 
 #### `io.buildpacks.env.build` (optional)
 
@@ -197,6 +197,10 @@ This table MAY be used to set environment variables at build time, for example:
 name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
+
+## Definitions
+
+* **Inline Buildpack** - a type of buildpack that can be defined in the same repo as the app it is used with
 
 ## Example
 
