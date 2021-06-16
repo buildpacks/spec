@@ -182,13 +182,13 @@ The platform SHOULD ensure that:
 
 The platform MUST ensure that:
 
-- The image config's `User` field is set to a user with the same user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID and primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
 The platform SHOULD ensure that:
 
+- The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
 - The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
@@ -300,7 +300,7 @@ Usage:
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
@@ -309,7 +309,7 @@ Usage:
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
 | `<tag>...`        |                       |                          | Additional tag to apply to exported image
-| `<uid>`           | `CNB_USER_ID`         |                          | UID of the stack `User`
+| `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
@@ -420,11 +420,11 @@ Usage:
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Path to a cache directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
-| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
+| `<uid>`        | `CNB_USER_ID`         |                          | UID of the build image `User`
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
 
 ##### Outputs
@@ -534,7 +534,7 @@ Usage:
 | `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
 | `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the stack `User`
+| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the build image `User`
 | `<group>`           | `CNB_GROUP_PATH`           | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
 | `<image>`           |                            |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`     |                     | Path to a cache directory containing launch layers
@@ -545,7 +545,7 @@ Usage:
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
-| `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
+| `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
@@ -682,12 +682,12 @@ Usage:
 | Input               | Environment Variable  | Default Value          | Description
 |---------------------|-----------------------|------------------------|---------------------------------------
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
+| `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the build image `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
 | `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
-| `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
+| `<uid>`             | `CNB_USER_ID`         |                        | UID of the build image `User`
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
