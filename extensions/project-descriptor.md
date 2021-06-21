@@ -184,7 +184,7 @@ uri = "<url or path to the buildpack (optional default=urn:buildpack:<id>)"
 
 This defines the buildpacks that a platform should use on the repo.
 
-Either an `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
+Either a `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
 
 The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the [inline buildpack](#Definitions) this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
 
