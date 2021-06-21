@@ -198,7 +198,7 @@ name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
 
-## Definitions
+## Terminology
 
 * **Inline Buildpack** - a type of buildpack that can be defined in the same repo as the app it is used with
 
