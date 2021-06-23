@@ -122,6 +122,11 @@ id = "<string>"
 version = "<string>"
 uri = "<string>"
 
+  [io.buildpacks.group.script]
+  api = "<buildpack api>"
+  shell = "<string (optional default=/bin/sh)>"
+  inline = "<script contents>"
+
 [[io.buildpacks.build.env]]
 name = "<string>"
 value = "<string>"
@@ -170,11 +175,18 @@ This table MAY contain an array of buildpacks. The schema for this table is:
 id = "<buildpack ID (optional)>"
 version = "<buildpack version (optional default=latest)>"
 uri = "<url or path to the buildpack (optional default=urn:buildpack:<id>)"
+
+  [io.buildpacks.group.script]
+  api = "<buildpack api>"
+  shell = "<string (optional default=/bin/sh)>"
+  inline = "<script contents>"
 ```
 
 This defines the buildpacks that a platform should use on the repo.
 
-Either an `id` or a `uri` MUST be included, but MUST NOT include both. If `uri` is provided, `version` MUST NOT be allowed.
+Either a `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
+
+The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the [inline buildpack](#Definitions) this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
 
 #### `io.buildpacks.env.build` (optional)
 
@@ -185,6 +197,10 @@ This table MAY be used to set environment variables at build time, for example:
 name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
+
+## Terminology
+
+* **Inline Buildpack** - a type of buildpack that can be defined in the same repo as the app it is used with
 
 ## Example
 
@@ -215,7 +231,7 @@ include = [
 id = "io.buildpacks/java"
 version = "1.0"
 
-[[io.buildpacks.gruop]]
+[[io.buildpacks.group]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
 ```
