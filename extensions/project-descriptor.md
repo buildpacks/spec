@@ -18,6 +18,8 @@ A project descriptor is a file that MAY contain configuration for apps, services
       - [`io.buildpacks.builder` (optional)](#iobuildpacksbuilder-optional)
       - [`io.buildpacks.include` (optional) and `io.buildpacks.exclude` (optional)](#iobuildpacksinclude-optional-and-iobuildpacksexclude-optional)
       - [`io.buildpacks.group` (optional)](#iobuildpacksgroup-optional)
+      - [`io.buildpacks.pre.group` (optional)](#iobuildpackspregroup-optional)
+      - [`io.buildpacks.post.group` (optional)](#iobuildpackspostgroup-optional)
       - [`io.buildpacks.env.build` (optional)](#iobuildpacksenvbuild-optional)
   - [Example](#example)
 
@@ -187,6 +189,19 @@ This defines the buildpacks that a platform should use on the repo.
 Either a `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
 
 The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the [inline buildpack](#Definitions) this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
+
+#### `io.buildpacks.pre.group` (optional)
+
+This table MAY contain a list of buildpacks to insert at the beginning of an automatically detected group. Given an order with multiple groups, the list of `pre` buildpacks will be inserted at the beginning of each group such that the are run as if they were original included in the group. Each phase of the injected buildpack(s) will execute as normal.
+[[build.post.buildpacks]]
+
+The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
+
+#### `io.buildpacks.post.group` (optional)
+
+This table MAY contain a list of buildpacks to insert at the end of an automatically detected group. Given an order with multiple groups, the list of `post` buildpacks will be inserted at the end of each group such that the are run as if they were original included in the group. Each phase of the injected buildpack(s) will execute as normal.
+
+The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
 
 #### `io.buildpacks.env.build` (optional)
 
