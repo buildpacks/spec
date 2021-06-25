@@ -282,11 +282,11 @@ Usage:
 ```
 /cnb/lifecycle/analyzer \
   [-analyzed <analyzed>] \
+  [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
-  [-order <order>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
   [-stack <stack> ] \
@@ -299,12 +299,12 @@ Usage:
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<order>`         | `CNB_ORDER_PATH`      | `/cnb/order.toml`        | Path to order definition (see [`order.toml`](#ordertoml-toml))
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from <stack>    | Run image reference
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
@@ -318,7 +318,9 @@ Usage:
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent images without error.
 - The lifecycle MUST fail if the stack ID of the `<run-image>` does not match `<stack-id>`
-- The lifecycle MUST ensure registry write access to `<image>` and any provided `<tag>`s.
+- The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
+  - `image` MUST describe the `<previous-image>`
 
 ##### Outputs
 | Output             | Description
@@ -338,8 +340,6 @@ Usage:
 
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`.
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
- -  `build-image` MUST match the values provided in `<stack>`
- -  `run-image` MUST describe the `<run-image>`
  - **If** the `<previous-image>` is compatible with the `<run-image>` `previous-image` MUST describe `<previous-image>`.  `<previous-image>` is compatible with `<run-image>` if:
    - The stack IDs match
    - `<run-image>` `mixins` are a superset of `<previous-image>` mixins
@@ -352,7 +352,6 @@ Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
-  [-analyzed <analyzed>] \
   [-buildpacks <buildpacks>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -366,7 +365,6 @@ Usage:
 | Input         | Environment Variable    | Default Value                                          | Description
 |---------------|-------------------------|--------------------------------------------------------|-------
 | `<app>`         | `CNB_APP_DIR`         | `/workspace`                                           | Path to application directory
-| `<analyzed>`    | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml`                               | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
 | `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml`                                  | Path to output group definition
 | `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`                                              | Path to layers directory
@@ -397,7 +395,6 @@ Usage:
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
-- SHALL compare the list of mixins that are statically required by all buildpacks with the static list of mixins provided in `<analyzed>` and fail if required mixins are not met.
 
 #### `restorer`
 Usage:
@@ -880,16 +877,11 @@ For more information on build reproducibility see [https://reproducible-builds.o
 #### `analyzed.toml` (TOML)
 
 ```toml
-[previous-image]
+[image]
   reference = "<image reference>"
-[previous-image.metadata]
-  # previous image layer metadata
-[run-image]
-  reference = "<image reference>"
-  mixins = ["libgc", "libpq"]
-[build-image]
-  stack-id = "<string>"
-  mixins = ["mixin name"]
+
+[metadata]
+# layer metadata
 ```
 
 Where:
@@ -1028,9 +1020,6 @@ Where:
 [run-image]
  image = "<image>"
  mirrors = ["<mirror>", "<mirror>"]
-[build-image]
- stack-id = "<string>"
- mixins = ["mixin name"]
 ```
 
 Where:
@@ -1040,7 +1029,6 @@ Where:
 - All `run-image.mirrors`:
   - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
-- `build-image.stack-id` MUST be a valid [stack ID](#stack-id)
 
 ### Labels
 
