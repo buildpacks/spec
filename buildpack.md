@@ -217,7 +217,7 @@ false     | false    | false    | No                       | No
 
 Examples:
 * `build = true, cache = true, launch = true`:
-A Ruby buildpack provides the Ruby interpretor to a subsequent buildpack and additionally installs Ruby in the app image to support the application. The Ruby is restored from the cache on rebuild, and the Ruby buildpack can use layer metadata to ensure the correct version is present.
+A Ruby buildpack provides the Ruby interpreter to a subsequent buildpack and additionally installs Ruby in the app image to support the application. The Ruby is restored from the cache on rebuild, and the Ruby buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = true, launch = false`:
 A Java buildpack provides the JDK to a subsequent buildpack, which uses it to compile a Java application. The JDK is restored from the cache on rebuild, and the Java buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = false, launch = false`:
