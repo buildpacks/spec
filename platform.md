@@ -313,10 +313,11 @@ Usage:
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
-- **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference
-- **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID
+- **If** `<daemon>` is `false` and the platform provides one or more `<tag>` inputs, each `<tag>` MUST refer to the same registry as `<image>`.
+- **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
+- **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
-- The lifecycle MUST accept valid references to non-existent images without error.
+- The lifecycle MUST accept valid references to non-existent `<previous-image>` and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
 - The lifecycle MUST ensure registry read access to `<previous-image>` and `<run-image>`.
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
