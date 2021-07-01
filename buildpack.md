@@ -782,7 +782,7 @@ For each environment variable file the period-delimited suffix SHALL determine t
 | none       | [Override](#override)
 | `.append`  | [Append](#append)
 | `.default` | [Default](#default)
-| `.delim`   | [Delimeter](#delimiter)
+| `.delim`   | [Delimiter](#delimiter)
 | `.override`| [Override](#override)
 | `.prepend` | [Prepend](#prepend)
 
