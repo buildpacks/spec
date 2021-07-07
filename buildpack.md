@@ -217,13 +217,13 @@ false     | false    | false    | No                       | No
 
 Examples:
 * `build = true, cache = true, launch = true`:
-A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime.
+A Ruby buildpack provides the Ruby interpreter to a subsequent buildpack and additionally installs Ruby in the app image to support the application. The Ruby is restored from the cache on rebuild, and the Ruby buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = true, launch = false`:
-A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
+A Java buildpack provides the JDK to a subsequent buildpack, which uses it to compile a Java application. The JDK is restored from the cache on rebuild, and the Java buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = false, launch = false`:
-A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
+An NPM buildpack provides the latest version of the NPM CLI to a subsequent buildpack (without caching it).
 * `build = false, cache = false, launch = true`:
-A Java buildpack might read the restored layer metadata to determine if the version of the JRE included in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the previous image to avoid re-downloading the JRE.
+A Python buildpack installs Python in the app image to support the application. Python is not restored from the cache on rebuild, but the Python buildpack can still use layer metadata to determine if the previous Python layer is replaced with a new layer or referenced by the new app image.
 
 #### Launch Layers
 
