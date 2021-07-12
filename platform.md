@@ -322,6 +322,7 @@ Usage:
 - The lifecycle MUST ensure registry read access to `<previous-image>` and `<run-image>`.
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
   - `image` MUST describe the `<previous-image>`
+  - `run-image` MUST describe the `<run-image>`
 
 ##### Outputs
 | Output             | Description
@@ -519,7 +520,6 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
-  [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -542,7 +542,6 @@ Usage:
 | `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
@@ -569,9 +568,9 @@ Usage:
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
-    - MUST be an extension of the `<run-image>`
+    - MUST be an extension of the `run-image` in [`analyzed.toml`](#analyzedtoml-toml)
       - All run-image layers SHALL be preserved
-      - All run-image config values SHALL be preserved unless this conflict with another requirement
+      - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
@@ -883,6 +882,9 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 [metadata]
 # layer metadata
+
+[run-image]
+  reference = "<image reference>"
 ```
 
 Where:
