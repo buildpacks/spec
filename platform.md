@@ -317,12 +317,9 @@ Usage:
 - **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
-- The lifecycle MUST accept valid references to non-existent `<previous-image>` and `<image>` without error.
+- The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
-- The lifecycle MUST ensure registry read access to `<previous-image>` and `<run-image>`.
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
-  - `image` MUST describe the `<previous-image>`
-  - `run-image` MUST describe the `<run-image>`
+- The lifecycle MUST ensure registry read access to `<previous-image>`, `<cache-image>`, and `<run-image>`.
 
 ##### Outputs
 | Output             | Description
@@ -340,12 +337,9 @@ Usage:
 | `1-10`, `13-99` | Generic lifecycle errors
 | `30-39` | Analysis-specific lifecycle errors
 
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`.
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
- - **If** the `<previous-image>` is compatible with the `<run-image>` `previous-image` MUST describe `<previous-image>`.  `<previous-image>` is compatible with `<run-image>` if:
-   - The stack IDs match
-   - `<run-image>` `mixins` are a superset of `<previous-image>` mixins
- - **Else** the lifecycle MUST omit `previous-image.reference` and `previous-image.metadata`
+  - `image` MUST describe the `<previous-image>`, if accessible
+  - `run-image` MUST describe the `<run-image>`
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -548,7 +542,7 @@ Usage:
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-- **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of `stack`
+- The <run-image>` will be read from [`analyzed.toml`](#analyzedtoml-toml)
 
 ##### Outputs
 | Output             | Description
