@@ -179,6 +179,8 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
 
+A [builder](extensions/builder.md) MUST be an extension of a build image.
+
 ### Run Image
 
 The platform MUST ensure that:
