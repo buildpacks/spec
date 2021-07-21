@@ -234,4 +234,11 @@ version = "1.0"
 [[io.buildpacks.group]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
+
+[[io.buildpacks.group]]
+id = "example/post-build"
+  
+    [io.buildpacks.group.script]
+    api = "0.5"
+    inline = "./post-build.sh"
 ```
