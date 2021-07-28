@@ -192,7 +192,7 @@ The `api` and `inline` key MUST be defined in the `script` table. The value of t
 
 #### `io.buildpacks.pre.group` (optional)
 
-This table MAY contain a list of buildpacks to insert at the beginning of an automatically detected group. Given an order with multiple groups, the list of `pre` buildpacks will be inserted at the beginning of each group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
+This table MAY contain a list of buildpacks to insert at the beginning of an automatically detected group. Given an order with multiple groups, the list of `pre` buildpacks will be inserted at the beginning of each automatically detected group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
 [[build.post.buildpacks]]
 
 The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
