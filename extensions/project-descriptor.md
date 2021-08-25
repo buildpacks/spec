@@ -198,7 +198,7 @@ The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksg
 
 #### `io.buildpacks.post.group` (optional)
 
-This table MAY contain a list of buildpacks to insert at the end of an automatically detected group. Given an order with multiple groups, the list of `post` buildpacks will be inserted at the end of each automatically detected group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
+This table MAY contain a list of buildpacks to insert at the end of every group. Given an order with multiple groups, the list of `post` buildpacks will be inserted at the end of each group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
 
 The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
 
