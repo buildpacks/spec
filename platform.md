@@ -258,7 +258,7 @@ or by executing `/cnb/lifecycle/creator`.
 #### Rebase
 When an updated run image with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
-When layers are rebased, any app image metadata referenceing to the original run image MUST be updated to reference to the new run image.
+When layers are rebased, any app image metadata referencing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
