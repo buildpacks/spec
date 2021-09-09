@@ -32,17 +32,16 @@ Examples of a platform might include:
       - [Rebase](#rebase)
       - [Launch](#launch)
     - [Usage](#usage)
-      - [`detector`](#detector)
+      - [`analyzer`](#analyzer)
         - [Inputs](#inputs)
         - [Outputs](#outputs)
-      - [`analyzer`](#analyzer)
+      - [`detector`](#detector)
         - [Inputs](#inputs-1)
         - [Outputs](#outputs-1)
-        - [Layer analysis](#layer-analysis)
       - [`restorer`](#restorer)
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
-        - [Layer restoration](#layer-restoration)
+        - [Layer Restoration](#layer-restoration)
       - [`builder`](#builder)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
@@ -88,7 +87,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.5`.
+This document specifies Platform API version `0.7`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -177,26 +176,26 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Run Image
 
 The platform MUST ensure that:
 
-- The image config's `User` field is set to a user with the same user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID and primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID as in the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
 The platform SHOULD ensure that:
 
+- The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
 - The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
 - The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
 - The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.   
+- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
 
 ### Mixins
 
@@ -206,6 +205,7 @@ A mixin name MUST only contain a `:` character as part of an optional stage spec
 
 A mixin prefixed with the `build:` stage specifier only affects the build image and does not need to be specified on the run image.
 A mixin prefixed with the `run:` stage specifier only affects the run image and does not need to be specified on the build image.
+A mixin WITHOUT a `build:` or `run:` prefix affects both the build and the run images.
 
 A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
 
@@ -237,15 +237,15 @@ If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifec
 #### Build
 A single app image build* consists of the following phases:
 
-1. Detection
 1. Analysis
+1. Detection
 1. Cache Restoration
 1. Build*
 1. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
-1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/analyzer`
+1. `/cnb/lifecycle/detector`
 1. `/cnb/lifecycle/restorer`
 1. `/cnb/lifecycle/builder`
 1. `/cnb/lifecycle/exporter`
@@ -258,13 +258,13 @@ or by executing `/cnb/lifecycle/creator`.
 #### Rebase
 When an updated run image with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
-When layers are rebased, any app image metadata referenceing to the original run image MUST be updated to reference to the new run image.
+When layers are rebased, any app image metadata referencing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
 Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
- 
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher`, or a symlink to it (see [exporter outputs](#outputs-4)), SHALL be the `ENTRYPOINT` for all app images.
@@ -276,10 +276,75 @@ All lifecycle phases:
 - MUST read `CNB_PLATFORM_API` from the execution environment and evaluate compatibility before attempting to parse other inputs (see [Platform API Compatibility](#platform-api-compatibility))
 - MUST give command line inputs precedence over other inputs
 
+#### `analyzer`
+
+Usage:
+```
+/cnb/lifecycle/analyzer \
+  [-analyzed <analyzed>] \
+  [-cache-image <cache-image>] \
+  [-daemon] \ # sets <daemon>
+  [-gid <gid>] \
+  [-layers <layers>] \
+  [-log-level <log-level>] \
+  [-previous-image <previous-image> ] \
+  [-run-image <run-image> ] \
+  [-stack <stack> ] \
+  [-tag <tag>...] \
+  [-uid <uid>] \
+  <image>
+```
+
+##### Inputs
+| Input             | Environment Variable  | Default Value            | Description
+|-------------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
+| `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
+| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
+| `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<image>`         |                       |                          | Tag reference to which the app image will be written
+| `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
+| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
+| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
+| `<tag>...`        |                       |                          | Additional tag to apply to exported image
+| `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
+
+-`<image>` MUST be a valid image reference
+- **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
+- **If** `<daemon>` is `false` and the platform provides one or more `<tag>` inputs, each `<tag>` MUST refer to the same registry as `<image>`.
+- **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
+- **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
+- **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
+- The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
+- The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
+- The lifecycle MUST ensure registry read access to `<previous-image>`, `<cache-image>`, and `<run-image>`.
+
+##### Outputs
+| Output             | Description
+|--------------------|----------------------------------------------
+| [exit status]      | (see Exit Code table below for values)
+| `/dev/stdout`      | Logs (info)
+| `/dev/stderr`      | Logs (warnings, errors)
+| `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `30-39` | Analysis-specific lifecycle errors
+
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
+  - `image` MUST describe the `<previous-image>`, if accessible
+  - `run-image` MUST describe the `<run-image>`
+
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
@@ -327,21 +392,19 @@ The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
-#### `analyzer`
-Usage: 
+#### `restorer`
+Usage:
 ```
-/cnb/lifecycle/analyzer \
+/cnb/lifecycle/restorer \
   [-analyzed <analyzed>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
-  [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
-  [-uid <uid>] \
-  <image>
+  [-uid <uid>]
 ```
 
 ##### Inputs
@@ -350,103 +413,42 @@ Usage:
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Path to a cache directory
 | `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
-| `<daemon>`     | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the stack `User`
+| `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<image>`      |                       |                          | Image reference to be analyzed (usually the result of the previous build)
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform layer analysis
-| `<uid>`        | `CNB_USER_ID`         |                          | UID of the stack `User`
-
-- **If** `<daemon>` is `false`, `<image>` MUST be a valid image reference
-- **If** `<daemon>` is `true`, `<image>` MUST be either a valid image reference or an imageID
-- The lifecycle MUST accept valid references to non-existent images without error.
+| `<uid>`        | `CNB_USER_ID`         |                          | UID of the build image `User`
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
 
 ##### Outputs
-| Output             | Description
-|--------------------|----------------------------------------------
-| [exit status]      | (see Exit Code table below for values)
-| `/dev/stdout`      | Logs (info)
-| `/dev/stderr`      | Logs (warnings, errors)
-| `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<layers>/<buidpack-id>/<layer>.sha`  | Files containing the diffID of each analyzed layer
+| Output                                | Description
+|---------------------------------------|----------------------------------------------
+| [exit status]                         | (see Exit Code table below for values)
+| `/dev/stdout`                         | Logs (info)
+| `/dev/stderr`                         | Logs (warnings, errors)
+| `<layers>/<buidpack-id>/store.toml`   | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>/*`.   | Restored layer contents
 
 | Exit Code | Result|
 |-----------|-------|
 | `0`       | Success
 | `11`      | Platform API incompatibility error
 | `12`      | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
-| `30-39` | Analysis-specific lifecycle errors
-
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>` if `<image>` is accessible.
-- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer analysis.
-- **Else** the lifecycle MUST analyze any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-
-##### Layer analysis
-When analyzing a given layer the lifecycle SHALL:
-- **If** `build=true`, `cache=false`:
-    - Do nothing
-- **Else if** `launch=true`:
-    - Write layer metadata read from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the analyzed image to `<layers>/<buildpack-id>/<layer-name>.sha`
-- **Else if** `cache=true`:
-    - Write layer metadata read from the cache to `<layers>/<buildpack-id>/<layer-name>.toml`
-    - Write the layer diffID from the cache to `<layers>/<buildpack-id>/<layer-name>.sha`
-
-#### `restorer`
-Usage:
-```
-/cnb/lifecycle/restorer \
-  [-cache-dir <cache-dir>]
-  [-cache-image <cache-image>]
-  [-gid <gid>] \
-  [-group <group>] \
-  [-layers <layers>] \
-  [-log-level <log-level>] \
-  [-uid <uid>]
-```
-
-##### Inputs
-| Input          | Environment Variable  | Default Value         | Description
-|----------------|-----------------------|-----------------------|----------------------
-| `<cache-dir>`  | `CNB_CACHE_DIR`       |                       | Path to a cache directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                       | Reference to a cache image in an OCI image registry
-| `<gid>`        | `CNB_GROUP_ID`        |                       | Primary GID of the stack `User`
-| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
-| `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`             | Path to layers directory
-| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
-| `<uid>`        | `CNB_USER_ID`         |                       | UID of the stack `User`
-| `<layers>/<buidpack-id>/<layer>.sha`  ||                       | Files containing the diffID of each analyzed layer
-| `<layers>/<buidpack-id>/<layer>.toml` ||                       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
-
-##### Outputs
-| Output                             | Description
-|------------------------------------|----------------------------------------------
-| [exit status]                      | (see Exit Code table below for values)
-| `/dev/stdout`                      | Logs (info)
-| `/dev/stderr`                      | Logs (warnings, errors)
-| `<layers>/<buidpack-id>/<layer>/*` | Restored layer contents
-
-| Exit Code | Result|
-|-----------|-------|
-| `0`       | Success
-| `11`      | Platform API incompatibility error
-| `12`      | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
+| `1-10`, `13-99` | Generic lifecycle errors
 | `40-49` | Restoration-specific lifecycle errors
 
-##### Layer restoration
-For each layer metadata file found in the `<layers>` directory, the lifecycle:
-- MUST restore cached layer contents if the cache contains a layer with matching diffID
-- MUST remove layer metadata if `cache=true` AND the cache DOES NOT contain a layer with matching diffID
+- For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
+- **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
+
+##### Layer Restoration
+lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
 
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
 
-Usage: 
+Usage:
 ```
 /cnb/lifecycle/builder \
   [-app <app>] \
@@ -512,8 +514,6 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
-  [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
-  [-stack <stack>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -526,7 +526,7 @@ Usage:
 | `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
 | `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI image registry
 | `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the stack `User`
+| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the build image `User`
 | `<group>`           | `CNB_GROUP_PATH`           | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
 | `<image>`           |                            |                     | Tag reference to which the app image will be written
 | `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`     |                     | Path to a cache directory containing launch layers
@@ -536,15 +536,13 @@ Usage:
 | `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`            | resolved from `<stack>`   | Run image reference
-| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
-| `<uid>`             | `CNB_USER_ID`              |                     | UID of the stack `User`
+| `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-- **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of `stack`
+- The <run-image>` will be read from [`analyzed.toml`](#analyzedtoml-toml)
 
 ##### Outputs
 | Output             | Description
@@ -564,9 +562,9 @@ Usage:
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
-    - MUST be an extension of the `<run-image>`
+    - MUST be an extension of the `run-image` in [`analyzed.toml`](#analyzedtoml-toml)
       - All run-image layers SHALL be preserved
-      - All run-image config values SHALL be preserved unless this conflict with another requirement
+      - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
@@ -675,12 +673,12 @@ Usage:
 | Input               | Environment Variable  | Default Value          | Description
 |---------------------|-----------------------|------------------------|---------------------------------------
 | `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the stack `User`
+| `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the build image `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
 | `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
-| `<uid>`             | `CNB_USER_ID`         |                        | UID of the stack `User`
+| `<uid>`             | `CNB_USER_ID`         |                        | UID of the build image `User`
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -812,7 +810,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 |-----------------|--------------------------------------
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
-    
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
 | Env Variable      | Layer Path   | Contents
@@ -878,11 +876,15 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 [metadata]
 # layer metadata
+
+[run-image]
+  reference = "<image reference>"
 ```
 
 Where:
-- `image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
-- `metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
+- `previous-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
 
