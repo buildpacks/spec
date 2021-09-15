@@ -222,6 +222,7 @@ value = "-Xmx1g"
 [_]
 id = "io.buildpacks.my-app"
 version = "0.1"
+schema-version = "0.2"
 
 [_.metadata]
 cdn = "https://cdn.example.com"
