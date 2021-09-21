@@ -925,7 +925,7 @@ paths = ["<app sub-path glob>"]
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack.
 - `processes` contains the complete set of processes contributed by all buildpacks
-- `slices` contains the complete set of slice defined by all buildpacks
+- `slices` contains the complete set of slices defined by all buildpacks
 - `bom` contains the Bill of Materials
 
 #### `order.toml` (TOML)
