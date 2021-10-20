@@ -88,6 +88,7 @@ This document specifies Buildpack API version `0.5`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - `<major>` and `<minor>` MUST only contain numbers (unsigned 64 bit integer)
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
 ## Buildpack Interface
