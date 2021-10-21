@@ -31,9 +31,13 @@ Distribution API versions:
 
 A buildpackage is a buildpack packaged for distribution.
 
-A buildpackage MUST exist as either an OCI image on an image registry, an OCI image in a Docker daemon, or a `.cnb` file.
+A buildpackage MUST exist in one of the following formats:
 
-A `.cnb` file MUST be an uncompressed tar archive containing an OCI image. Its file name SHOULD end in `.cnb`.
+* An OCI Image on an image registry.
+* An OCI Image in a Docker daemon.
+* An uncompressed tar archive in [oci-layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format.
+  * The file SHOULD have the extension `.cnb`.
+
 
 [†](README.md#linux-only)For Linux buildpackages, all FS layers MUST be buildpack layers.
 
@@ -116,5 +120,3 @@ The following labels MUST be set in the buildpack image(through the image config
 The buildpack ID and version MUST match a buildpack provided by a layer blob.
 
 For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed targets.
-
-For each listed target, all associated buildpacks MUST be a candidate for detection when the entrypoint buildpack ID and version are selected.
