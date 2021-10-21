@@ -70,12 +70,6 @@ The following labels MUST be set in the buildpack image(through the image config
   "name": "<buildpack name>",
   "version": "<entrypoint buildpack version>",
   "homepage": "<buildpack home page",
-  "targets": [
-    {
-      "os": "<build-image os>",
-      "architecture": "<architecture>"
-    }
-  ]
 }
 ```
 
@@ -103,12 +97,6 @@ The following labels MUST be set in the buildpack image(through the image config
   "<inner buildpack>": {
     "<inner buildpack version>": {
       "api": "<buildpack API>",
-      "targets" : [
-        {
-          "os": "<os buildpack supports>",
-          "architecture": "<underlying architecture>",
-        }
-      ],
       "layerDiffID": "<diff-ID>",
       "homepage": "<buildpack homepage>",
       "name": "<buildpack name>",      
