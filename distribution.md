@@ -11,6 +11,7 @@ This document specifies the artifact format and the delivery mechanism for the b
   - [Distribution API Version](#distribution-api-version)
   - [Artifact Format](#artifact-format)
     - [Buildpackage](#buildpackage)
+    - [Lifecycle](#lifecycle)
 
 ## Distribution API Version
 
@@ -103,4 +104,43 @@ The following labels MUST be set in the buildpack image(through the image config
 
 The buildpack ID and version MUST match a buildpack provided by a layer blob.
 
-For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed targets.
+For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed stacks.
+
+For each listed stack, all associated buildpacks MUST be a candidate for detection when the entrypoint buildpack ID and version are selected.
+
+Each stack ID MUST only be present once.
+For a given stack, the `mixins` list MUST enumerate mixins such that no included buildpacks are missing a mixin for the stack.
+
+Fewer stack entries as well as additional mixins for a stack entry MAY be specified.
+
+### Lifecycle
+
+A lifecycle is an OCI Image that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
+
+#### Filesystem
+
+A lifecycle image MUST have the following directories/files
+
+- `/cnb/lifecycle/<lifecycle binaries>` &rarr; An implementation of the lifecycle, which contains the required lifecycle binaries for [building images](https://github.com/buildpacks/spec/blob/main/platform.md#build).
+
+#### Labels
+
+| Label             | Description |
+| --------          | --------
+| `io.buildpacks.lifecycle.version`     |  A string, representing the version stored of the lifecycle   |
+|`io.buildpacks.lifecycle.apis`| A JSON object representing the lifecycle APIs the lifecycle supports. |
+
+`io.buildpacks.lifecycle.apis` (JSON)
+
+```json
+{
+  "buildpack": {
+    "deprecated": ["<list of versions>"],
+    "supported": ["<list of versions>"]
+  },
+  "platform": {
+    "deprecated": ["<list of versions>"],
+    "supported": ["<list of versions>"]
+  }
+}
+```
