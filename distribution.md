@@ -11,10 +11,6 @@ This document specifies the artifact format and the delivery mechanism for the b
   - [Distribution API Version](#distribution-api-version)
   - [Artifact Format](#artifact-format)
     - [Buildpackage](#buildpackage)
-    - [Lifecycle](#lifecycle)
-    - [Build Image](#build-image)
-    - [Run Image](#run-image)
-    - [Builder Image](#builder-image)
 
 ## Distribution API Version
 
