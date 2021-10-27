@@ -115,7 +115,7 @@ Fewer stack entries as well as additional mixins for a stack entry MAY be specif
 
 ### Lifecycle
 
-A lifecycle is an OCI Image that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
+The following defines how a `lifecycle` SHOULD be packaged for distribution as an OCI iamge. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
 
 #### Filesystem
 
