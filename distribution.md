@@ -125,10 +125,10 @@ A lifecycle image MUST have the following directories/files
 
 #### Labels
 
-| Label             | Description |
+| Label             | Description
 | --------          | --------
-| `io.buildpacks.lifecycle.version`     |  A string, representing the version stored of the lifecycle   |
-|`io.buildpacks.lifecycle.apis`| A JSON object representing the lifecycle APIs the lifecycle supports. |
+| `io.buildpacks.lifecycle.version`  | A string, representing the version stored of the lifecycle.
+| `io.buildpacks.lifecycle.apis`     | A JSON object representing the lifecycle APIs the lifecycle supports.
 
 `io.buildpacks.lifecycle.apis` (JSON)
 
