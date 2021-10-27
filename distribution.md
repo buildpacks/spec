@@ -49,14 +49,14 @@ A buildpack MUST contain a `buildpack.toml` file at its root directory.
 
 #### Labels
 
-For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpack.layers`
+For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpackage.layers`
 
 The following labels MUST be set in the buildpack image(through the image config's `Labels` field):
 
 | Label             | Description | 
 | --------          | -------- 
-| `io.buildpacks.buildpack.metadata`     | A JSON object representing Buildpack Metadata   |
-| `io.builpacks.buildpack.layers`| A JSON object representing the buildpack layers |
+| `io.buildpacks.buildpackage.metadata`     | A JSON object representing Buildpack Metadata   |
+| `io.builpacks.buildpackage.layers`| A JSON object representing the buildpack layers |
 
 
 `io.buildpacks.buildpackage.metadata` (JSON)
@@ -69,7 +69,7 @@ The following labels MUST be set in the buildpack image(through the image config
 }
 ```
 
-`io.buildpacks.buildpack.layers` (JSON)
+`io.buildpacks.buildpackage.layers` (JSON)
 ```json
 {
   "<buildpack ID>": {
