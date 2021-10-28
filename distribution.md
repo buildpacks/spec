@@ -115,7 +115,7 @@ Fewer stack entries as well as additional mixins for a stack entry MAY be specif
 
 ### Lifecycle
 
-The following defines how a `lifecycle` SHOULD be packaged for distribution as an OCI iamge. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
+The following defines how a `lifecycle` SHOULD be packaged for distribution as an OCI image. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
 
 #### Filesystem
 
@@ -127,8 +127,8 @@ A lifecycle image MUST have the following directories/files
 
 | Label             | Description
 | --------          | --------
-| `io.buildpacks.lifecycle.version`  | A string, representing the version stored of the lifecycle.
-| `io.buildpacks.lifecycle.apis`     | A JSON object representing the lifecycle APIs the lifecycle supports.
+| `io.buildpacks.lifecycle.version`  | A string, representing the semver version of the lifecycle.
+| `io.buildpacks.lifecycle.apis`     | A JSON object representing the APIs the lifecycle supports.
 
 `io.buildpacks.lifecycle.apis` (JSON)
 
