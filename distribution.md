@@ -117,6 +117,12 @@ Fewer stack entries as well as additional mixins for a stack entry MAY be specif
 
 The following defines how a `lifecycle` SHOULD be packaged for distribution as an OCI image. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
 
+The Lifecycle MUST exist in one of the following formats:
+
+* An OCI Image on an image registry.
+* An OCI Image in a Docker daemon.
+* An uncompressed tar archive in [oci-layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format.
+
 #### Filesystem
 
 A lifecycle image MUST have the following directories/files
@@ -144,3 +150,14 @@ A lifecycle image MUST have the following directories/files
   }
 }
 ```
+
+* `supported`:
+  * contains an array of support API versions:
+  * for versions `1.0+`, version `x.n` implies support for [`x.0`, `x.n`]
+  * should be a superset of `deprecated`
+  * should only contain APIs that correspond to a spec release
+
+* `deprecated`:
+  * contain an array of deprecated APIs:
+  * should only contain `0.x` or major versions
+  * should only contain APIs that correspond to a spec release
