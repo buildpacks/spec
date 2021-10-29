@@ -150,14 +150,15 @@ A lifecycle image MUST have the following directories/files
   }
 }
 ```
+Where:
 
 * `supported`:
-  * contains an array of support API versions:
-  * for versions `1.0+`, version `x.n` implies support for [`x.0`, `x.n`]
-  * should be a superset of `deprecated`
-  * should only contain APIs that correspond to a spec release
+    * contains an array of support API versions:
+    * for versions `1.0+`, version `x.n` implies support for [`x.0`, `x.n`]
+    * should be a superset of `deprecated`
+    * should only contain APIs that correspond to a spec release
 
 * `deprecated`:
-  * contain an array of deprecated APIs:
-  * should only contain `0.x` or major versions
-  * should only contain APIs that correspond to a spec release
+    * contain an array of deprecated APIs:
+    * should only contain `0.x` or major versions
+    * should only contain APIs that correspond to a spec release
