@@ -11,7 +11,11 @@ This document specifies the artifact format and the delivery mechanism for the b
   - [Distribution API Version](#distribution-api-version)
   - [Artifact Format](#artifact-format)
     - [Buildpackage](#buildpackage)
+<<<<<<< HEAD
     - [Lifecycle](#lifecycle)
+=======
+    - [Build Image](#build-image)
+>>>>>>> feat: build-image distribution spec
 
 ## Distribution API Version
 
@@ -155,3 +159,37 @@ Where:
     * contain an array of deprecated APIs:
       * should only contain `0.x` or major versions
       * should only contain APIs that correspond to a spec release
+### Build Image
+
+The following defines how a `build-image` SHOULD be packaged for distribution as an OCI Image. The `build-image` is the component that provides the base image from which the build environment is constructed.
+
+The image configuration refers to the OCI Image configuration as mentioned [here](https://github.com/opencontainers/image-spec/blob/main/config.md#properties).
+
+#### Image Configuration
+
+The Build Image MUST contain the following configurations:
+
+* Image Config's `config.User` field MUST be set to a non-root user with a writable home directory.
+* Image Config's `os` field MUST be set to the underlying operating system used by the build image.
+* Image Config's `architecture` field MUST be set to the underlying operating system architecture used by the build image.
+
+The Build Image SHOULD contain the following configurations:
+
+* Image Config's `variant` field SHOULD be set to the underlying architecture variant.
+
+#### Environment Variables
+
+The Build Image MUST contain the following Environment Variables:
+
+* Image Config's `config.Env` field MUST have the environment variable `CNB_USER_ID` set to the user UID/SID of the user specified in the `User` field.
+* Image Config's `config.Env` field MUST have the environment variable `CNB_GROUP_ID` set to the primary group GID/SID of the user specified in the `User` field.
+* Image Config's `config.Env` field MUST have the environment variable `PATH` set to a valid set of paths or explicitly set to empty. (`PATH=`).
+
+#### Labels
+
+The Build Image SHOULD contain the following Labels on the image configuration:
+
+| Label                   | Description
+|-------                  |------------
+| `io.buildpacks.distribution.name` | A string denoting the operating system distribution
+| `io.buildpacks.distribution.version` | A string denoting the operating system version
