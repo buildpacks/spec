@@ -568,6 +568,8 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain a layer containing all buildpack-provided standardized Bill of Materials (sBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
+      - `<layers>/sbom/<buildpack-id>/launch.bom.<ext>` MUST contain the buildpack-provided `launch` sBOM
+      - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is a `launch` layer
       - A merged sBOM MAY be included in the layer at `<layers>/sbom/launch.bom.<ext>`
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
@@ -599,6 +601,8 @@ Usage:
 
 - The `<layers>` directory:
   - MUST include all buildpack-provided standardized Bill of Materials (sBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - `<layers>/sbom/<buildpack-id>/build.bom.<ext>` MUST contain the buildpack-provided `build` sBOM
+    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is a `build` layer
     - A merged sBOM MAY be included in the directory at `<layers>/sbom/build.bom.<ext>`
 
 - *If* a cache is provided the lifecycle:
