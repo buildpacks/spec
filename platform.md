@@ -421,14 +421,15 @@ Usage:
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
 
 ##### Outputs
-| Output                                | Description
-|---------------------------------------|----------------------------------------------
-| [exit status]                         | (see Exit Code table below for values)
-| `/dev/stdout`                         | Logs (info)
-| `/dev/stderr`                         | Logs (warnings, errors)
-| `<layers>/<buidpack-id>/store.toml`   | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>.toml` | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>/*`.   | Restored layer contents
+| Output                                     | Description
+|--------------------------------------------|----------------------------------------------
+| [exit status]                              | (see Exit Code table below for values)
+| `/dev/stdout`                              | Logs (info)
+| `/dev/stderr`                              | Logs (warnings, errors)
+| `<layers>/<buidpack-id>/store.toml`        | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.toml`      | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.bom.<ext>` | Files containing the standardized Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>/*`.        | Restored layer contents
 
 | Exit Code | Result|
 |-----------|-------|
@@ -566,6 +567,8 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - MUST contain a layer containing all buildpack-provided standardized Bill of Materials (sBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
+      - A merged sBOM MAY be included in the layer at `<layers>/sbom/launch.bom.<ext>`
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -594,8 +597,12 @@ Usage:
 
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
+- The `<layers>` directory:
+  - MUST include all buildpack-provided standardized Bill of Materials (sBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - A merged sBOM MAY be included in the directory at `<layers>/sbom/build.bom.<ext>`
+
 - *If* a cache is provided the lifecycle:
-   - SHALL write the contents of all cached layers to the cache
+   - SHALL write the contents of all cached layers and any provided sBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
@@ -1088,6 +1095,9 @@ Where:
   "app": [
     {"sha": "<slice-layer-diffID>"}
   ],
+  "bom": {
+    "sha": "<sbom-layer-diffID>"
+  },
   "config": {
     "sha": "<config-layer-diffID>"
   },
