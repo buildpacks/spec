@@ -161,7 +161,7 @@ Where:
       * should only contain APIs that correspond to a spec release
 ### Build Image
 
-The following defines how a `build-image` SHOULD be packaged for distribution as an OCI Image. The `build-image` is the component that provides the base image from which the build environment is constructed.
+The following defines how a build image SHOULD be packaged for distribution as an OCI Image. The build image is the component that provides the base image from which the build environment is constructed.
 
 The image configuration refers to the OCI Image configuration as mentioned [here](https://github.com/opencontainers/image-spec/blob/main/config.md#properties).
 
@@ -183,7 +183,7 @@ The Build Image MUST contain the following Environment Variables:
 
 * Image Config's `config.Env` field MUST have the environment variable `CNB_USER_ID` set to the user UID/SID of the user specified in the `User` field.
 * Image Config's `config.Env` field MUST have the environment variable `CNB_GROUP_ID` set to the primary group GID/SID of the user specified in the `User` field.
-* Image Config's `config.Env` field MUST have the environment variable `PATH` set to a valid set of paths or explicitly set to empty. (`PATH=`).
+* Image Config's `config.Env` field MUST have the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
 #### Labels
 
