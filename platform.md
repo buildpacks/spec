@@ -602,7 +602,7 @@ Usage:
 - The `<layers>` directory:
   - MUST include all buildpack-provided standardized Bill of Materials (sBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
     - `<layers>/sbom/<buildpack-id>/build.bom.<ext>` MUST contain the buildpack-provided `build` sBOM
-    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is a `build` layer
+    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is not a `launch` layer
     - A merged sBOM MAY be included in the directory at `<layers>/sbom/build.bom.<ext>`
 
 - *If* a cache is provided the lifecycle:
