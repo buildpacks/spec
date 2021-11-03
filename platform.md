@@ -122,6 +122,8 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
+An **image extension** is a dynamically-generated build-time and/or runtime Dockerfiles that act as pre-build base image extensions. Extensions participate in detection and execute before the buildpack build process.
+
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
 
@@ -349,6 +351,7 @@ Usage:
 /cnb/lifecycle/detector \
   [-app <app>] \
   [-buildpacks <buildpacks>] \
+  [-exts <exts>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
@@ -362,6 +365,7 @@ Usage:
 |---------------|-------------------------|--------------------------------------------------------|-------
 | `<app>`         | `CNB_APP_DIR`         | `/workspace`                                           | Path to application directory
 | `<buildpacks>`  | `CNB_BUILDPACKS_DIR`  | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))
+| `<ext>`         | `CNB_IMAGE_EXTS_DIR`  | `/cnb/exts`                                            | Path to image extensions directory (see [Image Extensions
 | `<group>`       | `CNB_GROUP_PATH`      | `<layers>/group.toml`                                  | Path to output group definition
 | `<layers>`      | `CNB_LAYERS_DIR`      | `/layers`                                              | Path to layers directory
 | `<log-level>`   | `CNB_LOG_LEVEL`       | `info`                                                 | Log Level
@@ -444,6 +448,47 @@ Usage:
 
 ##### Layer Restoration
 lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
+
+#### `image-extender`
+
+The platform MAY execute `image-extender`.
+
+Usage:
+```
+/cnb/lifecycle/image-extender \
+  [-group <group>] \
+  [-exts <exts>] \
+  [-output <output>] \
+  [-log-level <log-level>] \
+  [-plan <plan>]
+```
+
+##### Inputs
+| Input          | Env                   | Default Value         | Description
+|----------------|-----------------------|-----------------------|----------------------
+| `<exts>`       | `CNB_IMAGE_EXTS_DIR`  | `/cnb/exts`           | Path to image extensions directory (see [Image Extensions Directory Layout](image-extension.md))
+| `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))
+| `<output>`     | `CNB_OUTPUT_DIR`      | `/output`             | Path to output directory
+| `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                | Log Level
+| `<plan>`       | `CNB_PLAN_PATH`       | `<output>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))
+
+##### Outputs
+| Output                                     | Description
+|--------------------------------------------|----------------------------------------------
+| [exit status]                              | (see Exit Code table below for values)
+| `/dev/stdout`                              | Logs (info)
+| `/dev/stderr`                              | Logs (warnings, errors)
+
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-19` | Generic lifecycle errors
+| `51`     | Image extension build error
+| `50`, `52-59`|  Build-specific lifecycle errors
+
+- The lifecycle SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Image Extensions Interface Specification](image-extension.md).
 
 #### `builder`
 The platform MUST execute `builder` in the **build environment**
@@ -911,6 +956,11 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 api = "<buildpack API version>"
 optional = false
+
+[[image-extensions]]
+id = "<image extension ID>"
+version = "<image extension version>"
+api = "<image extension API version>"
 
 [[processes]]
 type = "<process type>"

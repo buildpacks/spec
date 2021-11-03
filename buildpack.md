@@ -38,6 +38,9 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
     - [Process](#process-1)
+  - [Phase #3: Image Extension](#phase-3-image-extension)
+    - [Purpose](#purpose)
+    - [Process](#process)
   - [Phase #3: Build](#phase-3-build)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
@@ -202,7 +205,7 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
+`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored
 ----------|----------|----------|--------------------------|---------------------
 true      | true     | true     | Yes - from the app image | Yes* - from the cache
 true      | true     | false    | Yes - from the cache     | Yes - from the cache
@@ -406,6 +409,14 @@ Note that buildpack IDs are expanded depth-first in left-to-right order.
 
 If a buildpack order entry within a group has the parameter `optional = true`, then a copy of the group without the entry MUST be repeated after the original group.
 
+#### Image Extensions
+
+Image extensions participate in the buildpack [detection](#detector) process, with the same `UID`, `GID`, and interface for `/bin/detect`. However:
+- Detection is optional for extensions, and they are assumed to pass detection when it is not present. A `/bin/detect` that exits with a 0 exit code passes detection, and fails otherwise.
+- Extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
+- Extensions MUST all precede buildpacks in [order](#ordertoml-toml) definitions.
+- Extensions MUST always be optional.
+
 ## Phase #2: Analysis
 
 ![Analysis](img/analysis.svg)
@@ -434,6 +445,60 @@ For each buildpack in the group, the lifecycle
 2. MUST restore `<layers>/store.toml`.
 
 After analysis, the lifecycle MUST proceed to the build phase.
+
+
+## Phase #3: Image Extension
+
+### Purpose
+
+The purpose of the image extension phase is to apply dynamically-generated or static build-time and runtime modules that mutate the pre-build base image.
+
+During the image extension phase, an image extension might:
+
+1. Execute a pre-defined `Dockerfile` to install files in specific directories that require privilaged access.
+1. Dyanmically generate a `Dockerfile` based on the phase inputs and apply it.
+1. Execute a pre-defined `Dockerfile` to install system packages provided as input to the phase.
+
+### Process
+
+**GIVEN:**
+- The final ordered group of builimage extensions determined during the detection phase,
+- A directory containing application source code,
+- A `<output>` directory used to store generated artifacts
+- A shell, if needed,
+
+For each image extension in the group in order, the lifecycle MUST execute `/bin/build`.
+
+1. **If** the exit status of `/bin/build` is non-zero, \
+   **Then** the lifecycle MUST fail the phase.
+
+2. **If** the exit status of `/bin/build` is zero,
+   1. **If** there are additional image extensions in the group, \
+      **Then** the lifecycle MUST proceed to the next image extension's `/bin/build`.
+
+   2. **If** there are no additional image extension in the group, \
+      **Then** the lifecycle MUST proceed to the build phase.
+
+For each `/bin/build` executable in each image extension, the lifecycle:
+
+- MUST provide path arguments to `/bin/build` as described in the [Image Extension Interface](image-extension.md) section.
+- MUST configure the build environment as described in the [Environment](#environment) section.
+- MUST provide all `<plan>` entries that were required by any buildpack in the group during the detection phase with names matching the names that the buildpack provided.
+
+Correspondingly, each `/bin/build` executable:
+
+- MAY read from the `<app>` directory.
+- MUST NOT write to the `<app>` directory.
+- MAY read the build environment as described in the [Environment](#environment) section.
+- MAY read the Buildpack Plan.
+- MAY log output from the build process to `stdout`.
+- MAY emit error, warning, or debug messages to `stderr`.
+- SHOULD write BOM (Bill-of-Materials) entries to `<output>/launch.toml` describing any contributions to the app image.
+- MAY write key-value pairs to `<output>/launch.toml` that are provided as build args to run.Dockerfile or Dockerfile
+- SHOULD write build BOM entries to `<output>/build.toml` describing any contributions to the build environment.
+- MAY modify or delete any existing `<output>` directories.
+- MAY create new `<output>` directories.
+- MAY name any new `<output>` directories without restrictions except those imposed by the filesystem and the ones noted below.
 
 ## Phase #3: Build
 
