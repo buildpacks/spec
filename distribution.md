@@ -104,14 +104,7 @@ The following labels MUST be set in the buildpack image(through the image config
 
 The buildpack ID and version MUST match a buildpack provided by a layer blob.
 
-For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed stacks.
-
-For each listed stack, all associated buildpacks MUST be a candidate for detection when the entrypoint buildpack ID and version are selected.
-
-Each stack ID MUST only be present once.
-For a given stack, the `mixins` list MUST enumerate mixins such that no included buildpacks are missing a mixin for the stack.
-
-Fewer stack entries as well as additional mixins for a stack entry MAY be specified.
+For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed targets.
 
 ### Lifecycle
 
