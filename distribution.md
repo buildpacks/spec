@@ -108,7 +108,7 @@ For a buildpackage to be valid, each `buildpack.toml` describing a buildpack imp
 
 ### Lifecycle
 
-The following defines how a `lifecycle` SHOULD be packaged for distribution as an OCI image. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
+The following defines how a `lifecycle` SHOULD be packaged for distribution. The `lifecycle` is the component that orchestrates buildpack execution, then assembles the resulting artifacts into a final app image.
 
 The Lifecycle MUST exist in one of the following formats:
 
