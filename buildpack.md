@@ -551,7 +551,13 @@ For each entry in `<plan>`:
 
 #### Bills-of-Materials
 
-Buildpacks MAY write standardized Bill of Materials (sBOM) files with extension `<ext>`, where `<ext>` SHOULD denote an sBOM media type.
+Buildpacks MAY write standardized Bill of Materials (sBOM) files with extension `<ext>`, where `<ext>` MUST denote an sBOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
+
+ | sBOM Media Type                  | File Extension
+ |----------------------------------|----------------------------------------------
+ | `application/vnd.cyclonedx+json` | `cdx.json`
+ | `application/spdx+json`          | `spdx.json`
+ | `application/vnd.syft+json`      | `syft.json`
 
 When the build is complete, an sBOM describing the app image MAY be generated for auditing purposes.
 If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.bom.<ext>` if provided, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
@@ -1080,7 +1086,7 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 **The buildpack sBOM:**
 
 *Key: `sbom = [ "<string>" ]`*
- - MUST be an sBOM media type based on https://www.iana.org/assignments/media-types/media-types.xhtml.
+ - MUST be a supported sBOM media type as described in [Bills-of-Materials](#bills-of-materials).
 
 #### Buildpack Implementations
 
