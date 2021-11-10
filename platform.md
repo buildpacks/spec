@@ -421,15 +421,15 @@ Usage:
 | `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
 
 ##### Outputs
-| Output                                     | Description
-|--------------------------------------------|----------------------------------------------
-| [exit status]                              | (see Exit Code table below for values)
-| `/dev/stdout`                              | Logs (info)
-| `/dev/stderr`                              | Logs (warnings, errors)
-| `<layers>/<buidpack-id>/store.toml`        | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>.toml`      | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>.bom.<ext>` | Files containing the standardized Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>/*`.        | Restored layer contents
+| Output                                      | Description
+|---------------------------------------------|----------------------------------------------
+| [exit status]                               | (see Exit Code table below for values)
+| `/dev/stdout`                               | Logs (info)
+| `/dev/stderr`                               | Logs (warnings, errors)
+| `<layers>/<buidpack-id>/store.toml`         | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the standardized Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents
 
 | Exit Code | Result|
 |-----------|-------|
@@ -493,9 +493,9 @@ Usage:
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
-- The lifecycle SHALL aggregate all `processes`, `slices` and BOM entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes`, `slices` and `bom` entries returned by buildpacks in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
-    - The lifecycle SHALL treat `web` processes defined by buildpacks implementing buildpack API < 0.6 as `default = true`.
+    - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
 #### `exporter`
 Usage:
@@ -567,10 +567,9 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer containing all buildpack-provided standardized Bill of Materials (BOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
-      - `<layers>/BOM/<buildpack-id>/launch.bom.<ext>` MUST contain the buildpack-provided `launch` BOM
-      - `<layers>/BOM/<buildpack-id>/<layer-id>/launch.bom.<ext>` MUST contain the buildpack-provided layer BOM if `<layer-id>` is a `launch` layer
-      - A merged BOM MAY be included in the layer at `<layers>/BOM/launch.bom.<ext>`
+    - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
+      - `<layers>/sbom/<buildpack-id>/launch.sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
+      - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -600,13 +599,12 @@ Usage:
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
-  - MUST include all buildpack-provided standardized Bill of Materials (BOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - `<layers>/BOM/<buildpack-id>/build.bom.<ext>` MUST contain the buildpack-provided `build` BOM
-    - `<layers>/BOM/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer BOM if `<layer-id>` is not a `launch` layer
-    - A merged BOM MAY be included in the directory at `<layers>/BOM/build.bom.<ext>`
+  - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - `<layers>/sbom/<buildpack-id>/build.sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
+    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
 
 - *If* a cache is provided the lifecycle:
-   - SHALL write the contents of all cached layers and any provided BOM files to the cache
+   - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
@@ -934,10 +932,10 @@ paths = ["<app sub-path glob>"]
 ```
 
 Where:
-- `id`, `version`, and `api` MUST be present for each buildpack.
+- `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `processes` contains the complete set of slice defined by all buildpacks
-- `bom` contains the Bill of Materials
+- `bom` contains the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
 
 #### `order.toml` (TOML)
 
@@ -1020,7 +1018,7 @@ Where:
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
 - **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any build Bill-of-Materials entries returned by participating buildpacks
+  - `build.bom` MUST contain any build Bill of Materials entries returned by buildpacks implementing Buildpack API < 0.7
 
 #### `stack.toml` (TOML)
 
@@ -1087,7 +1085,7 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the Bill of Materials
+- `bom` MUST contain the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
@@ -1137,7 +1135,7 @@ Where:
 Where:
 - `app` MUST contain one entry per app slice layer where
   - `sha` MUST contain the digest of the uncompressed layer
-- `bom.sha` MUST contain the digest of the uncompressed layer containing buildpack-provided standardized Bill of Materials
+- `bom.sha` MUST contain the digest of the uncompressed layer containing buildpack-provided Software Bill of Materials
 - `config.sha` MUST contain the digest of the uncompressed layer containing launcher config
 - `launcher.sha` MUST contain the digest of the uncompressed layer containing the launcher binary
 - `buildpacks` MUST contain one entry per buildpack that participated in the build where
