@@ -524,9 +524,9 @@ Correspondingly, each `/bin/build` executable:
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
-- SHOULD write standardized Bill of Materials (sBOM) entries to `<layers>/<layer>.bom.<ext>` describing any contributions to the layer.
-- SHOULD write launch sBOM entries to `<layers>/launch.bom.<ext>` describing any contributions to the application not associated with a layer.
-- SHOULD write build sBOM entries to `<layers>/build.bom.<ext>` describing any contributions to the build environment not associated with a layer.
+- SHOULD write standardized Bill of Materials (BOM) entries to `<layers>/<layer>.bom.<ext>` describing any contributions to the layer.
+- SHOULD write launch BOM entries to `<layers>/launch.bom.<ext>` describing any contributions to the application not associated with a layer.
+- SHOULD write build BOM entries to `<layers>/build.bom.<ext>` describing any contributions to the build environment not associated with a layer.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
@@ -551,18 +551,18 @@ For each entry in `<plan>`:
 
 #### Bills-of-Materials
 
-Buildpacks MAY write standardized Bill of Materials (sBOM) files with extension `<ext>`, where `<ext>` MUST denote an sBOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
+Buildpacks MAY write standardized Bill of Materials (BOM) files with extension `<ext>`, where `<ext>` MUST denote an BOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
 
- | sBOM Media Type                  | File Extension
+ | BOM Media Type                  | File Extension
  |----------------------------------|----------------------------------------------
  | `application/vnd.cyclonedx+json` | `cdx.json`
  | `application/spdx+json`          | `spdx.json`
  | `application/vnd.syft+json`      | `syft.json`
 
-When the build is complete, an sBOM describing the app image MAY be generated for auditing purposes.
+When the build is complete, an BOM describing the app image MAY be generated for auditing purposes.
 If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
-When the build is complete, a **build sBOM** describing the build container MAY be generated for auditing purposes.
+When the build is complete, a **build BOM** describing the build container MAY be generated for auditing purposes.
 If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
@@ -1033,7 +1033,7 @@ homepage = "<buildpack homepage>"
 clear-env = false
 description = "<buildpack description>"
 keywords = [ "<string>" ]
-sbom = [ "<string>" ]
+BOM = [ "<string>" ]
 
 [[buildpack.licenses]]
 type = "<string>"
@@ -1083,10 +1083,10 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 - `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
 - `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
-**The buildpack sBOM:**
+**The buildpack BOM:**
 
-*Key: `sbom = [ "<string>" ]`*
- - MUST be supported sBOM media types as described in [Bills-of-Materials](#bills-of-materials).
+*Key: `BOM = [ "<string>" ]`*
+ - MUST be supported BOM media types as described in [Bills-of-Materials](#bills-of-materials).
 
 #### Buildpack Implementations
 
