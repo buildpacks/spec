@@ -218,6 +218,7 @@ false     | false    | true     | Yes - from the app image     | No
 false     | false    | false    | No                           | No
 
 \* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
+
 \** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
 
 Examples:
