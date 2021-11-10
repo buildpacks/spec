@@ -1036,7 +1036,7 @@ homepage = "<buildpack homepage>"
 clear-env = false
 description = "<buildpack description>"
 keywords = [ "<string>" ]
-BOM = [ "<string>" ]
+sbom-formats = [ "<string>" ]
 
 [[buildpack.licenses]]
 type = "<string>"
@@ -1088,7 +1088,7 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 
 **The buildpack BOM:**
 
-*Key: `BOM = [ "<string>" ]`*
+*Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported BOM media types as described in [Bills-of-Materials](#bills-of-materials).
 
 #### Buildpack Implementations
