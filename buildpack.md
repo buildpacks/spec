@@ -560,10 +560,10 @@ Buildpacks MAY write standardized Bill of Materials (sBOM) files with extension 
  | `application/vnd.syft+json`      | `syft.json`
 
 When the build is complete, an sBOM describing the app image MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.bom.<ext>` if provided, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
+If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 When the build is complete, a **build sBOM** describing the build container MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.bom.<ext>` if provided, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
+If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
