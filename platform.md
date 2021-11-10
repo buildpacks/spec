@@ -567,10 +567,10 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer containing all buildpack-provided standardized Bill of Materials (sBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
-      - `<layers>/sbom/<buildpack-id>/launch.bom.<ext>` MUST contain the buildpack-provided `launch` sBOM
-      - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is a `launch` layer
-      - A merged sBOM MAY be included in the layer at `<layers>/sbom/launch.bom.<ext>`
+    - MUST contain a layer containing all buildpack-provided standardized Bill of Materials (BOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
+      - `<layers>/BOM/<buildpack-id>/launch.bom.<ext>` MUST contain the buildpack-provided `launch` BOM
+      - `<layers>/BOM/<buildpack-id>/<layer-id>/launch.bom.<ext>` MUST contain the buildpack-provided layer BOM if `<layer-id>` is a `launch` layer
+      - A merged BOM MAY be included in the layer at `<layers>/BOM/launch.bom.<ext>`
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -600,13 +600,13 @@ Usage:
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
-  - MUST include all buildpack-provided standardized Bill of Materials (sBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - `<layers>/sbom/<buildpack-id>/build.bom.<ext>` MUST contain the buildpack-provided `build` sBOM
-    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer sBOM if `<layer-id>` is not a `launch` layer
-    - A merged sBOM MAY be included in the directory at `<layers>/sbom/build.bom.<ext>`
+  - MUST include all buildpack-provided standardized Bill of Materials (BOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - `<layers>/BOM/<buildpack-id>/build.bom.<ext>` MUST contain the buildpack-provided `build` BOM
+    - `<layers>/BOM/<buildpack-id>/<layer-id>/build.bom.<ext>` MUST contain the buildpack-provided layer BOM if `<layer-id>` is not a `launch` layer
+    - A merged BOM MAY be included in the directory at `<layers>/BOM/build.bom.<ext>`
 
 - *If* a cache is provided the lifecycle:
-   - SHALL write the contents of all cached layers and any provided sBOM files to the cache
+   - SHALL write the contents of all cached layers and any provided BOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
@@ -1100,7 +1100,7 @@ Where:
     {"sha": "<slice-layer-diffID>"}
   ],
   "bom": {
-    "sha": "<sbom-layer-diffID>"
+    "sha": "<BOM-layer-diffID>"
   },
   "config": {
     "sha": "<config-layer-diffID>"
