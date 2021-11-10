@@ -150,7 +150,9 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
+| `<layers>/launch.bom.<ext>`              | Launch standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
+| `<layers>/build.bom.<ext>`               | Build standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
 | `<layers>/<layer>.bom.<ext>`             | Layer standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
@@ -204,18 +206,19 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata and BOM Restored | Layer Restored
-----------|----------|----------|---------------------------|---------------------
-true      | true     | true     | Yes - from the app image  | Yes* - from the cache
-true      | true     | false    | Yes - from the cache      | Yes - from the cache
-true      | false    | true     | No                        | No
-true      | false    | false    | No                        | No
-false     | true     | true     | Yes - from the app image  | Yes* - from the cache
-false     | true     | false    | Yes - from the cache      | Yes - from the cache
-false     | false    | true     | Yes - from the app image  | No
-false     | false    | false    | No                        | No
+`build`   | `cache`  | `launch` | Metadata and BOM** Restored | Layer Restored
+----------|----------|----------|-----------------------------|---------------------
+true      | true     | true     | Yes - from the app image    | Yes* - from the cache
+true      | true     | false    | Yes - from the cache        | Yes - from the cache
+true      | false    | true     | No                          | No
+true      | false    | false    | No                          | No
+false     | true     | true     | Yes - from the app image    | Yes* - from the cache
+false     | true     | false    | Yes - from the cache        | Yes - from the cache
+false     | false    | true     | Yes - from the app image    | No
+false     | false    | false    | No                          | No
 
 \* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
+\** Only bom files associated with a layer are restored. Launch-level and build-level bom files must be re-created on each build.
 
 Examples:
 * `build = true, cache = true, launch = true`:
@@ -239,7 +242,7 @@ The lifecycle MUST also store the Layer Content Metadata associated with each la
 Before a given re-build:
 - If a launch layer is marked `cache = false` and `build = false` in the previous image metadata, the lifecycle:
   - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
-  - MUST restore any provided standardized Bill of Materials to `<layers>/<layer>.bom.<ext>`.
+  - MUST restore any layer-associated standardized Bill of Materials to `<layers>/<layer>.bom.<ext>`.
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
 
 After a given re-build:
