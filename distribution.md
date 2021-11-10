@@ -223,7 +223,7 @@ The Run Image SHOULD contain the following Labels on the image configuration:
 | --------          | --------
 | `io.buildpacks.distribution.name` |  A string denoting the Operating System distribution
 | `io.buildpacks.distribution.version` | A string denoting the Operating System distribution version
-| `io.buildpacks.id` | <Target ID>
+| `io.buildpacks.id` | `<Target ID>`
 
 Where,
 
