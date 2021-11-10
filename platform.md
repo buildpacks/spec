@@ -567,7 +567,7 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md)
+    - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/<buildpack-id>/launch.sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
       - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
@@ -599,7 +599,7 @@ Usage:
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
-  - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md)
+  - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
     - `<layers>/sbom/<buildpack-id>/build.sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
     - `<layers>/sbom/<buildpack-id>/<layer-id>/build.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
 
