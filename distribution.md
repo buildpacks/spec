@@ -181,7 +181,7 @@ The Build Image SHOULD contain the following configurations:
 
 The Build Image MUST contain the following Environment Variables:
 
-* Image Config's `config.Env` field MUST have the environment variable `CNB_USER_ID` set to the user UID/SID of the user specified in the `User` field.
+* Image Config's `config.Env` field MUST have the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 * Image Config's `config.Env` field MUST have the environment variable `CNB_GROUP_ID` set to the primary group GID/SID of the user specified in the `User` field.
 * Image Config's `config.Env` field MUST have the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
