@@ -428,7 +428,7 @@ Usage:
 | `/dev/stderr`                               | Logs (warnings, errors)
 | `<layers>/<buidpack-id>/store.toml`         | Persistent metadata (see data format in [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md))
-| `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the standardized Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))
+| `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the Software Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))
 | `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents
 
 | Exit Code | Result|
