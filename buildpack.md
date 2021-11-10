@@ -1086,7 +1086,7 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 **The buildpack sBOM:**
 
 *Key: `sbom = [ "<string>" ]`*
- - MUST be a supported sBOM media type as described in [Bills-of-Materials](#bills-of-materials).
+ - MUST be supported sBOM media types as described in [Bills-of-Materials](#bills-of-materials).
 
 #### Buildpack Implementations
 
