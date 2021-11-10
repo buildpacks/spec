@@ -42,7 +42,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Purpose](#purpose-2)
     - [Process](#process-2)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Bills-of-Materials](#bills-of-materials)
+      - [Bill-of-Materials](#bills-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
@@ -150,12 +150,12 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
-| `<layers>/launch.bom.<ext>`              | Launch standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
+| `<layers>/launch.bom.<ext>`              | Launch standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
-| `<layers>/build.bom.<ext>`               | Build standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
+| `<layers>/build.bom.<ext>`               | Build standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>.bom.<ext>`             | Layer standardized Bill of Materials (see [Bills-of-Materials](#bill-of-materials))
+| `<layers>/<layer>.bom.<ext>`             | Layer standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
@@ -552,7 +552,7 @@ For each entry in `<plan>`:
   - **Else**, the lifecycle
     - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
 
-#### Bills-of-Materials
+#### Bill-of-Materials
 
 Buildpacks MAY write standardized Bill of Materials (BOM) files with extension `<ext>`, where `<ext>` MUST denote an BOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
 
@@ -1036,7 +1036,7 @@ homepage = "<buildpack homepage>"
 clear-env = false
 description = "<buildpack description>"
 keywords = [ "<string>" ]
-sbom-formats = [ "<string>" ]
+bom-formats = [ "<string>" ]
 
 [[buildpack.licenses]]
 type = "<string>"
@@ -1088,8 +1088,8 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 
 **The buildpack BOM:**
 
-*Key: `sbom-formats = [ "<string>" ]`*
- - MUST be supported BOM media types as described in [Bills-of-Materials](#bills-of-materials).
+*Key: `bom-formats = [ "<string>" ]`*
+ - MUST be supported BOM media types as described in [Bill-of-Materials](#bills-of-materials).
 
 #### Buildpack Implementations
 
