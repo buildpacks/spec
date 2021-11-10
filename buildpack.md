@@ -150,12 +150,12 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
-| `<layers>/launch.bom.<ext>`              | Launch standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
+| `<layers>/launch.sbom.<ext>`             | Launch standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
-| `<layers>/build.bom.<ext>`               | Build standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
+| `<layers>/build.sbom.<ext>`              | Build standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>.bom.<ext>`             | Layer standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
+| `<layers>/<layer>.sbom.<ext>`            | Layer standardized Bill of Materials (see [Bill-of-Materials](#bill-of-materials))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
@@ -242,7 +242,7 @@ The lifecycle MUST also store the Layer Content Metadata associated with each la
 Before a given re-build:
 - If a launch layer is marked `cache = false` and `build = false` in the previous image metadata, the lifecycle:
   - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
-  - MUST restore any layer-associated standardized Bill of Materials to `<layers>/<layer>.bom.<ext>`.
+  - MUST restore any layer-associated standardized Bill of Materials to `<layers>/<layer>.sbom.<ext>`.
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
 
 After a given re-build:
@@ -263,7 +263,7 @@ A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by
 The lifecycle MUST make all build layers accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 Before the next re-build:
-- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory, the `<layers>/<layer>.toml` file, or any provided `<layers>/<layer>.bom.<ext>` from any previous build.
+- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory, the `<layers>/<layer>.toml` file, or any provided `<layers>/<layer>.sbom.<ext>` from any previous build.
 
 #### Cached Layers
 
@@ -432,7 +432,7 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.bom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -450,7 +450,7 @@ The lifecycle MUST skip analysis and proceed to the build phase if no such image
 - The final ordered group of buildpacks determined during the detection phase,
 
 For each buildpack in the group, the lifecycle
-1. MUST restore `<layers>/<layer>.toml` and `<layers>/<layer>.bom.<ext>` files from the previous build as described in [Layer Types](#layer-types).
+1. MUST restore `<layers>/<layer>.toml` and `<layers>/<layer>.sbom.<ext>` files from the previous build as described in [Layer Types](#layer-types).
 2. MUST restore `<layers>/store.toml`.
 
 After analysis, the lifecycle MUST proceed to the build phase.
@@ -473,9 +473,9 @@ During the build phase, typical buildpacks might:
 1. Compile the application source code into object code.
 1. Remove application source code that is not necessary for launch.
 1. Provide start command in `<layers>/launch.toml`.
-1. Write a partial standardized Bill of Materials to `<layers>/<layer>.bom.<ext>` describing any dependencies provided in the layer.
-1. Write a partial standardized Bill of Materials to `<layers>/launch.bom.<ext>` describing any provided application dependencies not associated with a layer.
-1. Write a partial standardized Bill of Materials to `<layers>/build.bom.<ext>` describing any provided build dependencies not associated with a layer.
+1. Write a partial standardized Bill of Materials to `<layers>/<layer>.sbom.<ext>` describing any dependencies provided in the layer.
+1. Write a partial standardized Bill of Materials to `<layers>/launch.sbom.<ext>` describing any provided application dependencies not associated with a layer.
+1. Write a partial standardized Bill of Materials to `<layers>/build.sbom.<ext>` describing any provided build dependencies not associated with a layer.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -527,16 +527,16 @@ Correspondingly, each `/bin/build` executable:
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
-- SHOULD write standardized Bill of Materials (BOM) entries to `<layers>/<layer>.bom.<ext>` describing any contributions to the layer.
-- SHOULD write launch BOM entries to `<layers>/launch.bom.<ext>` describing any contributions to the application not associated with a layer.
-- SHOULD write build BOM entries to `<layers>/build.bom.<ext>` describing any contributions to the build environment not associated with a layer.
+- SHOULD write standardized Bill of Materials (BOM) entries to `<layers>/<layer>.sbom.<ext>` describing any contributions to the layer.
+- SHOULD write launch BOM entries to `<layers>/launch.sbom.<ext>` describing any contributions to the application not associated with a layer.
+- SHOULD write build BOM entries to `<layers>/build.sbom.<ext>` describing any contributions to the build environment not associated with a layer.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
-- MAY modify or delete any existing `<layers>/<layer>.bom.<ext>` files.
+- MAY modify or delete any existing `<layers>/<layer>.sbom.<ext>` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
-- MAY create new `<layers>/<layer>.bom.<ext>` files.
+- MAY create new `<layers>/<layer>.sbom.<ext>` files.
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem and the ones noted below.
 - MUST NOT create `<layers>/<layer>` directories with `<layer>` names `build`, `launch` or `store`.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
@@ -556,17 +556,17 @@ For each entry in `<plan>`:
 
 Buildpacks MAY write standardized Bill of Materials (BOM) files with extension `<ext>`, where `<ext>` MUST denote an BOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
 
- | BOM Media Type                  | File Extension
+ | BOM Media Type                   | File Extension
  |----------------------------------|----------------------------------------------
  | `application/vnd.cyclonedx+json` | `cdx.json`
  | `application/spdx+json`          | `spdx.json`
  | `application/vnd.syft+json`      | `syft.json`
 
 When the build is complete, an BOM describing the app image MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
+If generated, this BOM MUST contain all `<layer>.sbom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.sbom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 When the build is complete, a **build BOM** describing the build container MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all `<layer>.bom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.bom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
+If generated, this BOM MUST contain all `<layer>.sbom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.sbom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -586,13 +586,13 @@ To decide whether layer reuse is appropriate, the buildpack should consider:
 
 At the start of the build phase a buildpack MAY find:
 - Partial `<layers>/<layer>.toml` files describing layers from the previous builds. The restored Layer Content Metadata SHALL NOT contain `launch`, `build`, or `cache` booleans even if those values were set on a previous build.
-- `<layers>/<layer>.bom.<ext>` files that were written previously.
+- `<layers>/<layer>.sbom.<ext>` files that were written previously.
 - `<layers>/<layer>/` directories containing layer contents that have been restored from the cache.
 
 The buildpack:
  - MAY set `launch = true` under `[types]` in the restored `<layers>/<layer>.toml` file in order to include the layer in the final image.
  - MAY modify `metadata` in  `<layers>/<layer>.toml`
- - MAY modify `metadata` in  `<layers>/<layer>.bom.<ext>`
+ - MAY modify `metadata` in  `<layers>/<layer>.sbom.<ext>`
  - **If** layer contents have been restored to the `<layers>/<layer>/` directory
      - MAY set `build = true` under `[types]` in the restored `<layers>/<layer>.toml` to expose to layer to subsequent buildpacks.
      - MAY set `cache = true` under `[types]` in the restored `<layers>/<layer>.toml` to persist the layer to subsequent builds.
