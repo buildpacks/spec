@@ -1137,8 +1137,9 @@ Where:
 Where:
 - `app` MUST contain one entry per app slice layer where
   - `sha` MUST contain the digest of the uncompressed layer
-- `config.sha` MUST the digest of the uncompressed layer containing launcher config
-- `launcher.sha` MUST the digest of the uncompressed layer containing the launcher binary
+- `bom.sha` MUST contain the digest of the uncompressed layer containing buildpack-provided standardized Bill of Materials
+- `config.sha` MUST contain the digest of the uncompressed layer containing launcher config
+- `launcher.sha` MUST contain the digest of the uncompressed layer containing the launcher binary
 - `buildpacks` MUST contain one entry per buildpack that participated in the build where
   - `key` is required and MUST contain the buildpack ID
   - `version` is required and MUST contain the buidpack Version
