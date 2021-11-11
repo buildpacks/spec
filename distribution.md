@@ -169,20 +169,17 @@ The image configuration refers to the OCI Image configuration as mentioned [here
 
 The Build Image MUST contain the following configurations:
 
-* Image Config's `config.User` field MUST be set to a non-root user with a writable home directory.
+* Image Config's `config.User` field MUST be set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID with a writable home directory.
 * Image Config's `os` field MUST be set to the underlying operating system used by the build image.
 * Image Config's `architecture` field MUST be set to the underlying operating system architecture used by the build image.
-
-The Build Image SHOULD contain the following configurations:
-
-* Image Config's `variant` field SHOULD be set to the underlying architecture variant.
+* Image Config's `variant` field MUST be set to the underlying architecture variant.
 
 #### Environment Variables
 
 The Build Image MUST contain the following Environment Variables:
 
 * Image Config's `config.Env` field MUST have the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
-* Image Config's `config.Env` field MUST have the environment variable `CNB_GROUP_ID` set to the primary group GID/SID of the user specified in the `User` field.
+* Image Config's `config.Env` field MUST have the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 * Image Config's `config.Env` field MUST have the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
 
 #### Labels
