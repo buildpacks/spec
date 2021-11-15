@@ -228,3 +228,72 @@ The Run Image SHOULD contain the following Labels on the image configuration:
 Where,
 
 `<Target ID>` is an identifier specified on the runtime image that MAY be used to apply target-specific logic.
+### Builder
+
+The following specifies the artifact format for a buildpacks builder.
+
+A Builder is an OCI Image that provides a distributable build environment.
+
+A platform supporting the builder SHOULD allow users to configure the build environment with a provided builder.
+
+#### General Requirements
+
+The Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and [build-time](#build-image) environment and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process. 
+
+#### Environment Variables
+
+A Builder MUST be an extension of a build-image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
+
+#### Labels
+
+A Builder MUST be an extension of a build-image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
+
+A Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
+
+A Builder image MAY contain [buildpacks](#buildpackage), and MAY retain all the specified Labels set on the original buildpackage, as specified in the buildpackage specifications.
+
+The following labels MUST be set in the builder environment (through the image config's `Labels` field):
+
+| Label             | Description
+| --------          | --------
+| `io.buildpacks.builder.metadata`     | A JSON object representing Builder metadata
+| `io.buildpacks.buildpack.order`      | A JSON object representing the order of the buildpacks stored on the builder
+
+`io.buildpacks.builder.metadata` (JSON)
+
+```json
+{
+  "description": "<description>",
+  "buildpacks": [
+    {
+      "id": "<buildpack ID>",
+      "version": "<buildpack version>",
+      "homepage": "<buildpack homepage>",
+    }
+  ],
+  "createdBy": {
+    "name": "<tool name>",
+    "version": "<tool version>",
+  }
+}
+```
+
+The `createdBy` metadata is meant to contain the name and version of the tool that created the builder.
+
+`io.buildpacks.buildpack.order` (JSON)
+
+```json
+[
+  {
+    "group":
+      [
+        {
+          "id": "<buildpack ID>",
+          "version": "<buildpack version>",
+          "optional": false
+        }
+      ]
+  }
+]
+
+```
