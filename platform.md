@@ -1097,7 +1097,7 @@ Where:
   "app": [
     {"sha": "<slice-layer-diffID>"}
   ],
-  "bom": {
+  "sbom": {
     "sha": "<BOM-layer-diffID>"
   },
   "config": {
