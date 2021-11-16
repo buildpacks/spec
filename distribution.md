@@ -199,7 +199,7 @@ The image configuration refers to the OCI Image configuration as mentioned [here
 
 The Run Image MUST contain the following configurations:
 
-* Image Config's `config.User` field MUST be set to a non-root user with a writable home directory and a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
+* Image Config's `config.User` field MUST be set to a non-root user with a writable home directory. The user SHOULD be a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID from that specified in the build image.
 * Image Config's `os` field MUST be set to the underlying operating system used by the run image.
 * Image Config's `architecture` field MUST be set to the underlying operating system used by the run image.
 
