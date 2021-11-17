@@ -42,7 +42,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Purpose](#purpose-2)
     - [Process](#process-2)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Software-Bill-of-Materials](#software-bill-of-materials)
+      - [Software Bill of Materials](#software-bill-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
