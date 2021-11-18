@@ -418,7 +418,7 @@ Usage:
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<log-level>`  | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<uid>`        | `CNB_USER_ID`         |                          | UID of the build image `User`
-| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration]((#layer-restoration)
+| `<skip-layers>`| `CNB_SKIP_LAYERS`     | `false`                  | Do not perform [layer restoration](#layer-restoration)
 
 ##### Outputs
 | Output                                      | Description
@@ -515,6 +515,7 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
+  [-stack <stack>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -537,13 +538,14 @@ Usage:
 | `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
 | `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
 | `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
+| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-- The <run-image>` will be read from [`analyzed.toml`](#analyzedtoml-toml)
+- The `<run-image>` will be read from [`analyzed.toml`](#analyzedtoml-toml)
 
 ##### Outputs
 | Output             | Description
@@ -719,7 +721,7 @@ Usage:
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
     - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
-    - Set the `created` time in image config to a constant
+    - SHOULD set the `created` time in image config to a constant
 
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
 
@@ -934,7 +936,7 @@ paths = ["<app sub-path glob>"]
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
-- `processes` contains the complete set of slice defined by all buildpacks
+- `slices` contains the complete set of slices defined by all buildpacks
 - `bom` contains the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
 
 #### `order.toml` (TOML)
