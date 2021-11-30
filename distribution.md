@@ -242,11 +242,11 @@ The Builder image MUST contain an implementation of the [lifecycle](#lifecycle),
 
 #### Environment Variables
 
-A Builder MUST be an extension of a build-image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
+A Builder MUST be an extension of a Build Image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
 
 #### Labels
 
-A Builder MUST be an extension of a build-image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
+A Builder MUST be an extension of a Build Image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
 
 A Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
 
