@@ -48,6 +48,8 @@ Each buildpack layer blob MUST contain a single [buildpack](./buildpack.md) at t
 /cnb/buildpacks/<buildpack ID>/<buildpack version>/
 ```
 
+If the buildpack ID contains a `/`, it must be replaced with `_` in the directory name.
+
 A buildpack MUST contain a `buildpack.toml` file at its root directory.
 
 #### Labels
