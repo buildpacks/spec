@@ -246,6 +246,21 @@ The Builder image MUST contain an implementation of the [lifecycle](#lifecycle),
 
 A Builder MUST be an extension of a Build Image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
 
+The following environment variables MUST be set on the builder (through the image config's `Env` field):
+
+| Env Variable             | Description                                                                       | Default
+| --------                 | --------                                                                          |-----------
+| `CNB_APP_DIR`            | Application directory of the build environment                                    | `/workspace`
+| `CNB_LAYERS_DIR`         | The directory to create and store `layers` in the build environment               | `/layers`
+| `CNB_PLATFORM_DIR`       | The directory to create and store platform focused files in the build environment | `/platform`
+
+The following variables MAY be set on the builder (through the image config's `Env` field):
+
+| Env Variable             | Description                            | Default
+| --------                 | --------                               |-----------
+| `SERVICE_BINDING_ROOT`   | The directory where services are bound | -
+
+
 #### Labels
 
 A Builder MUST be an extension of a Build Image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
