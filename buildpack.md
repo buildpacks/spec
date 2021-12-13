@@ -462,7 +462,7 @@ During the image extension phase, an image extension might:
 ### Process
 
 **GIVEN:**
-- The final ordered group of builimage extensions determined during the detection phase,
+- The final ordered group of image extensions determined during the detection phase,
 - A directory containing application source code,
 - A `<output>` directory used to store generated artifacts
 - A shell, if needed,
