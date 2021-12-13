@@ -46,7 +46,7 @@ After `/bin/build` executes, the `<output>` directory MAY contain
   - With an additional `args` table array with `name` and `value` fields that are provided as build args to `run.Dockerfile` or `Dockerfile`
 - Either `Dockerfile` or either or both of `build.Dockerfile` and `run.Dockerfile`. The `build.Dockerfile`, `run.Dockerfile`, and `Dockerfile` target the builder image, runtime base image, or both base images, respectively.
 
-If no Dockerfiles are present, `//bin/build` may still consume build plan entries and add metadata to `build.toml`/`launch.toml`.
+If no Dockerfiles are present, `/bin/build` may still consume build plan entries and add metadata to `build.toml`/`launch.toml`.
 
 `Dockerfile`s MUST be applied to their corresponding base images after all extensions are executed and before any regular buildpacks are executed. `Dockerfile`s MUST be applied in the order determined during buildpack detection.
 
