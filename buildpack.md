@@ -464,7 +464,7 @@ During the image extension phase, an image extension might:
 **GIVEN:**
 - The final ordered group of image extensions determined during the detection phase,
 - A directory containing application source code,
-- A `<output>` directory used to store generated artifacts
+- An `<output>` directory used to store generated artifacts
 - A shell, if needed,
 
 For each image extension in the group in order, the lifecycle MUST execute `/bin/build`.
