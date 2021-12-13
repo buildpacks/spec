@@ -486,7 +486,7 @@ Usage:
 | `12`      | Buildpack API incompatibility error
 | `1-10`, `13-19` | Generic lifecycle errors
 | `51`     | Image extension build error
-| `50`, `52-59`|  Build-specific lifecycle errors
+| `90`, `92-99`|  Extension-specific lifecycle errors
 
 - The lifecycle SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Image Extensions Interface Specification](image-extension.md).
 
