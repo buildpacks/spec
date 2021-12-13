@@ -495,7 +495,7 @@ Correspondingly, each `/bin/build` executable:
 - MAY emit error, warning, or debug messages to `stderr`.
 - SHOULD write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section describing any contributions to the app image.
 - MAY write key-value pairs to `<output>/launch.toml` that are provided as build args to run.Dockerfile or Dockerfile
-- SHOULD write build BOM entries to `<output>/build.toml` describing any contributions to the build environment.
+- SHOULD write build SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section describing any contributions to the build environment.
 - MAY modify or delete any existing `<output>` directories.
 - MAY create new `<output>` directories.
 - MAY name any new `<output>` directories without restrictions except those imposed by the filesystem and the ones noted below.
