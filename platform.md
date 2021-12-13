@@ -122,7 +122,7 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
-An **image extension** is a dynamically-generated build-time and/or runtime Dockerfiles that act as pre-build base image extensions. Extensions participate in detection and execute before the buildpack build process.
+An **image extension** is a dynamically-generated build-time and/or runtime Dockerfile that act as a pre-build base image extension. Extensions participate in detection and execute before the buildpack build process.
 
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
