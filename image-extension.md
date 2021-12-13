@@ -24,7 +24,7 @@ An image extension is used to apply a `Dockerfile` at the platform's discretion.
 The image extensions MAY contain a `/bin/build` and `/bin/detect` executable.
 Each extension MUST have an `extension.toml` file in its root directory.
 
-Extensions participate in the buildpack [detection](#detector) process, with the same `UID`, `GID`, and interface for `//bin/detect`. However:
+Extensions participate in the buildpack [detection](#detector) process, with the same `UID`, `GID`, and interface for `/bin/detect`. However:
 - Detection is optional for extensions, and they are assumed to pass detection when it is not present. A `/bin/detect` that exits with a 0 exit code passes detection, and fails otherwise.
 - Extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
 - Extensions MUST all precede buildpacks in [order](#ordertoml-toml) definitions.
