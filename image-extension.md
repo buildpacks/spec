@@ -55,7 +55,7 @@ The `base_image` arg allows the Dockerfile to reference the original base image.
 The `build_id` arg allows the Dockerfile to invalidate the cache after a certain layer and must be defaulted to `0`. The executor of the Dockerfile will provide the `build_id` as a UUID (this eliminates the need to track this variable).
 When the `$build_id` arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change).
 
-Build args specified in `build.toml` are provided to `build.Dockerfile` or `Dockerfile` (when applied to the build-time base image).
+Build args specified in `build.toml` MUST be provided to `build.Dockerfile` or `Dockerfile` (when applied to the build-time base image).
 Build args specified in `launch.toml` are provided to `run.Dockerfile` or `Dockerfile` (when applied to the runtime base image).
 
 A runtime base image may indicate that it preserves ABI compatibility by adding the label `io.buildpacks.rebasable=true`. In the case of builder-specified Dockerfiles, `io.buildpacks.rebasable=false` is set automatically on the base image before a runtime Dockerfile is applied and must be explicitly set to `true` if desired. If multiple Dockerfiles are applied, all must set `io.buildpacks.rebasable=true` for the final value to be `true`.
