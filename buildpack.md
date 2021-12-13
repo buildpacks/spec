@@ -493,7 +493,7 @@ Correspondingly, each `/bin/build` executable:
 - MAY read the Buildpack Plan.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
-- SHOULD write BOM (Bill-of-Materials) entries to `<output>/launch.toml` describing any contributions to the app image.
+- SHOULD write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section describing any contributions to the app image.
 - MAY write key-value pairs to `<output>/launch.toml` that are provided as build args to run.Dockerfile or Dockerfile
 - SHOULD write build BOM entries to `<output>/build.toml` describing any contributions to the build environment.
 - MAY modify or delete any existing `<output>` directories.
