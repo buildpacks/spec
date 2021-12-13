@@ -455,7 +455,7 @@ The purpose of the image extension phase is to apply dynamically-generated or st
 
 During the image extension phase, an image extension might:
 
-1. Execute a pre-defined `Dockerfile` to install files in specific directories that require privilaged access.
+1. Execute a pre-defined `Dockerfile` to install files in specific directories that require privileged access.
 1. Dyanmically generate a `Dockerfile` based on the phase inputs and apply it.
 1. Execute a pre-defined `Dockerfile` to install system packages provided as input to the phase.
 
