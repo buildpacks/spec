@@ -645,10 +645,10 @@ Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restor
 | Input             | Environment Variable| Default Value| Description
 |-------------------|---------------------|--------------|----------------------
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`| `<image>`    | Image reference to be analyzed (usually the result of the previous build)
-| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata or restore cached layers
+| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata, restore sbom layers, or restore cached layers
 | `<tag>...`        |                     |              | Additional tag to apply to exported image
 
-- **If** `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
+- **If** `<skip-restore>` is `true` the `creator` SHALL skip sbom layer restoration and skip the entire Restore phase.
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 ##### Outputs
