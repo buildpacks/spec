@@ -1060,7 +1060,7 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
 
 *Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be `config` or `app`.
+- MUST NOT be `config`, `app`, or `sbom`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
 **The buildpack version:**
