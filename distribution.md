@@ -230,17 +230,18 @@ The Run Image SHOULD contain the following Labels on the image configuration:
 Where,
 
 `<Target ID>` is an identifier specified on the runtime image that MAY be used to apply target-specific logic.
+
 ### Builder
 
 The following specifies the artifact format for a buildpacks builder.
 
 A Builder is an OCI Image that provides a distributable build environment.
 
-A platform supporting the builder SHOULD allow users to configure the build environment with a provided builder.
+A platform supporting builders SHOULD allow users to configure the build environment for a provided builder.
 
 #### General Requirements
 
-The Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and [build-time](#build-image) environment and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process. 
+The Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process.
 
 #### Environment Variables
 
