@@ -243,6 +243,12 @@ A platform supporting builders SHOULD allow users to configure the build environ
 
 The Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process.
 
+#### Filesystem
+
+A builder MUST have the following directories/files:
+
+* `/cnb/order.toml` &rarr; As defined in the [platform specification](https://github.com/buildpacks/spec/blob/main/platform.md#ordertoml-toml)
+
 #### Environment Variables
 
 A Builder MUST be an extension of a Build Image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
