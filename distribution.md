@@ -235,13 +235,13 @@ Where,
 
 The following specifies the artifact format for a buildpacks builder.
 
-A Builder is an OCI Image that provides a distributable build environment.
+A builder is an OCI Image that provides a distributable build environment.
 
 A platform supporting builders SHOULD allow users to configure the build environment for a provided builder.
 
 #### General Requirements
 
-The Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process.
+The builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process.
 
 #### Filesystem
 
@@ -251,7 +251,7 @@ A builder MUST have the following directories/files:
 
 #### Environment Variables
 
-A Builder MUST be an extension of a Build Image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
+A builder MUST be an extension of a Build Image, and MUST retain all the specified environment variables set on the original build image, as specified in the Build Image specifications.
 
 The following environment variables MAY be set on the builder (through the image config's `Env` field):
 
@@ -265,17 +265,17 @@ The following environment variables MAY be set on the builder (through the image
 
 #### Labels
 
-A Builder MUST be an extension of a Build Image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
+A builder MUST be an extension of a Build Image, and MUST retain all the specified Labels set on the original build image, as specified in the Build Image specifications.
 
-A Builder image MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
+A builder image MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
 
-A Builder image MAY contain [buildpacks](#buildpackage), and MAY retain all the specified Labels set on the original buildpackage, as specified in the buildpackage specifications.
+A builder image MAY contain [buildpacks](#buildpackage), and MAY retain all the specified Labels set on the original buildpackage, as specified in the buildpackage specifications.
 
 The following labels MUST be set in the builder environment (through the image config's `Labels` field):
 
 | Label             | Description
 | --------          | --------
-| `io.buildpacks.builder.metadata`     | A JSON object representing Builder metadata
+| `io.buildpacks.builder.metadata`     | A JSON object representing builder metadata
 | `io.buildpacks.buildpack.order`      | A JSON object representing the order of the buildpacks stored on the builder
 
 `io.buildpacks.builder.metadata` (JSON)
