@@ -150,12 +150,12 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
-| `<layers>/launch.sbom.<ext>`             | Launch Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
+| `<layers>/launch.sbom.<ext>`             | Launch Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
-| `<layers>/build.sbom.<ext>`              | Build Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
+| `<layers>/build.sbom.<ext>`              | Build Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
+| `<layers>/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
