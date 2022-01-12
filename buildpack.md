@@ -42,7 +42,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Purpose](#purpose-2)
     - [Process](#process-2)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Bills-of-Materials](#bills-of-materials)
+      - [Software Bill of Materials](#software-bill-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
@@ -84,10 +84,11 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.5`
+This document specifies Buildpack API version `0.7`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+ - `<major>` and `<minor>` MUST only contain numbers (unsigned 64 bit integer)
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
 ## Buildpack Interface
@@ -149,9 +150,12 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 | Standard output                          | Logs (info)
 | Standard error                           | Logs (warnings, errors)
 | `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
+| `<layers>/launch.sbom.<ext>`             | Launch Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
 | `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
+| `<layers>/build.sbom.<ext>`              | Build Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
 | `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
 | `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
+| `<layers>/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#bill-of-materials))
 | `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
 | `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
@@ -202,28 +206,30 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata Restored        | Layer Restored      
-----------|----------|----------|--------------------------|---------------------
-true      | true     | true     | Yes - from the app image | Yes* - from the cache
-true      | true     | false    | Yes - from the cache     | Yes - from the cache
-true      | false    | true     | No                       | No
-true      | false    | false    | No                       | No
-false     | true     | true     | Yes - from the app image | Yes* - from the cache
-false     | true     | false    | Yes - from the cache     | Yes - from the cache
-false     | false    | true     | Yes - from the app image | No
-false     | false    | false    | No                       | No
+`build`   | `cache`  | `launch` | Metadata and SBOM** Restored | Layer Restored
+----------|----------|----------|------------------------------|---------------------
+true      | true     | true     | Yes - from the app image     | Yes* - from the cache
+true      | true     | false    | Yes - from the cache         | Yes - from the cache
+true      | false    | true     | No                           | No
+true      | false    | false    | No                           | No
+false     | true     | true     | Yes - from the app image     | Yes* - from the cache
+false     | true     | false    | Yes - from the cache         | Yes - from the cache
+false     | false    | true     | Yes - from the app image     | No
+false     | false    | false    | No                           | No
 
 \* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
 
+\** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
+
 Examples:
 * `build = true, cache = true, launch = true`:
-A Ruby buildpack might need to provide Ruby to a downstream buildpack (such as bundler) and also include Ruby in the exported OCI image so that it could be used to start the app at runtime.
+A Ruby buildpack provides the Ruby interpreter to a subsequent buildpack and additionally installs Ruby in the app image to support the application. The Ruby is restored from the cache on rebuild, and the Ruby buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = true, launch = false`:
-A Java buildpack might read the restored layer metadata to determine if the version of the JDK used in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the cache to avoid re-downloading the JDK.
+A Java buildpack provides the JDK to a subsequent buildpack, which uses it to compile a Java application. The JDK is restored from the cache on rebuild, and the Java buildpack can use layer metadata to ensure the correct version is present.
 * `build = true, cache = false, launch = false`:
-A buildpack that reads from a bind-mounted directory at build time in order to provide data to downstream buildpacks.
+An NPM buildpack provides the latest version of the NPM CLI to a subsequent buildpack (without caching it).
 * `build = false, cache = false, launch = true`:
-A Java buildpack might read the restored layer metadata to determine if the version of the JRE included in the previous build of the OCI image is the one that is needed. If so, it might choose to re-use the layer from the previous image to avoid re-downloading the JRE.
+A Python buildpack installs Python in the app image to support the application. Python is not restored from the cache on rebuild, but the Python buildpack can still use layer metadata to determine if the previous Python layer is replaced with a new layer or referenced by the new app image.
 
 #### Launch Layers
 
@@ -237,15 +243,18 @@ The lifecycle MUST also store the Layer Content Metadata associated with each la
 Before a given re-build:
 - If a launch layer is marked `cache = false` and `build = false` in the previous image metadata, the lifecycle:
   - MUST restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
+  - MUST restore any layer-associated Software Bill of Materials to `<layers>/<layer>.sbom.<ext>`.
   - MUST NOT restore the corresponding `<layers>/<layer>/` directory from any previous build.
 
 After a given re-build:
 - If a buildpack adds `launch = true` under `[types]` in `<layers>/<layer>.toml` and leaves no `<layers>/<layer>/` directory, the lifecycle:
   - MUST reuse the corresponding layer from the previous build in the OCI image and
   - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
+  - MUST replace the Software Bill of Materials in the OCI image with the version present after the re-build.
 - If a buildpack adds `launch = true` under `[types]` in `<layers>/<layer>.toml` and leaves a `<layers>/<layer>/` directory, the lifecycle:
   - MUST replace the corresponding layer in the OCI image with the directory contents present after the re-build and
   - MUST replace the Layer Content Metadata in the OCI image with the version present after the re-build.
+  - MUST replace the Software Bill of Materials in the OCI image with the version present after the re-build.
 - If a buildpack does not add `launch = true` under `[types]` in `<layers>/<layer>.toml` or deletes `<layers>/<layer>.toml`, then the lifecycle MUST NOT include any corresponding layer in the OCI image.
 
 #### Build Layers
@@ -255,7 +264,7 @@ A buildpack MAY specify that a `<layers>/<layer>/` directory is a build layer by
 The lifecycle MUST make all build layers accessible to subsequent buildpacks as described in the [Environment](#environment) section.
 
 Before the next re-build:
-- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory or the `<layers>/<layer>.toml` file from any previous build.
+- If the layer is marked `cache = false`, the lifecycle MUST NOT restore the `<layers>/<layer>/` directory, the `<layers>/<layer>.toml` file, or any provided `<layers>/<layer>.sbom.<ext>` from any previous build.
 
 #### Cached Layers
 
@@ -264,10 +273,11 @@ A buildpack MAY specify that a `<layers>/<layer>/` directory is a cached layer b
 If a cache is provided, the lifecycle:
 - SHOULD store all cached layers after a successful build.
 - SHOULD store the Layer Content Metadata associated with each layer so that it can be recovered using the layer Diff ID
+- SHOULD store any provided Software Bill of Materials associated with each layer
 
 Before the next re-build:
 - The lifecycle MUST do both or neither of the following:
-  - Restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table.
+  - Restore Layer Content Metadata to `<layers>/<layer>.toml`, excluding the `[types]` table, and any provided Software Bill of Materials.
   - Restore layer contents to the `<layers>/<layer>/` directory.
 
 #### Ignored Layers
@@ -348,7 +358,18 @@ The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
 The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
 The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is unavailable in the container.
+The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
+
+#### Mixin Satisfaction
+A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
+
+1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
+2) the stack provides the mixin `build:<mixin>` and the buildpack requires `build:<mixin>`
+3) the stack provides the mixin `<mixin>` and the buildpack requires `<mixin>`
+4) the stack provides the mixin `<mixin>` and the buildpack requires `build:<mixin>`
+5) the stack provides the mixin `<mixin>` and the buildpack requires `run:<mixin>`
+6) the stack provides the mixin `<mixin>` and the buildpack requires both `run:<mixin>` and `build:<mixin>`
+7) the stack provides the mixins `build:<mixin>` and `run:<mixin>` the buildpack requires `<mixin>`
 
 #### Order Resolution
 
@@ -378,7 +399,7 @@ G, &amp; H
 \end{bmatrix}
 " />
 
-We propose:
+It MUST follow that:
 
 <img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20O%2C%20%26%20F%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20A%2C%20%26%20B%2C%20%26%20F%20%5C%5C%0AE%2C%20%26%20C%2C%20%26%20D%2C%20%26%20F%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
 \begin{bmatrix}
@@ -412,7 +433,7 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml` and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -430,7 +451,7 @@ The lifecycle MUST skip analysis and proceed to the build phase if no such image
 - The final ordered group of buildpacks determined during the detection phase,
 
 For each buildpack in the group, the lifecycle
-1. MUST restore `<layers>/<layer>.toml` files from the previous build as described in [Layer Types](#layer-types).
+1. MUST restore `<layers>/<layer>.toml` and `<layers>/<layer>.sbom.<ext>` files from the previous build as described in [Layer Types](#layer-types).
 2. MUST restore `<layers>/store.toml`.
 
 After analysis, the lifecycle MUST proceed to the build phase.
@@ -453,8 +474,9 @@ During the build phase, typical buildpacks might:
 1. Compile the application source code into object code.
 1. Remove application source code that is not necessary for launch.
 1. Provide start command in `<layers>/launch.toml`.
-1. Write a partial Bill-of-Material to `<layers>/launch.toml` describing any provided application dependencies.
-1. Write a partial Bill-of-Material to `<layers>/build.toml` describing any provided build dependencies.
+1. Write a partial Software Bill of Materials to `<layers>/<layer>.sbom.<ext>` describing any dependencies provided in the layer.
+1. Write a partial Software Bill of Materials to `<layers>/launch.sbom.<ext>` describing any provided application dependencies not associated with a layer.
+1. Write a partial Software Bill of Materials to `<layers>/build.sbom.<ext>` describing any provided build dependencies not associated with a layer.
 
 The purpose of separate `<layers>/<layer>` directories is to:
 
@@ -506,13 +528,16 @@ Correspondingly, each `/bin/build` executable:
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write a list of possible commands for launch to `<layers>/launch.toml`.
 - MAY write a list of sub-paths within `<app>` to `<layers>/launch.toml`.
-- SHOULD write BOM (Bill-of-Materials) entries to `<layers>/launch.toml` describing any contributions to the app image.
-- SHOULD write build BOM entries to `<layers>/build.toml` describing any contributions to the build environment.
+- SHOULD write Software Bill of Materials (SBOM) entries to `<layers>/<layer>.sbom.<ext>` describing any contributions to the layer.
+- SHOULD write launch SBOM entries to `<layers>/launch.sbom.<ext>` describing any contributions to the application not associated with a layer.
+- SHOULD write build SBOM entries to `<layers>/build.sbom.<ext>` describing any contributions to the build environment not associated with a layer.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
+- MAY modify or delete any existing `<layers>/<layer>.sbom.<ext>` files.
 - MAY create new `<layers>/<layer>` directories.
 - MAY create new `<layers>/<layer>.toml` files.
+- MAY create new `<layers>/<layer>.sbom.<ext>` files.
 - MAY name any new `<layers>/<layer>` directories without restrictions except those imposed by the filesystem and the ones noted below.
 - MUST NOT create `<layers>/<layer>` directories with `<layer>` names `build`, `launch` or `store`.
 - SHOULD NOT use the `<app>` directory to store provided dependencies.
@@ -528,13 +553,21 @@ For each entry in `<plan>`:
   - **Else**, the lifecycle
     - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
 
-#### Bills-of-Materials
+#### Software-Bill-of-Materials
 
-When the build is complete, a BOM (Bill-of-Materials) describing the app image MAY be generated for auditing purposes.
-If generated, this BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
+Buildpacks MAY write Software Bill of Materials (SBOM) files in a standardized format with extension `<ext>`, where `<ext>` MUST denote an SBOM media type based on Internet Assigned Numbers Authority (IANA) [assigned media types](https://www.iana.org/assignments/media-types/media-types.xhtml). The currently supported media types and their expected file extensions are as follows:
 
-When the build is complete, a build BOM describing the build container MAY be generated for auditing purposes.
-If generated, this build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md).
+ | SBOM Media Type                  | File Extension
+ |----------------------------------|----------------------------------------------
+ | `application/vnd.cyclonedx+json` | `cdx.json`
+ | `application/spdx+json`          | `spdx.json`
+ | `application/vnd.syft+json`      | `syft.json`
+
+When the build is complete, an SBOM describing the app image MAY be generated for auditing purposes.
+If generated, this SBOM MUST contain all `<layer>.sbom.<ext>` files for each `launch = true` layer at the end of each `/bin/build` execution, as well as `launch.sbom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
+
+When the build is complete, a **build SBOM** describing the build container MAY be generated for auditing purposes.
+If generated, this SBOM MUST contain all `<layer>.sbom.<ext>` files for each `launch = false` layer at the end of each `/bin/build` execution, as well as `build.sbom.<ext>` if provided, in adherence with the process and file structure outlined in the [Platform Interface Specification](platform.md).
 
 #### Layers
 
@@ -554,11 +587,13 @@ To decide whether layer reuse is appropriate, the buildpack should consider:
 
 At the start of the build phase a buildpack MAY find:
 - Partial `<layers>/<layer>.toml` files describing layers from the previous builds. The restored Layer Content Metadata SHALL NOT contain `launch`, `build`, or `cache` booleans even if those values were set on a previous build.
+- `<layers>/<layer>.sbom.<ext>` files that were written previously.
 - `<layers>/<layer>/` directories containing layer contents that have been restored from the cache.
 
 The buildpack:
  - MAY set `launch = true` under `[types]` in the restored `<layers>/<layer>.toml` file in order to include the layer in the final image.
  - MAY modify `metadata` in  `<layers>/<layer>.toml`
+ - MAY modify `metadata` in  `<layers>/<layer>.sbom.<ext>`
  - **If** layer contents have been restored to the `<layers>/<layer>/` directory
      - MAY set `build = true` under `[types]` in the restored `<layers>/<layer>.toml` to expose to layer to subsequent buildpacks.
      - MAY set `cache = true` under `[types]` in the restored `<layers>/<layer>.toml` to persist the layer to subsequent builds.
@@ -782,7 +817,7 @@ For each environment variable file the period-delimited suffix SHALL determine t
 | none       | [Override](#override)
 | `.append`  | [Append](#append)
 | `.default` | [Default](#default)
-| `.delim`   | [Delimeter](#delimiter)
+| `.delim`   | [Delimiter](#delimiter)
 | `.override`| [Override](#override)
 | `.prepend` | [Prepend](#prepend)
 
@@ -856,12 +891,6 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 ### launch.toml (TOML)
 
 ```toml
-[[bom]]
-name = "<dependency name>"
-
-[bom.metadata]
-# arbitrary metadata describing the dependency
-
 [[labels]]
 key = "<label key>"
 value = "<label valu>"
@@ -877,15 +906,7 @@ default = false
 paths = ["<app sub-path glob>"]
 ```
 
-The buildpack MAY specify any number of bill-of-materials entries, labels, processes, or slices.
-
-For each dependency contributed to the app image, the buildpack:
-
-- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
-  - `name` is REQUIRED.
-  - `metadata` MAY contain additional data describing the dependency.
-
-The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
+The buildpack MAY specify any number of labels, processes, or slices.
 
 For each label, the buildpack:
 
@@ -929,19 +950,9 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 ### build.toml (TOML)
 
 ```toml
-[[bom]]
-name = "<dependency name>"
-
-[bom.metadata]
-# arbitrary metadata describing the dependency
-
 [[unmet]]
 name = "<dependency name>"
 ```
-
-For each dependency contributed by the buildpack to the build environment, the buildpack:
-- SHOULD add a bill-of-materials entry to the `bom` array describing the dependency, where:
-  - `name` is REQUIRED.
 
 For each unmet entry in the Buildpack Plan, the buildpack:
 - SHOULD add an entry to `unmet`.
@@ -1023,6 +1034,7 @@ homepage = "<buildpack homepage>"
 clear-env = false
 description = "<buildpack description>"
 keywords = [ "<string>" ]
+sbom-formats = [ "<string>" ]
 
 [[buildpack.licenses]]
 type = "<string>"
@@ -1051,7 +1063,7 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
 - MUST NOT be `config` or `app`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
-The buildpack version:
+**The buildpack version:**
 - MUST be in the form `<X>.<Y>.<Z>` where `X`, `Y`, and `Z` are non-negative integers and must not contain leading zeros.
    - Each element MUST increase numerically.
    - Buildpack authors will define what changes will increment `X`, `Y`, and `Z`.
@@ -1071,6 +1083,11 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 
 - `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
 - `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
+
+**The buildpack SBOM:**
+
+*Key: `sbom-formats = [ "<string>" ]`*
+ - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
 #### Buildpack Implementations
 
