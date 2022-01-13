@@ -1123,6 +1123,8 @@ Each `key`:
 
 ## Deprecations
 This section describes all the features that are deprecated.
+Unless noted below, the lifecycle SHOULD fail if a buildpack declaring a newer Buildpack API tries to use features from an older Buildpack API.
+The lifecycle SHOULD warn and ignore if a buildpack declaring an older Buildpack API tries to use features from a newer Buildpack API.
 
 ### `0.3`
 
