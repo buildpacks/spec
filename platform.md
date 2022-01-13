@@ -645,7 +645,7 @@ Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restor
 | Input             | Environment Variable| Default Value| Description
 |-------------------|---------------------|--------------|----------------------
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`| `<image>`    | Image reference to be analyzed (usually the result of the previous build)
-| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata, restore sbom layers, or restore cached layers
+| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Prevent buildpacks from reusing layers from previous builds, by skipping the restoration of any data to each buildpack's layers directory, with the exception of `store.toml`.
 | `<tag>...`        |                     |              | Additional tag to apply to exported image
 
 - **If** `<skip-restore>` is `true` the `creator` SHALL skip sbom layer restoration and skip the entire Restore phase.
