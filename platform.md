@@ -1020,7 +1020,7 @@ Where:
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
 - **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any legacy build Bill of Materials entries returned by buildpacks (where [supported]((buildpack.md)))
+  - `build.bom` MUST contain any legacy build Bill of Materials entries returned by buildpacks (where [supported](buildpack.md))
 
 #### `stack.toml` (TOML)
 
