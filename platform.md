@@ -937,7 +937,7 @@ Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `slices` contains the complete set of slices defined by all buildpacks
-- `bom` contains the legacy Bill of Materials contributed by buildpacks (where [supported]((buildpack.md)))
+- `bom` contains the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 
 #### `order.toml` (TOML)
 
