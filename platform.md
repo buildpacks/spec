@@ -1087,7 +1087,7 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the legacy Bill of Materials contributed by buildpacks (where [supported]((buildpack.md)))
+- `bom` MUST contain the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
