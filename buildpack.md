@@ -1124,6 +1124,52 @@ Each `key`:
 ## Deprecations
 This section describes all the features that are deprecated.
 
+### `0.7`
+
+#### launch.toml (TOML) `bom` Array
+
+The `bom` array is deprecated.
+
+```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+```
+
+If the `bom` array is used, the buildpack:
+- SHOULD add a bill-of-materials entry to the `bom` array describing each dependency contributed to the app image, where:
+  - `name` is REQUIRED.
+  - `metadata` MAY contain additional data describing the dependency.
+
+The buildpack MAY add `bom` describing the contents of the app dir, even if they were not contributed by the buildpack.
+
+When the build is complete, a legacy Bill of Materials (BOM) describing the app image MAY be generated for auditing purposes.
+
+If generated, this legacy BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
+
+#### build.toml (TOML) `bom` Array
+
+The `bom` array is deprecated.
+
+```toml
+[[bom]]
+name = "<dependency name>"
+
+[bom.metadata]
+# arbitrary metadata describing the dependency
+```
+
+If the `bom` array is used, the buildpack:
+- SHOULD add a bill-of-materials entry to the `bom` array describing each dependency contributed to the build environment, where:
+  - `name` is REQUIRED.
+  - `metadata` MAY contain additional data describing the dependency.
+
+When the build is complete, a legacy build BOM describing the build container MAY be generated for auditing purposes.
+
+If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
+
 ### `0.3`
 
 #### Build Plan (TOML) `requires.version` Key
