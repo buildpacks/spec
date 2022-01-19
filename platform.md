@@ -285,10 +285,12 @@ Usage:
   [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
+  [-launch-cache <launch-cache>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
+  [-skip-layers <skip-layers> ] \
   [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
@@ -304,9 +306,11 @@ Usage:
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
+| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
+| `<skip-layers>`   | `CNB_SKIP_LAYERS`     | `false`                  | Do not restore SBOM layer from previous image
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
 | `<tag>...`        |                       |                          | Additional tag to apply to exported image
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
@@ -316,6 +320,7 @@ Usage:
 - **If** `<daemon>` is `false` and the platform provides one or more `<tag>` inputs, each `<tag>` MUST refer to the same registry as `<image>`.
 - **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT restore the SBOM layer (if any) from the previous image.
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
