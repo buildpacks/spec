@@ -942,7 +942,7 @@ Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `slices` contains the complete set of slices defined by all buildpacks
-- `bom` contains the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
+- `bom` contains the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 
 #### `order.toml` (TOML)
 
@@ -1025,7 +1025,7 @@ Where:
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
 - **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any build Bill of Materials entries returned by buildpacks implementing Buildpack API < 0.7
+  - `build.bom` MUST contain any legacy build Bill of Materials entries returned by buildpacks (where [supported](buildpack.md))
 
 #### `stack.toml` (TOML)
 
@@ -1092,7 +1092,7 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
+- `bom` MUST contain the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
