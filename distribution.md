@@ -2,27 +2,46 @@
 
 This document specifies the artifact format and the delivery mechanism for the buildpacks core components.
 
-
 ## Table of Contents
 
-<!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
-- [Distribution Specification](#distribution-specification)
-  - [Table of Contents](#table-of-contents)
-  - [Distribution API Version](#distribution-api-version)
-  - [Artifact Format](#artifact-format)
-    - [Buildpackage](#buildpackage)
-    - [Lifecycle](#lifecycle)
-    - [Build Image](#build-image)
-    - [Run Image](#run-image)
+<!-- TOC -->
+
+- [Table of Contents](#table-of-contents)
+- [Distribution API Version](#distribution-api-version)
+- [Artifact Format](#artifact-format)
+  - [Buildpackage](#buildpackage)
+    - [Labels](#labels)
+      - [`io.buildpacks.buildpack.metadata` (JSON)](#iobuildpacksbuildpackmetadata-json)
+      - [`io.buildpacks.buildpack.layers` (JSON)](#iobuildpacksbuildpacklayers-json)
+  - [Lifecycle](#lifecycle)
+    - [Filesystem](#filesystem)
+    - [Labels](#labels)
+  - [Build Image](#build-image)
+    - [Image Configuration](#image-configuration)
+    - [Environment Variables](#environment-variables)
+    - [Labels](#labels)
+  - [Run Image](#run-image)
+    - [Image Configuration](#image-configuration)
+    - [Environment Variables](#environment-variables)
+    - [Labels](#labels)
+  - [Builder](#builder)
+    - [General Requirements](#general-requirements)
+    - [Filesystem](#filesystem)
+    - [Environment Variables](#environment-variables)
+    - [Labels](#labels)
+      - [`io.buildpacks.builder.metadata` (JSON)](#iobuildpacksbuildermetadata-json)
+
+<!-- /TOC -->
 
 ## Distribution API Version
 
 This document specifies Distribution API version `0.3`.
 
 Distribution API versions:
- - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
- - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
- - Each Distributable artifact MUST contain the label `io.buildpacks.distribution.api` denoting the distribution API
+
+- MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+- When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
+- Each Distributable artifact MUST contain the label `io.buildpacks.distribution.api` denoting the distribution API
 
 ## Artifact Format
 
@@ -36,7 +55,6 @@ A buildpackage MUST exist in one of the following formats:
 * An OCI Image in a Docker daemon.
 * An uncompressed tar archive in [oci-layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format.
   * The file SHOULD have the extension `.cnb`.
-
 
 [†](README.md#linux-only)For Linux buildpackages, all FS layers MUST be buildpack layers.
 
@@ -54,57 +72,60 @@ A buildpack MUST contain a `buildpack.toml` file at its root directory.
 
 #### Labels
 
-For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpackage.layers`
-
 The following labels MUST be set in the buildpack image(through the image config's `Labels` field):
 
-| Label             | Description | 
-| --------          | -------- 
-| `io.buildpacks.buildpackage.metadata`     | A JSON object representing Buildpack Metadata   |
-| `io.builpacks.buildpackage.layers`| A JSON object representing the buildpack layers |
+| Label                                | Description                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `io.buildpacks.buildpack.metadata` | A JSON object representing information about the packaged entrypoint buildpack                    |
+| `io.buildpacks.buildpack.layers`   | A JSON object representing information about all packaged buildpacks and their associated layers. |
 
+##### `io.buildpacks.buildpack.metadata` (JSON)
 
-`io.buildpacks.buildpackage.metadata` (JSON)
 ```json
 {
-  "id": "<entrypoint buildpack ID>",
-  "name": "<buildpack name>",
-  "version": "<entrypoint buildpack version>",
-  "homepage": "<buildpack home page",
+  "id": "<buildpack ID (required)>",
+  "name": "<buildpack name (optional)>",
+  "version": "<buildpack version (required)>",
+  "homepage": "<buildpack home page (optional)>",
 }
 ```
 
-`io.buildpacks.buildpackage.layers` (JSON)
+##### `io.buildpacks.buildpack.layers` (JSON)
+
 ```json
 {
-  "<buildpack ID>": {
-    "<buildpack version>": {
-      "api": "<buildpack API>",
+  # schema of a meta-buildpack
+  "<buildpack ID (required)>": {
+    "<buildpack version (required)>": {
+      "api": "<buildpack API (required)>",
       "order": [
         {
           "group": [
             {
-              "id": "<inner buildpack ID>",
-              "version": "<inner buildpack version>"
+              "id": "<inner buildpack ID (required)>",
+              "version": "<inner buildpack version (required)>"
             }
           ]
         }
       ],
-      "layerDiffID": "<diff-ID>",
-      "homepage": "<buildpack homepage>",
-      "name": "<buildpack name>",
+      "layerDiffID": "<diff ID of buildpack layer (required)>",
+      "homepage": "<buildpack homepage (optional)>",
+      "name": "<buildpack name (optional)>"
     }
   },
-  "<inner buildpack>": {
-    "<inner buildpack version>": {
-      "api": "<buildpack API>",
-      "layerDiffID": "<diff-ID>",
-      "homepage": "<buildpack homepage>",
-      "name": "<buildpack name>",      
+  # schema of a regular buildpack
+  "<buildpack ID (required)>": {
+    "<buildpack version (required)>": {
+      "api": "<buildpack API (required)>",
+      "layerDiffID": "<diff ID of buildpack layer (required)>",
+      "homepage": "<buildpack homepage (optional)>",
+      "name": "<buildpack name (optional)>"
     }
   }
 }
 ```
+
+For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpack.layers`.
 
 The buildpack ID and version MUST match a buildpack provided by a layer blob.
 
@@ -128,12 +149,12 @@ A lifecycle image MUST have the following directories/files
 
 #### Labels
 
-| Label             | Description
-| --------          | --------
-| `io.buildpacks.lifecycle.version`  | A string, representing the semver version of the lifecycle.
-| `io.buildpacks.lifecycle.apis`     | A JSON object representing the APIs the lifecycle supports.
+| Label                             | Description                                                 |
+| --------------------------------- | ----------------------------------------------------------- |
+| `io.buildpacks.lifecycle.version` | A string, representing the semver version of the lifecycle. |
+| `io.buildpacks.lifecycle.apis`    | A JSON object representing the APIs the lifecycle supports. |
 
-`io.buildpacks.lifecycle.apis` (JSON)
+##### `io.buildpacks.lifecycle.apis` (JSON)
 
 ```json
 {
@@ -147,18 +168,20 @@ A lifecycle image MUST have the following directories/files
   }
 }
 ```
+
 Where:
 
 * `supported`:
-    * contains an array of support API versions:
-      * for versions `1.0+`, version `x.n` implies support for [`x.0`, `x.n`]
-      * should be a superset of `deprecated`
-      * should only contain APIs that correspond to a spec release
 
+  * contains an array of support API versions:
+    * for versions `1.0+`, version `x.n` implies support for [`x.0`, `x.n`]
+    * should be a superset of `deprecated`
+    * should only contain APIs that correspond to a spec release
 * `deprecated`:
-    * contain an array of deprecated APIs:
-      * should only contain `0.x` or major versions
-      * should only contain APIs that correspond to a spec release
+
+  * contain an array of deprecated APIs:
+    * should only contain `0.x` or major versions
+    * should only contain APIs that correspond to a spec release
 
 ### Build Image
 
@@ -168,7 +191,7 @@ The image configuration refers to the OCI Image configuration as mentioned [here
 
 #### Image Configuration
 
-  The Build Image MUST contain the following configurations:
+The Build Image MUST contain the following configurations:
 
 * Image Config's `config.User` field MUST be set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID with a writable home directory.
 * Image Config's `os` field MUST be set to the underlying operating system used by the build image.
@@ -186,10 +209,10 @@ The Build Image MUST contain the following Environment Variables:
 
 The Build Image SHOULD contain the following Labels on the image configuration:
 
-| Label                   | Description
-|-------                  |------------
-| `io.buildpacks.distribution.name` | A string denoting the operating system distribution
-| `io.buildpacks.distribution.version` | A string denoting the operating system version
+| Label                                | Description                                         |
+| ------------------------------------ | --------------------------------------------------- |
+| `io.buildpacks.distribution.name`    | A string denoting the operating system distribution |
+| `io.buildpacks.distribution.version` | A string denoting the operating system version      |
 
 ### Run Image
 
@@ -221,11 +244,11 @@ The Run Image MUST contain the following Environment Variables:
 
 The Run Image SHOULD contain the following Labels on the image configuration:
 
-| Label             | Description
-| --------          | --------
-| `io.buildpacks.distribution.name` |  A string denoting the Operating System distribution
-| `io.buildpacks.distribution.version` | A string denoting the Operating System distribution version
-| `io.buildpacks.id` | `<Target ID>`
+| Label                                | Description                                                 |
+| ------------------------------------ | ----------------------------------------------------------- |
+| `io.buildpacks.distribution.name`    | A string denoting the Operating System distribution         |
+| `io.buildpacks.distribution.version` | A string denoting the Operating System distribution version |
+| `io.buildpacks.id`                   | `<Target ID>`                                               |
 
 Where,
 
@@ -247,7 +270,7 @@ The builder image MUST contain an implementation of the [lifecycle](#lifecycle),
 
 A builder MUST have the following directories/files:
 
-* `/cnb/order.toml` &rarr; As defined in the [platform specification](https://github.com/buildpacks/spec/blob/main/platform.md#ordertoml-toml)
+* `/cnb/order.toml` &rarr; As defined in the [platform specification](https://github.com/buildpacks/spec/blob/main/platform.md#ordertoml-toml).
 
 #### Environment Variables
 
@@ -255,13 +278,14 @@ A builder MUST be an extension of a Build Image, and MUST retain all the specifi
 
 The following environment variables MAY be set on the builder (through the image config's `Env` field):
 
-| Env Variable             | Description                                                                       | Default
-| --------                 | --------                                                                          |-----------
-| `CNB_APP_DIR`            | Application directory of the build environment                                    | `/workspace`
-| `CNB_LAYERS_DIR`         | The directory to create and store `layers` in the build environment               | `/layers`
-| `CNB_PLATFORM_DIR`       | The directory to create and store platform focused files in the build environment | `/platform`
-| `SERVICE_BINDING_ROOT`   | The directory where services are bound                                            | -
+| Env Variable           | Description                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `CNB_APP_DIR`          | Application directory of the build environment.                                    |
+| `CNB_LAYERS_DIR`       | The directory to create and store `layers` in the build environment.               |
+| `CNB_PLATFORM_DIR`     | The directory to create and store platform focused files in the build environment. |
+| `SERVICE_BINDING_ROOT` | The directory where services are bound.                                            |
 
+If any environment variable defined above is set on the builder, the specified path MUST be present and writable by the Build Image user.
 
 #### Labels
 
@@ -269,50 +293,33 @@ A builder MUST be an extension of a Build Image, and MUST retain all the specifi
 
 A builder image MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
 
-A builder image MAY contain [buildpacks](#buildpackage), and MAY retain all the specified Labels set on the original buildpackage, as specified in the buildpackage specifications.
+A builder image MAY contain buildpacks, and MAY retain all the specified Labels set on the original buildpackage, as specified in the [buildpackage](#buildpackage) specification with the following exceptions:
 
-The following labels MUST be set in the builder environment (through the image config's `Labels` field):
+- `io.buildpacks.buildpack.metadata` MUST not be set.
+- `io.buildpacks.buildpack.layers`  on the builder SHOULD be a merged version based on all buildpackages combined and thereby have of all packaged buildpacks represented.
 
-| Label             | Description
-| --------          | --------
-| `io.buildpacks.builder.metadata`     | A JSON object representing builder metadata
-| `io.buildpacks.buildpack.order`      | A JSON object representing the order of the buildpacks stored on the builder
+In addition to all inherited labels above, the following labels MUST be set in the builder environment (through the image config's `Labels` field):
 
-`io.buildpacks.builder.metadata` (JSON)
+| Label                            | Description                                                   |
+| -------------------------------- | ------------------------------------------------------------- |
+| `io.buildpacks.builder.metadata` | A JSON object representing builder metadata.                  |
+| `io.buildpacks.buildpack.order`  | A JSON object representation of the `/cnb/order.toml` file.   |
+
+##### `io.buildpacks.builder.metadata` (JSON)
 
 ```json
 {
-  "description": "<description>",
-  "buildpacks": [
-    {
-      "id": "<buildpack ID>",
-      "version": "<buildpack version>",
-      "homepage": "<buildpack homepage>",
-    }
-  ],
+  "description": "<string>",
   "createdBy": {
-    "name": "<tool name>",
-    "version": "<tool version>",
+    "name": "<string>",
+    "version": "<string>",
   }
 }
 ```
 
-The `createdBy` metadata is meant to contain the name and version of the tool that created the builder.
+Where:
 
-`io.buildpacks.buildpack.order` (JSON)
-
-```json
-[
-  {
-    "group":
-      [
-        {
-          "id": "<buildpack ID>",
-          "version": "<buildpack version>",
-          "optional": false
-        }
-      ]
-  }
-]
-
-```
+- `description` (optional) is a human readable description of the builder.
+- `createdBy` (optional) is information about the tool that created the builder.
+  - `name` (optional) is the name of the tool that created the builder.
+  - `version` (optional) is the version of the tool that created the builder.
