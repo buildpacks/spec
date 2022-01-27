@@ -704,7 +704,9 @@ Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
-2. The lifecycle MUST
+2. The lifecycle MUST set the working directory for the process to `working-directory`, or to the application directory if `working-directory` is not specified.
+
+3. The lifecycle MUST
    1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
@@ -714,7 +716,7 @@ Given the start command and execution strategy,
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
 
-3. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
+4. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
    1. source each file in each `<layers>/<layer>/profile.d` directory,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
@@ -726,9 +728,9 @@ Given the start command and execution strategy,
    3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
 
-3. If using an execution strategy involving a shell, the lifecycle MUST source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+5. If using an execution strategy involving a shell, the lifecycle MUST source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
-4. The lifecycle MUST invoke the start command with the decided execution strategy.
+6. The lifecycle MUST invoke the start command with the decided execution strategy.
 
 [†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
@@ -901,6 +903,7 @@ command = "<command>"
 args = ["<arguments>"]
 direct = false
 default = false
+working-directory = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -928,6 +931,7 @@ For each process, the buildpack:
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
+- MAY specify a `working-directory` for the process. The `working-directory` defaults to the application directory if not specified.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 
