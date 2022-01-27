@@ -498,7 +498,7 @@ Usage:
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
-- The lifecycle SHALL aggregate all `processes`, `slices` and `bom` entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
@@ -934,15 +934,12 @@ direct = false
 
 [[slices]]
 paths = ["<app sub-path glob>"]
-
-[bom]
 ```
 
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `slices` contains the complete set of slices defined by all buildpacks
-- `bom` contains the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 
 #### `order.toml` (TOML)
 
@@ -1005,17 +1002,6 @@ tags = ["<tag reference>"]
 digest = "<image digest>"
 image-id = "<imageID>"
 manifest-size = "<manifest size in bytes>"
-
-[build]
-[[build.bom]]
-name = "<dependency name>"
-
-[build.bom.metadata]
-version = "<dependency version>"
-
-[build.bom.buildpack]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
@@ -1024,8 +1010,6 @@ Where:
   - `manifest-size` MUST contain the manifest size in bytes
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
-- **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any legacy build Bill of Materials entries returned by buildpacks (where [supported](buildpack.md))
 
 #### `stack.toml` (TOML)
 
@@ -1066,18 +1050,6 @@ Where:
       "homepage": "<buildpack homepage>"
     }
   ],
-  "bom": [
-    {
-      "name": "<bom-entry-name>",
-      "metadata": {
-        // arbitrary buildpack provided metadata
-      },
-      "buildpack": {
-        "id": "<buildpack ID>",
-        "version": "<buildpack version>"
-      }
-    },
-  ],
  "launcher": {
     "version": "<launcher-version>",
     "source": {
@@ -1092,7 +1064,6 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
