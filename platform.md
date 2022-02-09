@@ -746,7 +746,6 @@ Usage:
 | `<direct>`          |                       |                | Process execution strategy
 | `<cmd>`             |                       |                | Command to execute
 | `<args>`            |                       |                | Arguments to command
-| `<working-directory>`              |        |                | Process working directory
 | `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
 | `<layers>/<buildpack-id>/<layer>/` |        |                | Launch Layers
 
