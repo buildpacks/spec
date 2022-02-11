@@ -704,9 +704,7 @@ Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
-2. The lifecycle MUST set the working directory for the process to `working-directory`, or to the application directory if `working-directory` is not specified.
-
-3. The lifecycle MUST
+1. The lifecycle MUST
    1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
@@ -716,7 +714,9 @@ Given the start command and execution strategy,
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
 
-4. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
+The working directory for all executed files SHALL be `<app>`.
+
+1. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process to
    1. source each file in each `<layers>/<layer>/profile.d` directory,
       1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
       2. Secondly, in alphabetically ascending order by layer directory name.
@@ -727,10 +727,11 @@ Given the start command and execution strategy,
       3. Thirdly, in alphabetically ascending order by file name.
    3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
+The working directory for all sourced files SHALL be `<app>`.
 
-5. If using an execution strategy involving a shell, the lifecycle MUST source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+1. The lifecycle MUST set the working directory for the start command to `working-directory`, or to `<app>` if `working-directory` is not specified.
 
-6. The lifecycle MUST invoke the start command with the decided execution strategy.
+1. The lifecycle MUST invoke the start command with the decided execution strategy.
 
 [†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
