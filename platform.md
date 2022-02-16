@@ -546,6 +546,7 @@ Usage:
 | `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
+|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config                                           |
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -601,7 +602,7 @@ Usage:
         - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the modification time of all files in newly created layers to a constant value
-    - SHOULD set the `created` time in image config to a constant value
+    - SHOULD set the `created` time in image config to `SOURCE_DATE_EPOCH`, or to a constant value if not defined
 
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
