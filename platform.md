@@ -575,8 +575,8 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
-      - `<layers>/sbom/<buildpack-id>/launch.sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
-      - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
+      - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
+      - `<layers>/sbom/launch/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -607,8 +607,8 @@ Usage:
 
 - The `<layers>` directory:
   - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
-    - `<layers>/sbom/<buildpack-id>/build.sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
-    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
+    - `<layers>/sbom/build/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
+    - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
 
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
