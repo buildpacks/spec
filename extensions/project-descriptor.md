@@ -129,6 +129,16 @@ uri = "<string>"
   shell = "<string (optional default=/bin/sh)>"
   inline = "<script contents>"
 
+[[io.buildpacks.pre.group]]
+id = "<string>"
+version = "<string>"
+uri = "<string>"
+
+[[io.buildpacks.post.group]]
+id = "<string>"
+version = "<string>"
+uri = "<string>"
+
 [[io.buildpacks.build.env]]
 name = "<string>"
 value = "<string>"
