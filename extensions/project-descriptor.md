@@ -20,7 +20,7 @@ A project descriptor is a file that MAY contain configuration for apps, services
       - [`io.buildpacks.group` (optional)](#iobuildpacksgroup-optional)
       - [`io.buildpacks.pre.group` (optional)](#iobuildpackspregroup-optional)
       - [`io.buildpacks.post.group` (optional)](#iobuildpackspostgroup-optional)
-      - [`io.buildpacks.env.build` (optional)](#iobuildpacksenvbuild-optional)
+      - [`io.buildpacks.build.env` (optional)](#iobuildpacksbuildenv-optional)
   - [Example](#example)
 
 ## Schema Version
@@ -202,12 +202,12 @@ This table MAY contain a list of buildpacks to insert at the end of every group.
 
 The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
 
-#### `io.buildpacks.env.build` (optional)
+#### `io.buildpacks.build.env` (optional)
 
 This table MAY be used to set environment variables at build time, for example:
 
 ```toml
-[[io.buildpacks.env.build]]
+[[io.buildpacks.build.env]]
 name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
