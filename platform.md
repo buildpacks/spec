@@ -749,27 +749,27 @@ Usage:
 | `<layers>/config/metadata.toml`    |                      |               | Build metadata (see [`metadata.toml`](#metadatatoml-toml) |
 | `<layers>/<buildpack-id>/<layer>/` |                      |               | Launch Layers                                             |
 
-A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-directory>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
+A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST derive the values of `<cmd>`, `<args>`, `<working-directory>`, and `<direct>` as follows:
+- MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
-        - MUST set `<working-directory>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
+        - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
         - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
         - `<cmd>` SHALL be `$2`
         - `<args>` SHALL be `${@3:}`
-        - `<working-directory>` SHALL be `<app>`
+        - `<working-dir>` SHALL be `<app>`
     - **Else**
         - `<direct>` SHALL be `false`
         - `<cmd>` SHALL be `$1`
         - `<args>` SHALL be `${@2:}`
-        - `<working-directory` SHALL be `<app>`
+        - `<working-dir` SHALL be `<app>`
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
@@ -1061,7 +1061,7 @@ Where:
         "<args>"
       ],
       "direct": false,
-      "working-directory": "<working-directory>",
+      "working-dir": "<working-dir>",
     }
   ],
   "buildpacks": [
