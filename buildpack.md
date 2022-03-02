@@ -725,7 +725,7 @@ Given the start command and execution strategy,
       3. Thirdly, in alphabetically ascending order by file name.
    3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
 
-1. The lifecycle MUST set the working directory for the start command to `<working-directory>`, or to `<app>` if `<working-directory>` is not specified.
+1. The lifecycle MUST set the working directory for the start command to `<working-dir>`, or to `<app>` if `<working-dir>` is not specified.
 
 1. The lifecycle MUST invoke the start command with the decided execution strategy.
 
@@ -900,7 +900,7 @@ command = "<command>"
 args = ["<arguments>"]
 direct = false
 default = false
-working-directory = "<working directory>"
+working-dir = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -928,7 +928,7 @@ For each process, the buildpack:
 - MAY specify an `args` list to be passed directly to the specified executable.
 - MAY specify a `direct` boolean that bypasses the shell.
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
-- MAY specify a `working-directory` for the process. The `working-directory` defaults to the application directory if not specified.
+- MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 
