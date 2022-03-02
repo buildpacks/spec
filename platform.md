@@ -934,7 +934,7 @@ type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
 direct = false
-working-directory = "<working directory>"
+working-dir = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
