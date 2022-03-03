@@ -121,13 +121,13 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 
 Note: the positional arguments to `/bin/detect` are deprecated, and buildpack authors SHOULD use the corresponding environment variables.
 
-| Input                    | Description                                   |
-|--------------------------|-----------------------------------------------|
-| `$0`                     | Absolute path of `/bin/detect` executable     |
-| `$CNB_BUILD_PLAN_PATH`   | Absolute path of the build plan               |
-| `$CNB_PLATFORM_DIR`      | Absolute path of the platform directory       |
-| `$CNB_PLATFORM_DIR/env/` | User-provided environment variables for build |
-| `$CNB_PLATFORM_DIR/#`    | Platform-specific extensions                  |
+| Input                    | Attributes | Description                                   |
+|--------------------------|------------|-----------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/detect` executable     |
+| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan               |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory       |
+| `$CNB_PLATFORM_DIR/env/` |            | User-provided environment variables for build |
+| `$CNB_PLATFORM_DIR/#`    |            | Platform-specific extensions                  |
 
 | Output                 | Description                                 |
 |------------------------|---------------------------------------------|
@@ -143,14 +143,14 @@ Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `
 
 Note: the positional arguments to `/bin/detect` are deprecated, and buildpack authors SHOULD use the corresponding environment variables.
 
-| Input                    | Description                                                                   |
-|--------------------------|-------------------------------------------------------------------------------|
-| `$0`                     | Absolute path of `/bin/build` executable                                      |
-| `$CNB_LAYERS_DIR`        | Absolute path of the buildpack layers directory                               |
-| `$CNB_BP_PLAN_PATH`      | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
-| `$CNB_PLATFORM_DIR`      | Absolute path of the platform directory                                       |
-| `$CNB_PLATFORM_DIR/env/` | User-provided environment variables for build                                 |
-| `$CNB_PLATFORM_DIR/#`    | Platform-specific extensions                                                  |
+| Input                    | Attributes | Description                                                                   |
+|--------------------------|------------|-------------------------------------------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/build` executable                                      |
+| `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
+| `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
+| `$CNB_PLATFORM_DIR/env/` |            | User-provided environment variables for build                                 |
+| `$CNB_PLATFORM_DIR/#`    |            | Platform-specific extensions                                                  |
 
 | Output                                          | Description                                                                                                      |
 |-------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
