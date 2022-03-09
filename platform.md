@@ -498,7 +498,7 @@ Usage:
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
-- The lifecycle SHALL aggregate all `processes`, `slices` and `bom` entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
@@ -577,6 +577,7 @@ Usage:
     - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
       - `<layers>/sbom/launch/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
+      - `<layers>/sbom/launch/<buildpack-id>/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -608,8 +609,8 @@ Usage:
 - The `<layers>` directory:
   - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
     - `<layers>/sbom/build/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
-    - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
-
+    - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer    - `<layers>/sbom/build/<buildpack-id>/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `build` (where [supported](buildpack.md))
+    - `<layers>/sbom/build/<buildpack-id>/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `build` (where [supported](buildpack.md))
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
@@ -938,15 +939,12 @@ working-dir = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
-
-[bom]
 ```
 
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `slices` contains the complete set of slices defined by all buildpacks
-- `bom` contains the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 
 #### `order.toml` (TOML)
 
@@ -1009,17 +1007,6 @@ tags = ["<tag reference>"]
 digest = "<image digest>"
 image-id = "<imageID>"
 manifest-size = "<manifest size in bytes>"
-
-[build]
-[[build.bom]]
-name = "<dependency name>"
-
-[build.bom.metadata]
-version = "<dependency version>"
-
-[build.bom.buildpack]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
@@ -1028,8 +1015,6 @@ Where:
   - `manifest-size` MUST contain the manifest size in bytes
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
-- **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any legacy build Bill of Materials entries returned by buildpacks (where [supported](buildpack.md))
 
 #### `stack.toml` (TOML)
 
@@ -1071,18 +1056,6 @@ Where:
       "homepage": "<buildpack homepage>"
     }
   ],
-  "bom": [
-    {
-      "name": "<bom-entry-name>",
-      "metadata": {
-        // arbitrary buildpack provided metadata
-      },
-      "buildpack": {
-        "id": "<buildpack ID>",
-        "version": "<buildpack version>"
-      }
-    },
-  ],
  "launcher": {
     "version": "<launcher-version>",
     "source": {
@@ -1097,7 +1070,6 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the legacy Bill of Materials contributed by buildpacks (where [supported](buildpack.md))
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
