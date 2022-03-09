@@ -738,44 +738,47 @@ Usage:
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
 ##### Inputs
-| Input               | Environment Variable  | Default Value  | Description
-|---------------------|-----------------------|----------------|---------------------------------------
-| `<app>`             | `CNB_APP_DIR`         | `/workspace`   | Path to application directory
-| `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`      | Path to layer directory
-| `<process-type>`    |                       |                | `type` of process to launch
-| `<direct>`          |                       |                | Process execution strategy
-| `<cmd>`             |                       |                | Command to execute
-| `<args>`            |                       |                | Arguments to command
-| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
-| `<layers>/<buildpack-id>/<layer>/` |        |                | Launch Layers
+| Input                              | Environment Variable | Default Value | Description                                               |
+|------------------------------------|----------------------|---------------|-----------------------------------------------------------|
+| `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
+| `<layers>`                         | `CNB_LAYERS_DIR`     | `/layers`     | Path to layer directory                                   |
+| `<process-type>`                   |                      |               | `type` of process to launch                               |
+| `<direct>`                         |                      |               | Process execution strategy                                |
+| `<cmd>`                            |                      |               | Command to execute                                        |
+| `<args>`                           |                      |               | Arguments to command                                      |
+| `<layers>/config/metadata.toml`    |                      |               | Build metadata (see [`metadata.toml`](#metadatatoml-toml) |
+| `<layers>/<buildpack-id>/<layer>/` |                      |               | Launch Layers                                             |
 
-A command (`<cmd>`), arguments to that command (`<args>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
+A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
+- MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
         - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
         - `<cmd>` SHALL be `$2`
         - `<args>` SHALL be `${@3:}`
+        - `<working-dir>` SHALL be `<app>`
     - **Else**
         - `<direct>` SHALL be `false`
         - `<cmd>` SHALL be `$1`
         - `<args>` SHALL be `${@2:}`
+        - `<working-dir` SHALL be `<app>`
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
 
-| Exit Code | Result|
-|-----------|-------|
-| `11`      | Platform API incompatibility error
-| `12`      | Buildpack API incompatibility error
-| `80-89`|  Launch-specific lifecycle errors
+| Exit Code | Result                              |
+|-----------|-------------------------------------|
+| `11`      | Platform API incompatibility error  |
+| `12`      | Buildpack API incompatibility error |
+| `80-89`   | Launch-specific lifecycle errors    |
 
 Otherwise, the exit code shall be the exit code of the launched process.
 
@@ -931,6 +934,7 @@ type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
 direct = false
+working-dir = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1056,7 +1060,8 @@ Where:
       "args": [
         "<args>"
       ],
-      "direct": false
+      "direct": false,
+      "working-dir": "<working-dir>",
     }
   ],
   "buildpacks": [
