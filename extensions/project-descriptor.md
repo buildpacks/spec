@@ -7,81 +7,154 @@ A project descriptor is a file that MAY contain configuration for apps, services
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Project Descriptor](#project-descriptor)
   - [Table of Contents](#table-of-contents)
-  - [Schema](#schema)
-  - [`[project]`](#project)
-  - [`[[project.licenses]]`](#projectlicenses)
-  - [`[build.include]` and `[build.exclude]`](#buildinclude-and-buildexclude)
-  - [`[[build.buildpacks]]`](#buildbuildpacks)
-  - [`[[build.env]]`](#buildenv)
-  - [`[metadata]`](#metadata)
+  - [Schema Version](#schema-version)
+  - [Special Value Types](#special-value-types)
+  - [Top Level Tables](#top-level-tables)
+    - [Non-`_` Tables](#non-_-tables)
+    - [`_`](#_)
+      - [`_.licenses` (optional)](#_licenses-optional)
+      - [`_.metadata` (optional)](#_metadata-optional)
+    - [`io.buildpacks` (optional)](#iobuildpacks-optional)
+      - [`io.buildpacks.builder` (optional)](#iobuildpacksbuilder-optional)
+      - [`io.buildpacks.include` (optional) and `io.buildpacks.exclude` (optional)](#iobuildpacksinclude-optional-and-iobuildpacksexclude-optional)
+      - [`io.buildpacks.group` (optional)](#iobuildpacksgroup-optional)
+      - [`io.buildpacks.pre.group` (optional)](#iobuildpackspregroup-optional)
+      - [`io.buildpacks.post.group` (optional)](#iobuildpackspostgroup-optional)
+      - [`io.buildpacks.build.env` (optional)](#iobuildpacksbuildenv-optional)
   - [Example](#example)
 
-## Schema
+## Schema Version
 
-The TOML schema of the project descriptor is the following:
+This document specifies Project Descriptor Schema Version `0.2`.
+
+The Schema Version format follows the form of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version):
+
+* MUST be in form <major>.<minor> or <major>, where <major> is equivalent to <major>.0
+* When <major> is greater than 0 increments to <minor> SHALL exclusively indicate additive changes
+
+## Special Value Types
+
+* `schema-version` - A string that follows the format of [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version).
+* `uri` - A string that follows the format of [RFC3986](https://tools.ietf.org/html/rfc3986).
+
+## Top Level Tables
+
+### Non-`_` Tables
+
+All other tables besides `_` will use reverse domains, i.e. buildpacks.io will be `[io.buildpacks]`. These tables can be optionally versioned with a schema version number using the `schema-version` field. All these tables are optional.
+
+### `_`
+
+The TOML schema of the project section of the project descriptor:
 
 ```toml
-[project]
+[_]
+schema-version = "<schema-version>"
 id = "<string>" # machine readable
 name = "<string>" # human readable
 version = "<string>"
 authors = ["<string>"]
-documentation-url = "<url>"
-source-url = "<url>"
+documentation-url = "<uri>"
+source-url = "<uri>"
 
-[[project.licenses]]
+[[_.licenses]]
 type = "<string>"
 uri = "<uri>"
 
-[build]
-include = ["<string>"]
-exclude = ["<string>"]
-[[build.buildpacks]]
-id = "<string>"
-version = "<string>"
-uri = "<string>"
-[[build.env]]
-name = "<string>"
-value = "<string>"
-[metadata]
+[_.metadata]
 # additional arbitrary keys allowed
 ```
 
-The following sections describe each part of the schema in detail.
-
-## `[project]`
-
-The top-level `[project]` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled.
-
-The `project.id`
+The top-level `_` table MAY contain configuration about the repository, including `id` and `version`. It MAY also include metadata about how it is authored, documented, and version controlled. It MUST contain `schema-version`  to denote which schema version the descriptor is using.
 
 ```toml
-[project]
+[_]
+schema-version = "<string>"
 id = "<string>"
 name = "<string>"
 version = "<string>"
+authors = ["<string>"]
+documentation-url = "<uri>"
+source-url = "<uri>"
 ```
 
+* `schema-version` - version identifier for the schema of the `_` table and structure of the project descriptor file.
 * `id` - (optional) the machine readable identifier of the project (ex. "com.example.myservice")
 * `name` - (optional) the human readable name of the project (ex. "My Example Service")
 * `version` - (optional) and arbitrary string representing the version of the project
 * `authors` - (optional) the names and/or email addresses of the project's authors
-* `documentation-url` - (optional) a URL to the documentation for the project
+* `documentation-url` - (optional) a URL to the documentation for the project.
 * `source-url` - (optional) a URL to the source code for the project
 
-## `[[project.licenses]]`
+#### `_.licenses` (optional)
 
-An optional list of project licenses.
+This table MAY contain project licenses.
+
+```toml
+[[_.licenses]]
+type = "<string>"
+uri = "<uri>"
+```
 
 * `type` - This MAY use the [SPDX 2.1 license expression](https://spdx.org/spdx-specification-21-web-version), but is not limited to identifiers in the [SPDX Licenses List](https://spdx.org/licenses/).
 * `uri` - If this project is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
-## `[build.include]` and `[build.exclude]`
+#### `_.metadata` (optional)
 
-A optional list of files to include in the build (while excluding everything else):
+This is a free form table for users to use as they see fit. The keys in this table are not validated.
 
 ```toml
-[build]
+[_.metadata.foo]
+checksum = "a28a0d7772df1f918da2b1102da4ff35"
+```
+
+
+### `io.buildpacks` (optional)
+
+This is the Cloud Native Buildpacks' section of the project descriptor. The TOML schema is the following:
+
+```
+[io.buildpacks]
+builder = "<string>"
+include = ["<string>"]
+exclude = ["<string>"]
+
+[[io.buildpacks.group]]
+id = "<string>"
+version = "<string>"
+uri = "<string>"
+
+  [io.buildpacks.group.script]
+  api = "<buildpack api>"
+  shell = "<string (optional default=/bin/sh)>"
+  inline = "<script contents>"
+
+[[io.buildpacks.pre.group]]
+id = "<string>"
+version = "<string>"
+uri = "<string>"
+
+[[io.buildpacks.post.group]]
+id = "<string>"
+version = "<string>"
+uri = "<string>"
+
+[[io.buildpacks.build.env]]
+name = "<string>"
+value = "<string>"
+```
+
+#### `io.buildpacks.builder` (optional)
+
+This is the builder image to use (ex. "cnbs/sample-builder:bionic").
+
+#### `io.buildpacks.include` (optional) and `io.buildpacks.exclude` (optional)
+
+An optional list of files to include in the build (while excluding everything else):
+This MAY contain a list of files to include in the build (while excluding everything else):
+
+```toml
+[io.buildpacks]
 include = [
     "cmd/",
     "go.mod",
@@ -93,7 +166,7 @@ include = [
 A list of files to exclude from the build (while including everything else):
 
 ```toml
-[build]
+[io.buildpacks]
 exclude = [
     "spec/"
 ]
@@ -101,52 +174,77 @@ exclude = [
 
 The `.gitignore` pattern is used in both cases. The `exclude` and `include` keys are mutually exclusive, and if both are present the Lifecycle will error out.
 
-Any files that are excluded (either via `include` or `exclude`) MUST BE excluded before the build (i.e. not only exluded from the final image).
+Any files that are excluded (either via `include` or `exclude`) MUST BE excluded before the build (i.e. not only excluded from the final image).
 
 If both `exclude` and `include` are defined, the build process MUST result in an error.
 
-## `[[build.buildpacks]]`
+#### `io.buildpacks.group` (optional)
 
-The build table MAY contain an array of buildpacks. The schema for this table is:
+This table MAY contain an array of buildpacks. The schema for this table is:
 
 ```toml
-[[build.buildpacks]]
+[[io.buildpacks.group]]
 id = "<buildpack ID (optional)>"
 version = "<buildpack version (optional default=latest)>"
 uri = "<url or path to the buildpack (optional default=urn:buildpack:<id>)"
+
+  [io.buildpacks.group.script]
+  api = "<buildpack api>"
+  shell = "<string (optional default=/bin/sh)>"
+  inline = "<script contents>"
 ```
 
 This defines the buildpacks that a platform should use on the repo.
 
-Either an `id` or a `uri` MUST be included, but MUST NOT include both. If `uri` is provided, `version` MUST NOT be allowed.
+Either a `version`, `uri`, or `script` table MUST be included, but MUST NOT include any combination of these elements.
 
-## `[[build.env]]`
+The `api` and `inline` key MUST be defined in the `script` table. The value of the `inline` key will be used as the build script for the [inline buildpack](#Definitions) this entry represents. The value of the `api` key defines its Buildpack API compatibility, and the `shell` key defines the shell used to execute the `inline` script.
 
-Used to set environment variables at build time, for example:
+#### `io.buildpacks.pre.group` (optional)
+
+This table MAY contain a list of buildpacks to insert at the beginning of every group. Given an order with multiple groups, the list of `pre` buildpacks will be inserted at the beginning of each group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
+
+The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
+
+#### `io.buildpacks.post.group` (optional)
+
+This table MAY contain a list of buildpacks to insert at the end of every group. Given an order with multiple groups, the list of `post` buildpacks will be inserted at the end of each group such that they are run as if they were originally included in the group. Each phase of the injected buildpack(s) will execute as normal.
+
+The schema for this table is identical to [`io.buildpacks.group`](#iobuildpacksgroup-optional)
+
+#### `io.buildpacks.build.env` (optional)
+
+This table MAY be used to set environment variables at build time, for example:
 
 ```toml
-[[build.env]]
+[[io.buildpacks.build.env]]
 name = "JAVA_OPTS"
 value = "-Xmx1g"
 ```
 
-## `[metadata]`
+## Terminology
 
-This table includes a some defined keys, but additional keys are not validated. It can be used to add platform specific metadata. For example:
-
-```toml
-[metadata.heroku]
-pipeline = "foobar"
-```
+* **Inline Buildpack** - a type of buildpack that can be defined in the same repo as the app it is used with
 
 ## Example
 
 ```toml
-[project]
+[_]
 id = "io.buildpacks.my-app"
 version = "0.1"
+schema-version = "0.2"
 
-[build]
+[_.metadata]
+cdn = "https://cdn.example.com"
+
+[[_.metadata.assets]]
+url = "https://cdn.example.com/assets/foo.jar"
+checksum = "3b1b39893d8e34a6d0bd44095afcd5c4"
+
+buzz = ["a", "b", "c"]
+
+[io.buildpacks]
+builder = "cnbs/sample-builder:bionic"
 include = [
     "cmd/",
     "go.mod",
@@ -154,17 +252,18 @@ include = [
     "*.go"
 ]
 
-[[build.buildpacks]]
+[[io.buildpacks.group]]
 id = "io.buildpacks/java"
 version = "1.0"
 
-[[build.buildpacks]]
+[[io.buildpacks.group]]
 id = "io.buildpacks/nodejs"
 version = "1.0"
 
-[metadata]
-foo = "bar"
-
-[metadata.fizz]
-buzz = ["a", "b", "c"]
+[[io.buildpacks.group]]
+id = "example/post-build"
+  
+    [io.buildpacks.group.script]
+    api = "0.5"
+    inline = "./post-build.sh"
 ```
