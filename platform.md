@@ -873,9 +873,6 @@ To achieve reproducibility the lifecycle SHOULD set the following to a constant,
 - file modification times in generated layers
 - image creation time
 
-The platform MAY set `SOURCE_DATE_EPOCH`  in the lifecycle execution environment, where the value of `SOURCE_DATE_EPOCH` MUST be a [UNIX timestamp](https://reproducible-builds.org/specs/source-date-epoch/).
-If `SOURCE_DATE_EPOCH` is set, the lifecycle SHOULD set the image creation time to its value.
-
 Because compressions algorithms and manifest whitespace affect the image digest, an app image exported to the docker daemon and subsequently pushed to a registry MAY have a different digest than an app image exported directly to a registry by the lifecycle, even when all other inputs are held constant.
 
 If buildpacks do not generate layer contents or layer metadata reproducibly, builds MAY NOT be reproducibile even when identical source code and buildpacks are provided to the lifecycle.
