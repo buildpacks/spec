@@ -117,9 +117,7 @@ The lifecycle MAY return an error to the platform if two or more buildpacks with
 
 ### Detection
 
-Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
-
-Note: the positional arguments to `/bin/detect` are deprecated, and buildpack authors SHOULD use the corresponding environment variables.
+Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
 | Input                    | Attributes | Description                                   |
 |--------------------------|------------|-----------------------------------------------|
@@ -139,9 +137,7 @@ Note: the positional arguments to `/bin/detect` are deprecated, and buildpack au
 
 ###  Build
 
-Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `<app[AI]>`
-
-Note: the positional arguments to `/bin/detect` are deprecated, and buildpack authors SHOULD use the corresponding environment variables.
+Executable: `/bin/build`, Working Dir: `<app[AI]>`
 
 | Input                    | Attributes | Description                                                                   |
 |--------------------------|------------|-------------------------------------------------------------------------------|
