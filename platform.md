@@ -503,8 +503,8 @@ Usage:
 - The lifecycle SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked image extensions to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL copy all output Dockerfiles to `<output>`.
-- The lifecycle SHALL record all Dockerfiles and build args in `<layers>/extender.toml`.
-- The lifecycle SHALL filter the build plan for buildpacks with dependencies provided by image extensions.
+- The lifecycle SHALL record all Dockerfiles and build args in `<extender>`.
+- The lifecycle SHALL filter the build plan with dependencies provided by image extensions.
 
 #### `extender`
 
@@ -544,11 +544,11 @@ Usage:
 | `<work-dir>`     | `CNB_EXTEND_WORK_DIR`     | `<layers>`                                        | Path to a working directory                                          |
 
 - `<base-image>`, `<cache-image>`, and `<target-image>` MUST be valid image references
-- If after extending the image, the `User` defined on the image is `root`, the lifecycle MUST fail
-- If after extending the run image, the underlying base image has not changed but the `User` defined on the image has changed from its original value, the lifecycle SHOULD warn
+- If after extending a base image, the `User` defined on the image is `root`, the lifecycle MUST fail
+- If after extending the run image, the underlying base image has not changed but image config's `User` field has changed from its original value, the lifecycle SHOULD warn
 
 When extending the run image:
-- After all image extensions have been applied, the lifecycle MUST set the label `io.buildpacks.rebasable` to `true` if and only if the original base image had `io.buildpacks.rebasable=true` and all image extensions set the label `io.buildpacks.rebasable` to `true`.
+- After all image extensions have been applied, the lifecycle MUST set the label `io.buildpacks.rebasable` to `true` if and only if the original base image had `io.buildpacks.rebasable=true` and all Dockerfiles set the label `io.buildpacks.rebasable` to `true`.
 - After all image extensions have been applied, the lifecycle MUST run `<genpkgs>` (if provided) in the context of the extended run image to generate an SBOM for the extended run image. The lifecycle MUST include the SBOM as a layer in the extended run image. The diffID of the layer containing the run image SBOM SHOULD replace the `io.buildpacks.base.sbom` label on the extended run image.
 - If no `<genpkgs>` is provided, the lifecycle should warn.
 
@@ -696,7 +696,6 @@ Usage:
     - MUST contain a layer containing all image extension-provided and buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/<buildpack-id>/launch.sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
       - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
-      - TODO: if image extension SBOM files are included here, there could be collisions between image extension ids and buildpack ids...
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`

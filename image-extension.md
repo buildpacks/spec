@@ -77,7 +77,7 @@ value = "<label valu>"
 The image extension MAY specify any number of args or labels.
 
 For each arg, the image extension:
-- MUST specify a `name` to be the name of a build argument that will be provided to any output Dockerfile or run.Dockerfile when extending the run base image.
+- MUST specify a `name` to be the name of a build argument that will be provided to all output Dockerfiles or run.Dockerfiles when extending the run base image.
 - MUST specify a `value` to be the value of the build argument when it is provided.
 
 The image extension `labels` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
@@ -95,7 +95,7 @@ name = "<dependency name>"
 
 For each arg, the image extension:
 
-- MUST specify a `name` to be the name of a build argument that will be provided to any output Dockerfile or build.Dockerfile when extending the build base image.
+- MUST specify a `name` to be the name of a build argument that will be provided to all output Dockerfiles or build.Dockerfiles when extending the build base image.
 - MUST specify a `value` to be the value of the build argument when it is provided.
 
 The image extension `unmet` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
