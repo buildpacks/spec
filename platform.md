@@ -551,6 +551,7 @@ When extending the run image:
 - After all image extensions have been applied, the lifecycle MUST set the label `io.buildpacks.rebasable` to `true` if and only if the original base image had `io.buildpacks.rebasable=true` and all image extensions set the label `io.buildpacks.rebasable` to `true`.
 - After all image extensions have been applied, the lifecycle MUST run `<genpkgs>` (if provided) in the context of the extended run image to generate an SBOM for the extended run image. The lifecycle MUST include the SBOM as a layer in the extended run image. The diffID of the layer containing the run image SBOM SHOULD replace the `io.buildpacks.base.sbom` label on the extended run image.
 - If no `<genpkgs>` is provided, the lifecycle should warn.
+- The lifecycle MUST replace the `run-image` reference in `<analyzed>` with the extended run image referece.
 
 ##### Outputs
 
@@ -1030,6 +1031,19 @@ Where:
 - `previous-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
+
+#### `extender.toml` (TOML)
+
+```toml
+[[dockerfiles]]
+  extension_id = "<extension id>"
+  path = "<path to file in output directory>"
+  type = "<build or run>"
+
+  [[dockerfiles.args]]
+    name = "<arg name>"
+    value = "<arg value>"
+```
 
 #### `group.toml` (TOML)
 
