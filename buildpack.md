@@ -310,7 +310,7 @@ TODO: move this after analyze
 
 ### Purpose
 
-The purpose of detection is to find an ordered group of image extensions and buildpacks to use during the build phase.
+The purpose of detection is to find an ordered group of image extensions and buildpacks to use during the build-ext and build phases.
 These image extensions and buildpacks must be compatible with the app.
 
 For detect requirements that are specific to image extensions, see the [Image Extension Interface](image-extension.md).
@@ -481,7 +481,7 @@ The purpose of the build-ext phase is to generate Dockerfiles that can be used t
 - The final ordered group of image extensions determined during the detection phase,
 - A directory containing application source code,
 - The Buildpack Plan,
-- An `<output>` directory used to store generated artifacts
+- An `<output>` directory used to store generated artifacts,
 - A shell, if needed,
 
 For each image extension in the group in order, the lifecycle MUST execute `/bin/build`.
@@ -538,14 +538,14 @@ The extension phase MUST be invoked separately for each base image (build or run
 
 **GIVEN:**
 - The final ordered group of Dockerfiles generated during the build-ext phase,
-- Buildpack-provided build args specified during the build-ext phase,
+- Image extension-provided build args specified during the build-ext phase,
 - A UUID provided as a `build_id` build arg,
 - A user id provided as a `user_id` build arg, and a group id provided as a `group_id` build arg,
-- A Dockerfile build context provided as a `base_image` build arg,
+- A Dockerfile `FROM` image provided as a `base_image` build arg,
 
 The `build_id` build arg allows the Dockerfile to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change).
 
-The `user_id` and `group_id` build args allow the Dockerfile to reset the `USER` to its original value if the user needs to be changed (e.g., to `root`) in order to perform privileged operations.
+The `user_id` and `group_id` build args allow the Dockerfile to reset the image config's `User` field to its original value if the user needs to be changed (e.g., to `root`) during the build in order to perform privileged operations.
 
 For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfile to the base image as follows:
 
@@ -564,7 +564,7 @@ For the final image to be rebasable, the provided run image and all applied Dock
 
 #### Software-Bill-of-Materials
 
-Image extensions MAY write Software Bill of Materials (SBOM) files as described in [Software-Bill-of-Materials](#software-bill-of-materials). The platform MAY generate additional SBOM files describing an extended base image after all Dockerfiles have been applied.
+Image extensions MAY write Software Bill of Materials (SBOM) files as described in [Software-Bill-of-Materials](#software-bill-of-materials). The platform MAY generate additional SBOM files describing the extended base image after all Dockerfiles have been applied.
 
 ## Phase #5: Build
 
