@@ -334,7 +334,7 @@ For each buildpack implementation in each group in order, the lifecycle MUST exe
          **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
       2. **If** at least one exit status from `/bin/detect` in the group is zero \
-         **Then** the lifecycle MUST select this group and proceed to the builder-ext phase.
+         **Then** the lifecycle MUST select this group and MAY proceed to the build-ext phase.
 
 The selected group MUST be filtered to only include buildpacks with exit status zero.
 The order of the buildpacks in the group MUST otherwise be preserved.
