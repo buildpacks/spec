@@ -62,7 +62,7 @@ Image extension authors MUST choose a globally unique ID, for example: "io.build
 
 The image extension `id`, `version`, `api`, `licenses`, and `sbom-formats` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
-### launch.toml (TOML) for extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md)
+### launch.toml (TOML) output by image extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md)
 
 ```toml
 [[args]]
@@ -82,7 +82,7 @@ For each arg, the image extension:
 
 The image extension `labels` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
-### build.toml (TOML) for buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
+### build.toml (TOML) output by image extensions; for buildpacks see the [Image Extension Specification](image-extension.md)
 
 ```toml
 [[args]]

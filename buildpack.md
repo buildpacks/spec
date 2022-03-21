@@ -995,7 +995,7 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 
 ## Data Format
 
-### launch.toml (TOML) for buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
+### launch.toml (TOML) output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
 
 ```toml
 [[labels]]
@@ -1056,7 +1056,7 @@ The lifecycle MUST accept slices that do not contain any files or directory. How
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
-### build.toml (TOML) for buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
+### build.toml (TOML) output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
 
 ```toml
 [[unmet]]
