@@ -193,8 +193,6 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
-- The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
 - The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
 - The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
