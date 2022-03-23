@@ -1128,9 +1128,30 @@ Each `key`:
 ## Deprecations
 This section describes all the features that are deprecated.
 
-### `0.7`
 
-#### launch.toml (TOML) `bom` Array
+### Positional Arguments to `detect` and `build` Executables
+
+_Deprecated in Buildpack API 0.8._
+
+The positional arguments to the `detect` and `build` executables are deprecated.
+The lifecycle provides these values as environment variables.
+
+To upgrade, buildpack authors SHOULD use the following environment variables:
+
+For `detect`:
+
+- `CNB_PLATFORM_DIR` replaces the first positional argument.
+- `CNB_BUILD_PLAN_PATH` replaces the second positional argument.
+
+For `build`:
+
+* `CNB_LAYERS_DIR` replaces the first positional argument.
+* `CNB_PLATFORM_DIR` replaces the second positional argument.
+* `CNB_BP_PLAN_PATH` replaces the third positional argument.
+
+### launch.toml (TOML) `bom` Array
+
+_Deprecated in Buildpack API 0.7._
 
 The `bom` array is deprecated.
 
@@ -1153,7 +1174,9 @@ When the build is complete, a legacy Bill of Materials (BOM) describing the app 
 
 If generated, this legacy BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
 
-#### build.toml (TOML) `bom` Array
+### build.toml (TOML) `bom` Array
+
+_Deprecated in Buildpack API 0.7._
 
 The `bom` array is deprecated.
 
@@ -1174,9 +1197,10 @@ When the build is complete, a legacy build BOM describing the build container MA
 
 If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
 
-### `0.3`
 
-#### Build Plan (TOML) `requires.version` Key
+### Build Plan (TOML) `requires.version` Key
+
+_Deprecated in Buildpack API 0.3._
 
 The `requires.version` and `or.requires.version` keys are deprecated.
 
@@ -1217,23 +1241,3 @@ name = "<dependency name>"
 [entries.metadata]
 version = "<dependency version>"
 ```
-
-### `0.8`
-
-#### Positional Arguments to `detect` and `build` Executables
-
-The positional arguments to the `detect` and `build` executables are deprecated.
-The lifecycle provides these values as environment variables.
-
-To upgrade, buildpack authors SHOULD use the following environment variables:
-
-For `detect`:
-
-- `CNB_PLATFORM_DIR` replaces the first positional argument.
-- `CNB_BUILD_PLAN_PATH` replaces the second positional argument.
-
-For `build`:
-
-* `CNB_LAYERS_DIR` replaces the first positional argument.
-* `CNB_PLATFORM_DIR` replaces the second positional argument.
-* `CNB_BP_PLAN_PATH` replaces the third positional argument.
