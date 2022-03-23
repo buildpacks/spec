@@ -38,28 +38,32 @@ TODO: fix toc
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
+      - [Mixin Satisfaction](#mixin-satisfaction)
       - [Order Resolution](#order-resolution)
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
     - [Process](#process-1)
-  - [Phase #3: Image Extension](#phase-3-image-extension)
-    - [Purpose](#purpose)
-    - [Process](#process)
-  - [Phase #3: Build](#phase-3-build)
+  - [Phase #3: Build-Ext (optional)](#phase-3-build-ext-optional)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
+  - [Phase #4: Extension (optional)](#phase-4-extension-optional)
+    - [Purpose](#purpose-3)
+    - [Process](#process-3)
+  - [Phase #5: Build](#phase-5-build)
+    - [Purpose](#purpose-4)
+    - [Process](#process-4)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Software Bill of Materials](#software-bill-of-materials)
+      - [Software-Bill-of-Materials](#software-bill-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
         - [Slice Layers](#slice-layers)
-  - [Phase #4: Export](#phase-4-export)
-    - [Purpose](#purpose-3)
-    - [Process](#process-3)
+  - [Phase #6: Export](#phase-6-export)
+    - [Purpose](#purpose-5)
+    - [Process](#process-5)
   - [Launch](#launch)
-    - [Purpose](#purpose-4)
-    - [Process](#process-4)
+    - [Purpose](#purpose-6)
+    - [Process](#process-6)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
       - [Buildpack Specific Variables](#buildpack-specific-variables)
@@ -87,6 +91,9 @@ TODO: fix toc
       - [Order Buildpacks](#order-buildpacks)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
+    - [`0.7`](#07)
+      - [launch.toml (TOML) `bom` Array](#launchtoml-toml-bom-array)
+      - [build.toml (TOML) `bom` Array](#buildtoml-toml-bom-array)
     - [`0.3`](#03)
       - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
@@ -917,7 +924,9 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 
 ## Data Format
 
-### launch.toml (TOML) output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
+### launch.toml (TOML)
+
+This section describes the `launch.toml` output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md).
 
 ```toml
 [[labels]]
@@ -978,7 +987,9 @@ The lifecycle MUST accept slices that do not contain any files or directory. How
 
 The lifecycle MUST include all unmatched files in the app directory in any number of additional layers in the OCI image.
 
-### build.toml (TOML) output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md)
+### build.toml (TOML)
+
+This section describes the `build.toml` output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md).
 
 ```toml
 [[unmet]]

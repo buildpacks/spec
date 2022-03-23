@@ -7,6 +7,26 @@ The lifecycle program uses image extensions to generate Dockerfiles that can be 
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
+- [Image Extension Interface Specification](#image-extension-interface-specification)
+  - [Table of Contents](#table-of-contents)
+  - [Image Extension API Version](#image-extension-api-version)
+  - [Image Extension Interface](#image-extension-interface)
+    - [Detection](#detection)
+    - [Build-Ext](#build-ext)
+  - [Phase: Build-Ext](#phase-build-ext)
+    - [Purpose](#purpose)
+    - [Process](#process)
+      - [Dockerfile Requirements](#dockerfile-requirements)
+  - [Phase: Extension](#phase-extension)
+    - [Purpose](#purpose-1)
+    - [Process](#process-1)
+      - [Ability to rebase](#ability-to-rebase)
+      - [Software-Bill-of-Materials](#software-bill-of-materials)
+  - [Data Format](#data-format)
+    - [Files](#files)
+    - [extension.toml (TOML)](#extensiontoml-toml)
+    - [launch.toml (TOML)](#launchtoml-toml)
+    - [build.toml (TOML)](#buildtoml-toml)
 
 ## Image Extension API Version
 
@@ -171,7 +191,9 @@ Image extension authors MUST choose a globally unique ID, for example: "io.build
 
 The image extension `id`, `version`, `api`, `licenses`, and `sbom-formats` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
-### launch.toml (TOML) output by image extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md)
+### launch.toml (TOML)
+
+This section describes the `launch.toml` output by image extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md).
 
 ```toml
 [[args]]
@@ -191,7 +213,9 @@ For each arg, the image extension:
 
 The image extension `labels` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
-### build.toml (TOML) output by image extensions; for buildpacks see the [Image Extension Specification](image-extension.md)
+### build.toml (TOML)
+
+This section describes the `build.toml` output by image extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md).
 
 ```toml
 [[args]]
