@@ -515,14 +515,26 @@ Correspondingly, each `/bin/build` executable:
 
 #### Dockerfile Requirements
 
-run.Dockerfiles have the following requirements:
+run.Dockerfiles:
 
-- TODO: list run.Dockerfile requirements
-- Dockerfiles that target the run image (only) may indicate any image in their `FROM` instruction.
+- MAY contain multiple `FROM` instructions
+- MAY contain any instruction except for `CMD` and `ENTRYPOINT`
 
-Dockerfiles and build.Dockerfiles have the following additional requirements:
+build.Dockerfiles and Dockerfiles:
 
-- TODO: list build.Dockerfile requirements
+- MUST begin with:
+```bash
+ARG base_image
+FROM ${base_image}
+```
+- MUST NOT contain any other `FROM` instructions
+- MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
+- MUST NOT contain any other instructions
+
+All files:
+
+- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change).
+- SHOULD use the `user_id` and `group_id` build args to reset the image config's `User` field to its original value if the user needs to be changed (e.g., to `root`) during the build in order to perform privileged operations.
 
 ## Phase #4: Extension
 
@@ -536,19 +548,19 @@ The extension phase MUST be invoked separately for each base image (build or run
 
 **GIVEN:**
 - The final ordered group of Dockerfiles generated during the build-ext phase,
-- Image extension-provided build args specified during the build-ext phase,
-- A UUID provided as a `build_id` build arg,
-- A user id provided as a `user_id` build arg, and a group id provided as a `group_id` build arg,
-- A Dockerfile `FROM` image provided as a `base_image` build arg,
-
-The `build_id` build arg allows the Dockerfile to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change).
-
-The `user_id` and `group_id` build args allow the Dockerfile to reset the image config's `User` field to its original value if the user needs to be changed (e.g., to `root`) during the build in order to perform privileged operations.
+- A list of build args for each Dockerfile specified during the build-ext phase,
 
 For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfile to the base image as follows:
 
-- For the first Dockerfile, the `base_image` build arg MUST be the original base image.
-- When there are multiple Dockerfiles, the intermediate image generated from the application of the current Dockerfile MUST be provided as the `base_image` build arg to the next Dockerfile.
+- The lifecycle MUST provide each Dockerfile with:
+- A `base_image` build arg
+  - For the first Dockerfile, the value MUST be the original base image.
+  - When there are multiple Dockerfiles, the value MUST be the intermediate image generated from the application of the previous Dockerfile.
+- A `build_id` build arg
+  - The value MUST be a UUID
+- `user_id` and `group_id` build args
+  - For the first Dockerfile, the values MUST be the original `uid` and `gid` from the `User` field of the config for the original base image.
+  - When there are multiple Dockerfiles, the values MUST be the `uid` and `gid` from the `User` field of the config for the intermediate image generated from the application of the previous Dockerfile.
 
 #### Ability to rebase
 
