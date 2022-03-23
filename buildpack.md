@@ -926,7 +926,7 @@ The lifecycle SHOULD be implemented so that each phase may run in a different co
 
 ### launch.toml (TOML)
 
-This section describes the `launch.toml` output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md).
+This section describes the `launch.toml` output by buildpacks; for image extensions see the [Image Extension Interface Specification](image-extension.md).
 
 ```toml
 [[labels]]
@@ -989,7 +989,7 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 
 ### build.toml (TOML)
 
-This section describes the `build.toml` output by buildpacks; for image extensions see the [Image Extension Specification](image-extension.md).
+This section describes the `build.toml` output by buildpacks; for image extensions see the [Image Extension Interface Specification](image-extension.md).
 
 ```toml
 [[unmet]]
