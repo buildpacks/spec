@@ -33,6 +33,115 @@ Image extensions participate in a build-ext process that is similar to the build
 - `$CNB_LAYERS_DIR` MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
 - If an image extension is missing `/bin/build`, the image extension root MUST be treated as a pre-populated `<output>` directory.
 
+## Phase: Build-Ext
+
+### Purpose
+
+The purpose of the build-ext phase is to generate Dockerfiles that can be used to extend the build and/or run base images. The Build-Ext phase MUST NOT be run for Windows builds.
+
+### Process
+
+**GIVEN:**
+- The final ordered group of image extensions determined during the detection phase,
+- A directory containing application source code,
+- The Buildpack Plan,
+- An `<output>` directory used to store generated artifacts,
+- A shell, if needed,
+
+For each image extension in the group in order, the lifecycle MUST execute `/bin/build`.
+
+1. **If** the exit status of `/bin/build` is non-zero, \
+   **Then** the lifecycle MUST fail the build.
+
+2. **If** the exit status of `/bin/build` is zero,
+    1. **If** there are additional image extensions in the group, \
+       **Then** the lifecycle MUST proceed to the next image extension's `/bin/build`.
+
+    2. **If** there are no additional image extensions in the group, \
+       **Then** the lifecycle MUST proceed to the extend phase.
+
+For each `/bin/build` executable in each image extension, the lifecycle:
+
+- MUST provide path arguments to `/bin/build` as described in the [Image Extension Interface](image-extension.md) section.
+- MUST configure the build environment as described in the [Environment](#environment) section.
+- MUST provide all `<plan>` entries that were required by any image extension or buildpack in the group during the detection phase with names matching the names that the image extension provided.
+
+Correspondingly, each `/bin/build` executable:
+
+- MAY read from the `<app>` directory.
+- MUST NOT write to the `<app>` directory.
+- MAY read the build environment as described in the [Environment](#environment) section.
+- MAY read the Buildpack Plan.
+- MAY log output from the build process to `stdout`.
+- MAY emit error, warning, or debug messages to `stderr`.
+- MAY write any combination of Dockerfile, build.Dockerfile, and run.Dockerfile to the `<output>` directory. These files MUST adhere to the requirements listed below.
+- MAY write key-value pairs to `<output>/launch.toml` that are provided as build args to Dockerfile or run.Dockerfile when extending the run image.
+- MAY write key-value pairs to `<output>/build.toml` that are provided as build args to Dockerfile or build.Dockerfile when extending the build image.
+- SHOULD write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section describing any contributions to the app image or build environment.
+
+#### Dockerfile Requirements
+
+run.Dockerfiles:
+
+- MAY contain multiple `FROM` instructions
+- MAY contain any instruction except for `CMD` and `ENTRYPOINT`
+
+build.Dockerfiles and Dockerfiles:
+
+- MUST begin with:
+```bash
+ARG base_image
+FROM ${base_image}
+```
+- MUST NOT contain any other `FROM` instructions
+- MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
+- MUST NOT contain any other instructions
+
+All files:
+
+- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change).
+- SHOULD use the `user_id` and `group_id` build args to reset the image config's `User` field to its original value if the user needs to be changed (e.g., to `root`) during the build in order to perform privileged operations.
+
+## Phase: Extension
+
+### Purpose
+
+The purpose of the extension phase is to apply the Dockerfiles generated in the build-ext phase to the build and/or run base images. The Extension phase MUST NOT be run for Windows builds.
+
+### Process
+
+The extension phase MUST be invoked separately for each base image (build or run) that is extended.
+
+**GIVEN:**
+- The final ordered group of Dockerfiles generated during the build-ext phase,
+- A list of build args for each Dockerfile specified during the build-ext phase,
+
+For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfile to the base image as follows:
+
+- The lifecycle MUST provide each Dockerfile with:
+- A `base_image` build arg
+    - For the first Dockerfile, the value MUST be the original base image.
+    - When there are multiple Dockerfiles, the value MUST be the intermediate image generated from the application of the previous Dockerfile.
+- A `build_id` build arg
+    - The value MUST be a UUID
+- `user_id` and `group_id` build args
+    - For the first Dockerfile, the values MUST be the original `uid` and `gid` from the `User` field of the config for the original base image.
+    - When there are multiple Dockerfiles, the values MUST be the `uid` and `gid` from the `User` field of the config for the intermediate image generated from the application of the previous Dockerfile.
+
+#### Ability to rebase
+
+When extending the run image, a Dockerfile MAY indicate that it preserves the ability to rebase by including the following instruction:
+
+```bash
+LABEL io.buildpacks.rebasable=true
+```
+
+For the final image to be rebasable, the provided run image and all applied Dockerfiles MUST indicate rebasability.
+
+#### Software-Bill-of-Materials
+
+Image extensions MAY write Software Bill of Materials (SBOM) files as described in [Software-Bill-of-Materials](#software-bill-of-materials). The platform MAY generate additional SBOM files describing the extended base image after all Dockerfiles have been applied.
+
 ## Data Format
 
 ### Files
