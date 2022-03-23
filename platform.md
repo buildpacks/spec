@@ -10,8 +10,6 @@ Examples of a platform might include:
 1. A plugin for a continuous integration service that uses buildpacks to create OCI images
 1. A cloud application platform that uses buildpacks to build source code before deployment
 
-TODO: fix toc
-
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->

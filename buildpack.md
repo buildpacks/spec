@@ -17,8 +17,6 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
 
 ## Table of Contents
 
-TODO: fix toc
-
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
