@@ -313,14 +313,13 @@ At the end of each individual buildpack's build phase:
 ### Purpose
 
 The purpose of detection is to find an ordered group of image extensions and buildpacks to use during the build-ext and build phases.
-These image extensions and buildpacks must be compatible with the app.
 
 For detect requirements that are specific to image extensions, see the [Image Extension Interface](image-extension.md).
 
 ### Process
 
 **GIVEN:**
-- An ordered list of image extension or buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- An ordered list of resolved groups as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
 - A shell, if needed,
 
