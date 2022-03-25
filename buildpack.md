@@ -118,7 +118,11 @@ An **application directory** is a directory containing application source code. 
 
 A **layer** is a set of filesystem changes packaged according to the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/layer.md).
 
-A **layer directory** is a directory created by an executable buildpack that contains build and/or runtime dependencies, or is used to configure the build and/or runtime environment. If designated for launch, the layer directory will be added as a layer in the exported OCI image.
+A **layer directory** is a directory created by an executable buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
+  * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the executable buildpack that created the layer has the same requirements on the next build
+  * a **cache layer** is saved to the cache and its contents are restored on the next build
+  * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
+Any combination of the three layer types are valid for a particular layer directory.
 
 A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to executable buildpacks through the `CNB_STACK_ID` environment variable, enabling each executable buildpack to modify its behavior when executed on different stacks.
 
