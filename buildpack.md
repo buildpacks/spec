@@ -2,17 +2,6 @@
 
 This document specifies the interface between a lifecycle program and one or more buildpacks.
 
-The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
-
-This is accomplished in four phases:
-
-1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
-3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
-4. **Export,** where the remote layers are replaced by the generated layers.
-
-The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
-
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
@@ -91,6 +80,50 @@ Buildpack API versions:
  - `<major>` and `<minor>` MUST only contain numbers (unsigned 64 bit integer)
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
+## Terminology
+
+### CNB Terminology
+
+A **buildpack** is a directory containing a `buildpack.toml`.
+
+A **buildpack group**, or **group**, is a list of one or more buildpacks that are designed to work together - for example, a buildpack that provides `node` and a buildpack that provides `npm`.
+
+An **order** is a list of one or more groups to be tested against application source code, so that the appropriate group for a build can be determined. 
+
+An **executable buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables.
+
+An **order buildpack** is a buildpack containing an order definition in `buildpack.toml`. Order buildpacks do not contain `/bin/detect` or `/bin/build` executables.
+
+**Resolving an order** is the process by which an order (which may contain order buildpacks) is evaluated together with application source code to produce a group of executable buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each executable buildpack is invoked, and the group that is returned is the first group where `/bin/detect` returns true for all non-optional executable buildpacks.
+
+A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility:
+  1. **Detection,** where an optimal selection of compatible buildpacks is chosen by resolving the provided order.
+  2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to executable buildpacks in the selected group.
+  3. **Build,** where the `bin/build` for each executable buildpack in the selected group is invoked, in order, to build the application.
+  4. **Export,** where filesystem changes from the build phase are packaged into layers in an OCI image.
+
+A **launcher** is software contributed by the lifecycle as the `ENTRYPOINT` of the exported OCI image that is used to start processes at runtime.
+
+**Launch** describes the process of running an application by creating a container from the exported OCI image.
+
+A **platform** is a system or software that orchestrates the lifecycle by invoking each lifecycle phase in order.
+
+A **process type** is a definition, provided by executable buildpacks during the build phase, of a process to launch at runtime.
+
+A **build plan** is a file used during detection, in which each executable buildpack may express the dependencies that it requires and the dependencies that it provides. A group of executable buildpacks will only pass detection if a valid build plan can be produced from the dependencies that all executable buildpacks in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each executable buildpack will have its required dependencies provided by an executable buildpack that runs before it.
+
+A **buildpack plan** is a file unique to each executable buildpack, used during the build phase to communicate the dependencies that the executable buildpack is expected to provide.
+
+An **application directory** is a directory containing application source code. Executable buildpacks may make changes to the application directory during the build phase.
+
+A **layer** is a set of filesystem changes packaged according to the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/layer.md).
+
+A **layer directory** is a directory created by an executable buildpack that contains build and/or runtime dependencies, or is used to configure the build and/or runtime environment. If designated for launch, the layer directory will be added as a layer in the exported OCI image.
+
+A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to executable buildpacks through the `CNB_STACK_ID` environment variable, enabling each executable buildpack to modify its behavior when executed on different stacks.
+
+A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
+
 ## Buildpack Interface
 
 The following specifies the interface implemented by executables in each buildpack.
@@ -99,7 +132,7 @@ The lifecycle MUST invoke these executables as described in the Phase sections.
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
-- return an error to the platform if it does not support `<buildpack API Version>`
+- MUST return an error to the platform if it does not support `<buildpack API Version>`
 
 The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
@@ -131,7 +164,6 @@ Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
 | Standard output    | Logs (info)
 | Standard error     | Logs (warnings, errors)
 | `<plan>`           | Contributions to the the Build Plan (TOML)
-
 
 ###  Build
 
@@ -462,7 +494,7 @@ After analysis, the lifecycle MUST proceed to the build phase.
 
 ### Purpose
 
-The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container.
+The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container image.
 
 During the build phase, typical buildpacks might:
 
@@ -1019,7 +1051,6 @@ For a given layer, the buildpack MAY specify:
 
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
-
 
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
