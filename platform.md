@@ -42,7 +42,7 @@ Examples of a platform might include:
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
         - [Layer Restoration](#layer-restoration)
-      - [`builder-ext`](#builder-ext)
+      - [`generator`](#generator)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
       - [`extender`](#extender)
@@ -459,12 +459,12 @@ Usage:
 ##### Layer Restoration
 lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
 
-#### `builder-ext`
-The platform MAY execute `builder-ext` in the **build environment** for Linux builds
+#### `generator`
+The platform MAY execute `generator` in the **build environment** for Linux builds
 
 Usage:
 ```
-/cnb/lifecycle/builder-ext \
+/cnb/lifecycle/generator \
   [-app <app>] \
   [-extender <extender> ] \
   [-exts <exts>] \
@@ -496,14 +496,14 @@ Usage:
 | `<output>/<image extension ID>/<Dockerfile>` | Generated Dockerfiles (see [Image Extension Specfication](image-extension.md) |
 | `<layers>/config/metadata.toml`              | Build metadata (see [`metadata.toml`](#metadatatoml-toml))                    |
 
-| Exit Code       | Result                              |
-|-----------------|-------------------------------------|
-| `0`             | Success                             |
-| `11`            | Platform API incompatibility error  |
-| `12`            | Buildpack API incompatibility error |
-| `1-10`, `13-19` | Generic lifecycle errors            |
-| `91`            | Image extension build error         |
-| `90`, `92-99`   | Build-Ext-specific lifecycle errors |
+| Exit Code       | Result                               |
+|-----------------|--------------------------------------|
+| `0`             | Success                              |
+| `11`            | Platform API incompatibility error   |
+| `12`            | Buildpack API incompatibility error  |
+| `1-10`, `13-19` | Generic lifecycle errors             |
+| `91`            | Image extension build error          |
+| `90`, `92-99`   | Generation-specific lifecycle errors |
 
 - The lifecycle SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked image extensions to`<layers>/config/metadata.toml`.

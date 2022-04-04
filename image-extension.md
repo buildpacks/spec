@@ -12,8 +12,8 @@ The lifecycle program uses image extensions to generate Dockerfiles that can be 
   - [Image Extension API Version](#image-extension-api-version)
   - [Image Extension Interface](#image-extension-interface)
     - [Detection](#detection)
-    - [Build-Ext](#build-ext)
-  - [Phase: Build-Ext](#phase-build-ext)
+    - [Generation](#generation)
+  - [Phase: Generation](#phase-generation)
     - [Purpose](#purpose)
     - [Process](#process)
       - [Dockerfile Requirements](#dockerfile-requirements)
@@ -21,7 +21,6 @@ The lifecycle program uses image extensions to generate Dockerfiles that can be 
     - [Purpose](#purpose-1)
     - [Process](#process-1)
       - [Ability to rebase](#ability-to-rebase)
-      - [Software-Bill-of-Materials](#software-bill-of-materials)
   - [Data Format](#data-format)
     - [Files](#files)
     - [extension.toml (TOML)](#extensiontoml-toml)
@@ -44,20 +43,20 @@ Image extensions participate in the buildpack [detection](buildpack.md#detection
 - Detection is optional for image extensions, and they are assumed to pass detection when `/bin/detect` is not present.
 - Image extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
 
-### Build-Ext
+### Generation
 
-Executable: `/bin/build`, Working Dir: `<app[AR]>`
+Executable: `/bin/generate`, Working Dir: `<app[AR]>`
 
-Image extensions participate in a build-ext process that is similar to the buildpack [build](buildpack.md#build) process, with the same interface for `/bin/build`. However:
-- Image extensions' `/bin/build` MUST NOT write to the app directory.
-- `$CNB_LAYERS_DIR` MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
-- If an image extension is missing `/bin/build`, the image extension root MUST be treated as a pre-populated `<output>` directory.
+Image extensions participate in a generation process that is similar to the buildpack [build](buildpack.md#build) process, with an interface that is similar to `/bin/build`. However:
+- Image extensions' `/bin/generate` MUST NOT write to the app directory.
+- Instead of the `CNB_LAYERS_DIR`, image extensions receive a `CNB_OUTPUT_DIR` which MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
+- If an image extension is missing `/bin/generate`, the image extension root MUST be treated as a pre-populated `<output>` directory.
 
-## Phase: Build-Ext
+## Phase: Generation
 
 ### Purpose
 
-The purpose of the build-ext phase is to generate Dockerfiles that can be used to extend the build and/or run base images. The Build-Ext phase MUST NOT be run for Windows builds.
+The purpose of the generation phase is to generate Dockerfiles that can be used to extend the build and/or run base images. The generation phase MUST NOT be run for Windows builds.
 
 ### Process
 
@@ -68,25 +67,25 @@ The purpose of the build-ext phase is to generate Dockerfiles that can be used t
 - An `<output>` directory used to store generated artifacts,
 - A shell, if needed,
 
-For each image extension in the group in order, the lifecycle MUST execute `/bin/build`.
+For each image extension in the group in order, the lifecycle MUST execute `/bin/generate`.
 
-1. **If** the exit status of `/bin/build` is non-zero, \
+1. **If** the exit status of `/bin/generate` is non-zero, \
    **Then** the lifecycle MUST fail the build.
 
-2. **If** the exit status of `/bin/build` is zero,
+2. **If** the exit status of `/bin/generate` is zero,
     1. **If** there are additional image extensions in the group, \
-       **Then** the lifecycle MUST proceed to the next image extension's `/bin/build`.
+       **Then** the lifecycle MUST proceed to the next image extension's `/bin/generate`.
 
     2. **If** there are no additional image extensions in the group, \
        **Then** the lifecycle MUST proceed to the extend phase.
 
-For each `/bin/build` executable in each image extension, the lifecycle:
+For each `/bin/generate` executable in each image extension, the lifecycle:
 
-- MUST provide path arguments to `/bin/build` as described in the [Image Extension Interface](image-extension.md) section.
+- MUST provide path arguments to `/bin/generate` as described in the [Image Extension Interface](image-extension.md) section.
 - MUST configure the build environment as described in the [Environment](#environment) section.
 - MUST provide all `<plan>` entries that were required by any image extension or buildpack in the group during the detection phase with names matching the names that the image extension provided.
 
-Correspondingly, each `/bin/build` executable:
+Correspondingly, each `/bin/generate` executable:
 
 - MAY read from the `<app>` directory.
 - MUST NOT write to the `<app>` directory.
@@ -97,7 +96,7 @@ Correspondingly, each `/bin/build` executable:
 - MAY write any combination of Dockerfile, build.Dockerfile, and run.Dockerfile to the `<output>` directory. These files MUST adhere to the requirements listed below.
 - MAY write key-value pairs to `<output>/launch.toml` that are provided as build args to Dockerfile or run.Dockerfile when extending the run image.
 - MAY write key-value pairs to `<output>/build.toml` that are provided as build args to Dockerfile or build.Dockerfile when extending the build image.
-- SHOULD write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section describing any contributions to the app image or build environment.
+- MUST NOT write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section.
 
 #### Dockerfile Requirements
 
@@ -126,15 +125,15 @@ All files:
 
 ### Purpose
 
-The purpose of the extension phase is to apply the Dockerfiles generated in the build-ext phase to the build and/or run base images. The Extension phase MUST NOT be run for Windows builds.
+The purpose of the extension phase is to apply the Dockerfiles generated in the generation phase to the build and/or run base images. The extension phase MUST NOT be run for Windows builds.
 
 ### Process
 
 The extension phase MUST be invoked separately for each base image (build or run) that is extended.
 
 **GIVEN:**
-- The final ordered group of Dockerfiles generated during the build-ext phase,
-- A list of build args for each Dockerfile specified during the build-ext phase,
+- The final ordered group of Dockerfiles generated during the generation phase,
+- A list of build args for each Dockerfile specified during the generation phase,
 
 For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfile to the base image as follows:
 
@@ -158,10 +157,6 @@ LABEL io.buildpacks.rebasable=true
 
 For the final image to be rebasable, the provided run image and all applied Dockerfiles MUST indicate rebasability.
 
-#### Software-Bill-of-Materials
-
-Image extensions MAY write Software Bill of Materials (SBOM) files as described in [Software-Bill-of-Materials](#software-bill-of-materials). The platform MAY generate additional SBOM files describing the extended base image after all Dockerfiles have been applied.
-
 ## Data Format
 
 ### Files
@@ -180,7 +175,6 @@ version = "<extension version>"
 homepage = "<extension homepage>"
 description = "<extension description>"
 keywords = [ "<string>" ]
-sbom-formats = [ "<string>" ]
 
 [[extension.licenses]]
 type = "<string>"
@@ -199,19 +193,13 @@ This section describes the `launch.toml` output by image extensions; for buildpa
 [[args]]
 name = "<build arg name>"
 value = "<build arg value>"
-
-[[labels]]
-key = "<label key>"
-value = "<label valu>"
 ```
 
-The image extension MAY specify any number of args or labels.
+The image extension MAY specify any number of args.
 
 For each arg, the image extension:
 - MUST specify a `name` to be the name of a build argument that will be provided to all output Dockerfiles or run.Dockerfiles when extending the run base image.
 - MUST specify a `value` to be the value of the build argument when it is provided.
-
-The image extension `labels` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
 ### build.toml (TOML)
 
