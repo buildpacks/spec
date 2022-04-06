@@ -87,7 +87,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.7`.
+This document specifies Platform API version `0.9`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -285,10 +285,12 @@ Usage:
   [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
+  [-launch-cache <launch-cache>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
+  [-skip-layers <skip-layers> ] \
   [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
@@ -304,9 +306,11 @@ Usage:
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
+| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
+| `<skip-layers>`   | `CNB_SKIP_LAYERS`     | `false`                  | Do not restore SBOM layer from previous image
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
 | `<tag>...`        |                       |                          | Additional tag to apply to exported image
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
@@ -316,6 +320,7 @@ Usage:
 - **If** `<daemon>` is `false` and the platform provides one or more `<tag>` inputs, each `<tag>` MUST refer to the same registry as `<image>`.
 - **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
+- **If** `<skip-layers>` is `true` the lifecycle MUST NOT restore the SBOM layer (if any) from the previous image.
 - **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
@@ -493,7 +498,7 @@ Usage:
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
-- The lifecycle SHALL aggregate all `processes`, `slices` and `bom` entries returned by buildpacks in `<layers>/config/metadata.toml`.
+- The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
@@ -541,6 +546,7 @@ Usage:
 | `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
+|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config                                           |
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -570,8 +576,9 @@ Usage:
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
-      - `<layers>/sbom/<buildpack-id>/launch.sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
-      - `<layers>/sbom/<buildpack-id>/<layer-id>/launch.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
+      - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
+      - `<layers>/sbom/launch/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
+      - `<layers>/sbom/launch/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -596,15 +603,15 @@ Usage:
         - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the modification time of all files in newly created layers to a constant value
-    - SHOULD set the `created` time in image config to a constant value
+    - SHOULD set the `created` time in image config to `SOURCE_DATE_EPOCH`, or to a constant value if not defined
 
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
   - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
-    - `<layers>/sbom/<buildpack-id>/build.sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
-    - `<layers>/sbom/<buildpack-id>/<layer-id>/build.sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer
-
+    - `<layers>/sbom/build/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
+    - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer.
+    - `<layers>/sbom/build/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `build` (where [supported](buildpack.md))
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
@@ -645,10 +652,10 @@ Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restor
 | Input             | Environment Variable| Default Value| Description
 |-------------------|---------------------|--------------|----------------------
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`| `<image>`    | Image reference to be analyzed (usually the result of the previous build)
-| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Do not write layer metadata or restore cached layers
+| `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Prevent buildpacks from reusing layers from previous builds, by skipping the restoration of any data to each buildpack's layers directory, with the exception of `store.toml`.
 | `<tag>...`        |                     |              | Additional tag to apply to exported image
 
-- **If** `<skip-restore>` is `true` the `creator` SHALL skip layer analysis and skip the entire Restore phase.
+- **If** `<skip-restore>` is `true` the `creator` SHALL skip sbom layer restoration and skip the entire Restore phase.
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 ##### Outputs
@@ -733,44 +740,47 @@ Usage:
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
 ##### Inputs
-| Input               | Environment Variable  | Default Value  | Description
-|---------------------|-----------------------|----------------|---------------------------------------
-| `<app>`             | `CNB_APP_DIR`         | `/workspace`   | Path to application directory
-| `<layers>`          | `CNB_LAYERS_DIR`      | `/layers`      | Path to layer directory
-| `<process-type>`    |                       |                | `type` of process to launch
-| `<direct>`          |                       |                | Process execution strategy
-| `<cmd>`             |                       |                | Command to execute
-| `<args>`            |                       |                | Arguments to command
-| `<layers>/config/metadata.toml`    |        |                | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
-| `<layers>/<buildpack-id>/<layer>/` |        |                | Launch Layers
+| Input                              | Environment Variable | Default Value | Description                                               |
+|------------------------------------|----------------------|---------------|-----------------------------------------------------------|
+| `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
+| `<layers>`                         | `CNB_LAYERS_DIR`     | `/layers`     | Path to layer directory                                   |
+| `<process-type>`                   |                      |               | `type` of process to launch                               |
+| `<direct>`                         |                      |               | Process execution strategy                                |
+| `<cmd>`                            |                      |               | Command to execute                                        |
+| `<args>`                           |                      |               | Arguments to command                                      |
+| `<layers>/config/metadata.toml`    |                      |               | Build metadata (see [`metadata.toml`](#metadatatoml-toml) |
+| `<layers>/<buildpack-id>/<layer>/` |                      |               | Launch Layers                                             |
 
-A command (`<cmd>`), arguments to that command (`<args>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
+A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST derive the values of `<cmd>`, `<args>`, and `<direct>` as follows:
+- MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
         - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
         - `<cmd>` SHALL be `$2`
         - `<args>` SHALL be `${@3:}`
+        - `<working-dir>` SHALL be `<app>`
     - **Else**
         - `<direct>` SHALL be `false`
         - `<cmd>` SHALL be `$1`
         - `<args>` SHALL be `${@2:}`
+        - `<working-dir` SHALL be `<app>`
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
 
-| Exit Code | Result|
-|-----------|-------|
-| `11`      | Platform API incompatibility error
-| `12`      | Buildpack API incompatibility error
-| `80-89`|  Launch-specific lifecycle errors
+| Exit Code | Result                              |
+|-----------|-------------------------------------|
+| `11`      | Platform API incompatibility error  |
+| `12`      | Buildpack API incompatibility error |
+| `80-89`   | Launch-specific lifecycle errors    |
 
 Otherwise, the exit code shall be the exit code of the launched process.
 
@@ -926,18 +936,16 @@ type = "<process type>"
 command = "<command>"
 args = ["<arguments>"]
 direct = false
+working-dir = "<working directory>"
 
 [[slices]]
 paths = ["<app sub-path glob>"]
-
-[bom]
 ```
 
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
 - `slices` contains the complete set of slices defined by all buildpacks
-- `bom` contains the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
 
 #### `order.toml` (TOML)
 
@@ -1000,17 +1008,6 @@ tags = ["<tag reference>"]
 digest = "<image digest>"
 image-id = "<imageID>"
 manifest-size = "<manifest size in bytes>"
-
-[build]
-[[build.bom]]
-name = "<dependency name>"
-
-[build.bom.metadata]
-version = "<dependency version>"
-
-[build.bom.buildpack]
-id = "<buildpack ID>"
-version = "<buildpack version>"
 ```
 Where:
 - `tags` MUST contain all tag references to the exported app image
@@ -1019,8 +1016,6 @@ Where:
   - `manifest-size` MUST contain the manifest size in bytes
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
-- **If** the app image was the result of a build operation
-  - `build.bom` MUST contain any build Bill of Materials entries returned by buildpacks implementing Buildpack API < 0.7
 
 #### `stack.toml` (TOML)
 
@@ -1051,7 +1046,8 @@ Where:
       "args": [
         "<args>"
       ],
-      "direct": false
+      "direct": false,
+      "working-dir": "<working-dir>",
     }
   ],
   "buildpacks": [
@@ -1060,18 +1056,6 @@ Where:
       "version": "<buildpack version>",
       "homepage": "<buildpack homepage>"
     }
-  ],
-  "bom": [
-    {
-      "name": "<bom-entry-name>",
-      "metadata": {
-        // arbitrary buildpack provided metadata
-      },
-      "buildpack": {
-        "id": "<buildpack ID>",
-        "version": "<buildpack version>"
-      }
-    },
   ],
  "launcher": {
     "version": "<launcher-version>",
@@ -1087,7 +1071,6 @@ Where:
 Where:
 - `processes` MUST contain all buildpack contributed processes
 - `buildpacks` MUST contain the detected group
-- `bom` MUST contain the Bill of Materials contributed by buildpacks implementing Buildpack API < 0.7
 - `launcher.version` SHOULD contain the version of the `launcher` binary included in the app
 - `launcher.source.git.repository` SHOULD contain the git repository containing the `launcher` source code
 - `launcher.source.git.commit` SHOULD contain the git commit from which the given `launcher` was built
