@@ -55,7 +55,6 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Process](#process-4)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
-      - [Buildpack Specific Variables](#buildpack-specific-variables)
       - [Layer Paths](#layer-paths)
     - [Provided by the Platform](#provided-by-the-platform)
     - [Provided by the Buildpacks](#provided-by-the-buildpacks)
@@ -123,9 +122,10 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 |--------------------------|------------|-----------------------------------------------|
 | `$0`                     |            | Absolute path of `/bin/detect` executable     |
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan               |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory       |
-| `$CNB_PLATFORM_DIR/env/` |            | User-provided environment variables for build |
-| `$CNB_PLATFORM_DIR/#`    |            | Platform-specific extensions                  |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                  |
 
 | Output                 | Description                                 |
 |------------------------|---------------------------------------------|
@@ -144,9 +144,10 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$0`                     |            | Absolute path of `/bin/build` executable                                      |
 | `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
-| `$CNB_PLATFORM_DIR/env/` |            | User-provided environment variables for build                                 |
-| `$CNB_PLATFORM_DIR/#`    |            | Platform-specific extensions                                                  |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
 
 | Output                                          | Description                                                                                                      |
 |-------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
@@ -742,16 +743,6 @@ Given the start command and execution strategy,
 ## Environment
 
 ### Provided by the Lifecycle
-
-#### Buildpack Specific Variables
-
-The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
-
-These variables MAY differ between buildpacks.
-
-| Env Variable        | Description                          | Detect | Build | Launch
-|---------------------|--------------------------------------|--------|-------|--------
-| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
 
 #### Layer Paths
 
