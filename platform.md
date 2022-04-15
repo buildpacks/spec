@@ -87,7 +87,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.9`.
+This document specifies Platform API version `0.10`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -735,9 +735,9 @@ Usage:
 #### `launcher`
 Usage:
 ```
-/cnb/process/<process-type> [<arg>...]
+/cnb/process/<process-type> [<args>...]
 # OR
-/cnb/lifecycle/launcher [--] [<cmd> <arg>...]
+/cnb/lifecycle/launcher [<cmd> <args>...]
 ```
 ##### Inputs
 | Input                              | Environment Variable | Default Value | Description                                               |
@@ -745,33 +745,28 @@ Usage:
 | `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
 | `<layers>`                         | `CNB_LAYERS_DIR`     | `/layers`     | Path to layer directory                                   |
 | `<process-type>`                   |                      |               | `type` of process to launch                               |
-| `<direct>`                         |                      |               | Process execution strategy                                |
 | `<cmd>`                            |                      |               | Command to execute                                        |
 | `<args>`                           |                      |               | Arguments to command                                      |
 | `<layers>/config/metadata.toml`    |                      |               | Build metadata (see [`metadata.toml`](#metadatatoml-toml) |
 | `<layers>/<buildpack-id>/<layer>/` |                      |               | Launch Layers                                             |
 
-A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
+A command (`<cmd>`), arguments to that command (`<args>`), and a working directory (`<working-dir>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
+- MUST derive the values of `<cmd>`, `<args>`, and `<working-dir>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
-        - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
-        - MUST append any user-provided `<args>` to process arguments
+        - MUST set `<cmd>` to the first element of `command` in the selected process type.
+        - MUST set `<args>` to any remaining elements of `command` in the selected process type, followed by:
+            - **If** there are user-provided `<args>`, the user-provided `<args>`
+            - **Else** any `args` defined in the selected process type
+        - MUST set `<working-dir>` to the `working-dir` defined for the selected process type, or to `<app>` if not defined
 - **Else**
-    - **If** `$1` is `--`
-        - `<direct>` SHALL be `true`
-        - `<cmd>` SHALL be `$2`
-        - `<args>` SHALL be `${@3:}`
-        - `<working-dir>` SHALL be `<app>`
-    - **Else**
-        - `<direct>` SHALL be `false`
-        - `<cmd>` SHALL be `$1`
-        - `<args>` SHALL be `${@2:}`
-        - `<working-dir` SHALL be `<app>`
+    - `<cmd>` SHALL be the user-provided `<cmd>`
+    - `<args>` SHALL be the user-provided `<args>`
+    - `<working-dir>` SHALL be `<app>`
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
@@ -933,9 +928,8 @@ optional = false
 
 [[processes]]
 type = "<process type>"
-command = "<command>"
+command = ["<command>"]
 args = ["<arguments>"]
-direct = false
 working-dir = "<working directory>"
 
 [[slices]]
@@ -1042,11 +1036,12 @@ Where:
   "processes": [
     {
       "type": "<process-type>",
-      "command": "<command>",
+      "command": [
+        "<command>"
+      ],
       "args": [
         "<args>"
       ],
-      "direct": false,
       "working-dir": "<working-dir>",
     }
   ],
