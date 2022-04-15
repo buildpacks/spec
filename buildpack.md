@@ -4,12 +4,13 @@ This document specifies the interface between a lifecycle program and one or mor
 
 The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
 
-This is accomplished in four phases:
+This is accomplished in five phases:
 
-1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
-3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
-4. **Export,** where the remote layers are replaced by the generated layers.
+1. **Detection**, where an optimal selection of compatible buildpacks is chosen.
+1. **Analysis**, where metadata about OCI layers generated during a previous build are made available to buildpacks.
+1. **Generation** (optional, see the [Image Extension Interface](image-extension.md)), where image extensions generate Dockerfiles that can be used to select the runtime base image.
+1. **Build**, where buildpacks use analyzed metadata to generate only the OCI layers that need to be replaced.
+1. **Export**, where the remote layers are replaced by the generated layers.
 
 The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
 
@@ -34,25 +35,29 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
+      - [Mixin Satisfaction](#mixin-satisfaction)
       - [Order Resolution](#order-resolution)
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
     - [Process](#process-1)
-  - [Phase #3: Build](#phase-3-build)
+  - [Phase #3: Generation (optional)](#phase-3-generation-optional)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
+  - [Phase #4: Build](#phase-4-build)
+    - [Purpose](#purpose-3)
+    - [Process](#process-3)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Software Bill of Materials](#software-bill-of-materials)
+      - [Software-Bill-of-Materials](#software-bill-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
         - [Slice Layers](#slice-layers)
-  - [Phase #4: Export](#phase-4-export)
-    - [Purpose](#purpose-3)
-    - [Process](#process-3)
-  - [Launch](#launch)
+  - [Phase #5: Export](#phase-5-export)
     - [Purpose](#purpose-4)
     - [Process](#process-4)
+  - [Launch](#launch)
+    - [Purpose](#purpose-5)
+    - [Process](#process-5)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
       - [Layer Paths](#layer-paths)
@@ -79,8 +84,10 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Order Buildpacks](#order-buildpacks)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
-    - [`0.3`](#03)
-      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
+    - [Positional Arguments to `detect` and `build` Executables](#positional-arguments-to-detect-and-build-executables)
+    - [launch.toml (TOML) `bom` Array](#launchtoml-toml-bom-array)
+    - [build.toml (TOML) `bom` Array](#buildtoml-toml-bom-array)
+    - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
 This document specifies Buildpack API version `0.8`
@@ -133,7 +140,6 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | Standard output        | Logs (info)                                 |
 | Standard error         | Logs (warnings, errors)                     |
 | `$CNB_BUILD_PLAN_PATH` | Contributions to the the Build Plan (TOML)  |
-
 
 ###  Build
 
@@ -306,36 +312,37 @@ At the end of each individual buildpack's build phase:
 
 ### Purpose
 
-The purpose of detection is to find an ordered group of buildpacks to use during the build phase.
-These buildpacks must be compatible with the app.
+The purpose of detection is to find an ordered group of image extensions and executable buildpacks to use during the generation and build phases.
+
+For detect requirements that are specific to image extensions, see the [Image Extension Interface](image-extension.md).
 
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- An ordered list of resolved groups as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
 - A shell, if needed,
 
-For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
+For each image extension ("extension") or executable buildpack ("buildpack") in each group in order, the lifecycle MUST execute `/bin/detect`. Image extensions MUST always be optional during detection.
 
-1. **If** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
+1. **If** the exit status of a buildpack `/bin/detect` is non-zero and the buildpack is not marked optional, \
    **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-2. **If** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
-   1. **If** the buildpack is not the last buildpack in the group, \
-      **Then** the lifecycle MUST proceed to the next buildpack in the group.
+2. **If** the exit status of `/bin/detect` is zero or the extension or buildpack is marked optional,
+   1. **If** the extension or buildpack is not the last in the group, \
+      **Then** the lifecycle MUST proceed to the next extension or buildpack in the group.
 
-   2. **If** the buildpack is the last buildpack in the group,
-      1. **If** no exit statuses from `/bin/detect` in the group are zero \
+   2. **If** the extension or buildpack is the last in the group,
+      1. **If** no exit statuses from buildpack `/bin/detect` in the group are zero \
          **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-      2. **If** at least one exit status from `/bin/detect` in the group is zero \
-         **Then** the lifecycle MUST select this group and proceed to the analysis phase.
+      2. **If** at least one exit status from a buildpack `/bin/detect` in the group is zero \
+         **Then** the lifecycle MUST select this group and MAY proceed to the generation phase.
 
-The selected group MUST be filtered to only include buildpacks with exit status zero.
-The order of the buildpacks in the group MUST otherwise be preserved.
+The selected group MUST be filtered to only include extensions and buildpacks with exit status zero.
+The order of the extensions and buildpacks in the group MUST otherwise be preserved.
 
-The `/bin/detect` executable in each buildpack, when executed:
+The `/bin/detect` executable in each extension or buildpack, when executed:
 
 - MAY read the app directory.
 - MAY read the detect environment as described in the [Environment](#environment) section.
@@ -349,23 +356,26 @@ Each `requires` and `provides` section MUST be a list of entries formatted as de
 
 Each pairing of `requires` and `provides` sections (at the top level, or inside of an `or` array) is a potential Build Plan.
 
-For a given buildpack group, a sequence of trials is generated by selecting a single potential Build Plan from each buildpack in a left-to-right, depth-first order.
+For a given group, a sequence of trials is generated by selecting a single potential Build Plan from each extension or buildpack in a left-to-right, depth-first order.
 The group fails to detect if all trials fail to detect.
 
 For each trial,
 - If a required buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
 - If a required buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the trial MUST fail to detect.
 - If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an extension provides a dependency that is not required by a subsequent buildpack, the extension MUST be excluded from the build phase and its provides MUST be excluded from the Build Plan.
 - If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
 - Multiple buildpacks MAY require or provide the same dependency.
+- Multiple extensions MAY provide the same dependency.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
-The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
-The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
+The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using common stack with a common set of mixins.
+The lifecycle MUST fail detection if any of the buildpacks does not list that stack in `buildpack.toml`.
+The lifecycle MUST fail detection if any of the buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
 
 #### Mixin Satisfaction
+
 A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
 
 1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
@@ -378,13 +388,17 @@ A buildpack's mixin requirements must be satisfied by the stack in one of the fo
 
 #### Order Resolution
 
-During detection, an order definition MUST be resolved into individual buildpack implementations.
+During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and executable buildpacks.
+
+Order definitions for image extensions MUST NOT contain nested orders.
+
+If an order definition for image extensions is present, it MUST be prepended to the order definition for buildpacks before the resolution process occurs.
 
 The resolution process MUST follow this pattern:
 
 Where:
-- O and P are buildpack orders.
-- A through H are buildpack implementations.
+- O and P are image extension or buildpack orders.
+- A through H are image extensions or executable buildpacks.
 
 Given:
 
@@ -461,7 +475,17 @@ For each buildpack in the group, the lifecycle
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
-## Phase #3: Build
+## Phase #3: Generation (optional)
+
+### Purpose
+
+The purpose of the generation phase is to generate Dockerfiles that can be used to select the runtime base image.
+
+### Process
+
+See the [Image Extension Specification](#image-extension.md).
+
+## Phase #4: Build
 
 ![Build](img/build.svg)
 
@@ -549,14 +573,14 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-A buildpack SHOULD designate a Buildpack Plan entry as unmet if the buildpack did not satisfy the requirement described by the entry.
+An image extension or executable buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
 The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
-    - MUST include the entry in the `<plan>` of the next buildpack that provided an entry with that name during the detection phase.
+    - MUST include the entry in the `<plan>` of the next image extension or executable buildpack that provided an entry with that name during the detection phase.
   - **Else**, the lifecycle
-    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
+    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent image extensions or executable buildpacks.
 
 #### Software-Bill-of-Materials
 
@@ -612,7 +636,7 @@ Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `l
 Separate layers MUST be created during the export phase for each slice with one or more files or directories.
 This minimizes data transfer when the app directory contains a known set of files.
 
-## Phase #4: Export
+## Phase #5: Export
 
 ![Export](img/export.svg)
 
@@ -877,7 +901,7 @@ Prohibited:
 
 ### Requirements
 
-The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
+The lifecycle MUST be implemented so that the detection, generation, and build phases do not have access to OCI image store credentials used in the analysis and export phases.
 The lifecycle SHOULD be implemented so that each phase may run in a different container.
 
 ## Data Format
@@ -1099,7 +1123,7 @@ Each stack in `stacks` either:
 
 #### Order Buildpacks
 
-A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
+A buildpack that specifies `order` in its `buildpack.toml` MUST be [resolvable](#order-resolution) into an ordering of executable buildpacks that implement the [Buildpack Interface](#buildpack-interface). The `order` MUST include only executable buildpacks and MUST NOT include image extensions.
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
 
@@ -1119,7 +1143,6 @@ Each `key`:
 
 ## Deprecations
 This section describes all the features that are deprecated.
-
 
 ### Positional Arguments to `detect` and `build` Executables
 
