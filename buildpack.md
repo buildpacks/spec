@@ -84,7 +84,7 @@ Buildpack API versions:
 
 ### CNB Terminology
 
-A **buildpack** is a directory containing a `buildpack.toml`.
+A **buildpack** is a directory containing a `buildpack.toml`. A buildpack analyzes application source code and determines the best way to build it.
 
 A **buildpack group**, or **group**, is a list of one or more buildpacks that are designed to work together - for example, a buildpack that provides `node` and a buildpack that provides `npm`.
 
@@ -102,7 +102,7 @@ A **lifecycle** is software that orchestrates a build. It executes in a series o
   3. **Build,** where the `bin/build` for each executable buildpack in the selected group is invoked, in order, to build the application.
   4. **Export,** where filesystem changes from the build phase are packaged into layers in an OCI image.
 
-A **launcher** is software contributed by the lifecycle as the `ENTRYPOINT` of the exported OCI image that is used to start processes at runtime.
+A **launcher** is an executable that is the `ENTRYPOINT` of the exported OCI image. It is used to start processes at runtime. Having a launcher enables multiple process types to be defined on an image, with process-specific environment variables and other functionality.
 
 **Launch** describes the process of running an application by creating a container from the exported OCI image.
 
@@ -120,7 +120,7 @@ A **layer** is a set of filesystem changes packaged according to the [OCI Image 
 
 A **layer directory** is a directory created by an executable buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
   * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the executable buildpack that created the layer has the same requirements on the next build
-  * a **cache layer** is saved to the cache and its contents are restored on the next build
+  * a **cache layer** is saved to the cache and its contents may be restored on the next build
   * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
 Any combination of the three layer types are valid for a particular layer directory.
 
