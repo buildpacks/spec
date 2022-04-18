@@ -725,7 +725,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 |-----------------|------------------------------------------------|--------|-------|--------
 | `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for or exec.d           |        |       | [x]
+| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
