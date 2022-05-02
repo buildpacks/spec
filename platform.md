@@ -1149,6 +1149,13 @@ Where:
       "homepage": "<buildpack homepage>"
     }
   ],
+  "extensions": [
+    {
+      "id": "<extension ID>",
+      "version": "<extension version>",
+      "homepage": "<extension homepage>"
+    }
+  ],
  "launcher": {
     "version": "<launcher-version>",
     "source": {
