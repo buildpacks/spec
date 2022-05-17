@@ -134,6 +134,10 @@ The following is a non-exhaustive list of terms defined in the [OCI Image Format
 * **imageID** - https://github.com/opencontainers/image-spec/blob/master/config.md#imageid
 * **diffID** - https://github.com/opencontainers/image-spec/blob/master/config.md#layer-diffid
 
+The following is a non-exhaustive list of terms defined in the [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) used throughout this document:
+
+* **registry** - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#definitions
+
 ## Stacks
 
 A typical stack might specify:
@@ -261,7 +265,7 @@ This is referred to as rebasing the app, launch, and launcher layers onto the ne
 When layers are rebased, any app image metadata referencing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
-Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on a Docker registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
+Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on an OCI registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
 
@@ -301,7 +305,7 @@ Usage:
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI registry
 | `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
 | `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
@@ -417,7 +421,7 @@ Usage:
 |----------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`   | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<cache-dir>`  | `CNB_CACHE_DIR`       |                          | Path to a cache directory
-| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI image registry
+| `<cache-image>`| `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI registry
 | `<gid>`        | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
 | `<group>`      | `CNB_GROUP_PATH`      | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))
 | `<layers>`     | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
@@ -531,7 +535,7 @@ Usage:
 | `<analyzed>`        | `CNB_ANALYZED_PATH`        | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 | `<app>`             | `CNB_APP_DIR`              | `/workspace`        | Path to application directory
 | `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
-| `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI image registry
+| `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI registry
 | `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
 | `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the build image `User`
 | `<group>`           | `CNB_GROUP_PATH`           | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
@@ -903,8 +907,8 @@ For more information on build reproducibility see [https://reproducible-builds.o
 ```
 
 Where:
-- `previous-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
-- `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
+- `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+- `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
@@ -1026,9 +1030,9 @@ Where:
 ```
 
 Where:
-- `run-image.image` MAY be a reference to a run image in a docker registry
+- `run-image.image` MAY be a reference to a run image in an OCI registry
 - `run-image.mirrors` MUST NOT be present if `run-image.image` is not present
-- `run-image.mirrors` MAY contain one or more tag references to run images in docker registries
+- `run-image.mirrors` MAY contain one or more tag references to run images in OCI registries
 - All `run-image.mirrors`:
   - SHOULD reference an image with ID identical to that of `run-image.image`
 - `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
@@ -1134,7 +1138,7 @@ Where:
 - `run-image.topLayer` must contain the uncompressed digest of the top layer of the run-image
 - `run-image.reference` MUST uniquely identify the run image. It MAY contain one of the following
   - An image ID (the digest of the uncompressed config blob)
-  - A digest reference to a manifest stored in an OCI image registry
+  - A digest reference to a manifest stored in an OCI registry
 - `stack` MUST contain the json representation of `stack.toml`
 
 #### `io.buildpacks.project.metadata` (JSON)
