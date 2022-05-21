@@ -753,9 +753,13 @@ Usage:
 A command (`<cmd>`), arguments to that command (`<args>`), and a working directory (`<working-dir>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
-- MUST derive the values of `<cmd>`, `<args>`, and `<working-dir>` as follows:
+- MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
+    - **If** the buildpack API version supports the `direct` flag on process types, **and** the `direct` flag for this process type is set to `false`
+        - `<direct>` is `false`
+    - **Else**
+        - `<direct>` is `true`.
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
         - MUST set `<cmd>` to the first element of `command` in the selected process type.
@@ -764,9 +768,17 @@ The launcher:
             - **Else** any `args` defined in the selected process type
         - MUST set `<working-dir>` to the `working-dir` defined for the selected process type, or to `<app>` if not defined
 - **Else**
+    - `<direct>` SHALL be `true`
     - `<cmd>` SHALL be the user-provided `<cmd>`
     - `<args>` SHALL be the user-provided `<args>`
     - `<working-dir>` SHALL be `<app>`
+
+
+- **If** `<direct>` is `true`
+    - The launcher MUST invoke the command `<cmd>` with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+- **Else** `<direct>` is `false`, and
+    - The launcher MUST invoke the command `<cmd>` using a shell with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
