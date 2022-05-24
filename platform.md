@@ -942,6 +942,7 @@ optional = false
 type = "<process type>"
 command = ["<command>"]
 args = ["<arguments>"]
+direct = false
 working-dir = "<working directory>"
 
 [[slices]]
@@ -1054,6 +1055,7 @@ Where:
       "args": [
         "<args>"
       ],
+      "direct": false,
       "working-dir": "<working-dir>",
     }
   ],
