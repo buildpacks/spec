@@ -1171,3 +1171,5 @@ _Deprecated in Platform API 0.10._
 
 The launcher no longer sources `<app>/.profile` or `<app>/.profile.bat` files if present.
 The launcher previously sourced these files when the command was run in a shell (i.e., `direct = false`), before executing the command in the same shell.
+
+Platform operators who wish to continue supporting `.profile` or `.profile.bad` scripts to avoid regressions can use the [.profile utility buildpack](https://github.com/buildpacks/profile).
