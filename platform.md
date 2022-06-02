@@ -775,14 +775,13 @@ The launcher:
     - `<working-dir>` SHALL be `<app>`
 
 - **If** `<direct>` is `true`
-    - The launcher MUST invoke the command `<cmd>` with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+    - MUST invoke the command `<cmd>` with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
 - **Else** `<direct>` is `false`, and
-    - The launcher MUST invoke the command `<cmd>` using a shell with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+    - MUST invoke the command `<cmd>` using a shell with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
 
 - MUST replace all occurrences of `$(<env>)` in `<args>`, where `<env>` is the name of a defined environment variable, with the value of the environment variable after it makes buildpack-provided environment modifications, and before it launches the process.
-  If the environment variable `<env>` is undefined, the launcher MUST treat `$(<env>)` like a normal string and perform no replacements.
-  - The `$(<env>)` syntax can be escaped with a double `$`, i.e., `$$(<env>)`.
-    The launcher MUST NOT replace any escaped references.
+  If the environment variable `<env>` is undefined, MUST treat `$(<env>)` like a normal string and perform no replacements.
+  - MUST NOT replace any environment variable references escaped with a double `$`, i.e., `$$(<env>)`.
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
