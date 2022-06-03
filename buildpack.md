@@ -195,6 +195,21 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | Standard error     | Logs (warnings, errors)
 | [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`<handle>` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
+### Process Definition
+
+In the [launch.toml](#launchtoml-toml) file, buildpacks define processes that the launcher can run on the app image.
+
+| Field         | Type            | Definition                                                                                   |
+|---------------|-----------------|----------------------------------------------------------------------------------------------|
+| `type`        | String          | An identifier for this process type                                                          |
+| `command`     | Array of string | The command to execute, followed by arguments that should always be provided [^command-args] |
+| `args`        | Array of string | Default arguments to the command that can be overridden by the user                          |
+| `default`     | Boolean         | If `true`, use this as the default process for the app image                                 |
+| `working-dir` | Path            | Working directory for this process in the app image                                          |
+
+[^command-args]: For versions of the Platform API that use a string for the `command` in process definitions in `metadata.toml`, the arguments from `command` move to `args` and the default `args` are ignored.
+In general, check the [Platform Interface Specification](platform.md) for details on process execution.
+
 ### Layer Types
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in the `[types]` table of a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
@@ -686,7 +701,7 @@ The purpose of launch is to modify the running app environment using app-provide
       2. Secondly, in alphabetically ascending order by layer directory name.
       3. Thirdly, in alphabetically ascending order by file name.
 
-1. The lifecycle MUST use the `execve` syscall to invoke the command with its arguments, environment, and working directory following the process outlined in the [Platform Interface Specification](platform.md).
+1. The lifecycle MUST invoke the command with its arguments, environment, and working directory following the process outlined in the [Platform Interface Specification](platform.md).
 
 [†](README.md#linux-only)When executing a process, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
