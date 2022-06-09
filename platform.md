@@ -499,7 +499,7 @@ Usage:
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
-    - For buildpacks implementing Buildpack API < 0.9, the lifecycle SHALL combine each process' `command` and `args` in `launch.toml` into `command` in `<layers>/config/metadata.toml`, and leave `args` empty in `<layers>/config/metadata.toml`.
+    - For buildpacks implementing a Buildpack API where the `direct` field on process types is supported, the lifecycle SHALL combine each process' `command` and `args` in `launch.toml` into `command` in `<layers>/config/metadata.toml`, and leave `args` empty in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
