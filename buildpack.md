@@ -207,7 +207,7 @@ Each buildpack may write a [launch.toml](#launchtoml-toml) file in order to defi
 | `default`     | Boolean         | If `true`, use this as the default process for the app image                                 |
 | `working-dir` | Path            | Working directory for this process in the app image                                          |
 
-[^command-args]: For versions of the Platform API that use a string for the `command` in process definitions in `metadata.toml`, the arguments from `command` move to `args` and the default `args` are ignored.
+[^command-args]: For versions of the Platform API that do not support overridable arguments, `args` are always applied.
 In general, check the [Platform Interface Specification](platform.md) for details on process execution.
 
 ### Layer Types
