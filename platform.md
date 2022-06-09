@@ -779,7 +779,7 @@ The launcher:
 - **Else** `<direct>` is `false`, and
     - MUST invoke the command `<cmd>` using a shell with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
 
-- MUST replace all occurrences of `$(<env>)` in `<args>`, where `<env>` is the name of a defined environment variable, with the value of the environment variable after it makes buildpack-provided environment modifications, and before it launches the process.
+- MUST replace all occurrences of `$(<env>)` in `<args>`, where `<env>` is the name of a variable defined in the launch environment, with the value of the environment variable after applying buildpack-provided environment modifications, before it launches the process.
   If the environment variable `<env>` is undefined, MUST treat `$(<env>)` like a normal string and perform no replacements.
   - MUST NOT replace any environment variable references escaped with a double `$`, i.e., `$$(<env>)`.
 
