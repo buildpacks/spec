@@ -197,7 +197,7 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 
 ### Process Definition
 
-In the [launch.toml](#launchtoml-toml) file, buildpacks define processes that the launcher can run on the app image.
+Each buildpack may write a [launch.toml](#launchtoml-toml) file in order to define processes that the launcher can run on the app image.
 
 | Field         | Type            | Definition                                                                                   |
 |---------------|-----------------|----------------------------------------------------------------------------------------------|
