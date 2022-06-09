@@ -757,7 +757,7 @@ The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
-    - **If** the buildpack API version supports the `direct` flag on process types, **and** the `direct` flag for this process type is set to `false`
+    - **If** the buildpack API version supports the `direct` field on process definitions, **and** the `direct` field for this process definition is set to `false`
         - `<direct>` is `false`
     - **Else**
         - `<direct>` is `true`.
