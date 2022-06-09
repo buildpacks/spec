@@ -201,7 +201,7 @@ Each buildpack may write a [launch.toml](#launchtoml-toml) file in order to defi
 
 | Field         | Type            | Definition                                                                                   |
 |---------------|-----------------|----------------------------------------------------------------------------------------------|
-| `type`        | String          | An identifier for this process type                                                          |
+| `type`        | String          | An identifier for the process                                                          |
 | `command`     | Array of string | The command to execute, followed by arguments that should always be provided [^command-args] |
 | `args`        | Array of string | Default arguments to the command that can be overridden by the user                          |
 | `default`     | Boolean         | If `true`, use this as the default process for the app image                                 |
