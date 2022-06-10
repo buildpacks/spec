@@ -1170,7 +1170,7 @@ This label MUST contain the JSON representation of [`project-metadata.toml`](#pr
 
 ### Sourcing `.profile` or `.profile.bat` Scripts
 
-_Deprecated in Platform API 0.10._
+_Unsupported in Platform API 0.10._
 
 The launcher no longer sources `<app>/.profile` or `<app>/.profile.bat` files if present.
 The launcher previously sourced these files when the command was run in a shell (i.e., `direct = false`), before executing the command in the same shell.
