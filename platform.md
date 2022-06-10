@@ -755,24 +755,24 @@ A command (`<cmd>`), arguments to that command (`<args>`), and a working directo
 
 The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
-- **If** the final path element in `$0`, matches the type of any buildpack-provided process type
-    - `<process-type>` SHALL be the final path element in `$0`
-    - **If** the buildpack API version supports the `direct` field on process definitions, **and** the `direct` field for this process definition is set to `false`
-        - `<direct>` is `false`
+    - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
+        - `<process-type>` SHALL be the final path element in `$0`
+        - **If** the buildpack API version supports the `direct` field on process definitions, **and** the `direct` field for this process definition is set to `false`
+            - `<direct>` is `false`
+        - **Else**
+            - `<direct>` is `true`.
+        - The lifecycle:
+            - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+            - MUST set `<cmd>` to the first element of `command` in the selected process type.
+            - MUST set `<args>` to any remaining elements of `command` in the selected process type, followed by:
+                - **If** there are user-provided `<args>`, the user-provided `<args>`
+                - **Else** any `args` defined in the selected process type
+            - MUST set `<working-dir>` to the `working-dir` defined for the selected process type, or to `<app>` if not defined
     - **Else**
-        - `<direct>` is `true`.
-    - The lifecycle:
-        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
-        - MUST set `<cmd>` to the first element of `command` in the selected process type.
-        - MUST set `<args>` to any remaining elements of `command` in the selected process type, followed by:
-            - **If** there are user-provided `<args>`, the user-provided `<args>`
-            - **Else** any `args` defined in the selected process type
-        - MUST set `<working-dir>` to the `working-dir` defined for the selected process type, or to `<app>` if not defined
-- **Else**
-    - `<direct>` SHALL be `true`
-    - `<cmd>` SHALL be the user-provided `<cmd>`
-    - `<args>` SHALL be the user-provided `<args>`
-    - `<working-dir>` SHALL be `<app>`
+        - `<direct>` SHALL be `true`
+        - `<cmd>` SHALL be the user-provided `<cmd>`
+        - `<args>` SHALL be the user-provided `<args>`
+        - `<working-dir>` SHALL be `<app>`
 
 - **If** `<direct>` is `true`
     - MUST invoke the command `<cmd>` with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
