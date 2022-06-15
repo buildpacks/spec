@@ -1,4 +1,4 @@
-# Image Extension Interface Specification
+# Image Extension Interface Specification (**experimental**)
 
 This document specifies the interface between a lifecycle program and one or more image extensions.
 
@@ -35,6 +35,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
 Image extensions participate in the buildpack [detection](buildpack.md#detection) process, with the same interface for `/bin/detect`. However:
 - Detection is optional for image extensions, and they are assumed to pass detection when `/bin/detect` is not present.
+- If an image extension is missing `/bin/detect`, the image extension root MUST be treated as a pre-populated `<output>` directory.
 - Image extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
 
 ### Generation
@@ -124,3 +125,14 @@ uri = "<uri>"
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
 
 The image extension `id`, `version`, `api`, `licenses`, and `sbom-formats` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+
+### build.toml (TOML)
+
+This section describes the `build.toml` output by image extensions; for buildpacks see the [Buildpack Interface Specification](buildpack.md).
+
+```toml
+[[unmet]]
+name = "<dependency name>"
+```
+
+The image extension `unmet` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
