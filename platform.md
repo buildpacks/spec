@@ -1022,6 +1022,7 @@ Where:
   [[entries.providers]]
     id = "<buildpack ID>"
     version = "buildpack Version"
+    extension = false
 
   [[entries.requires]]
     name = "<dependency name>"
