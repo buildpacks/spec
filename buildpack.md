@@ -44,7 +44,6 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Process](#process-4)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
-      - [Buildpack Specific Variables](#buildpack-specific-variables)
       - [Layer Paths](#layer-paths)
     - [Provided by the Platform](#provided-by-the-platform)
     - [Provided by the Buildpacks](#provided-by-the-buildpacks)
@@ -152,57 +151,63 @@ The lifecycle MAY return an error to the platform if two or more buildpacks with
 
 ### Detection
 
-Executable: `/bin/detect <platform[AR]> <plan[E]>`, Working Dir: `<app[AR]>`
+Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/detect` executable
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
+| Input                    | Attributes | Description                                   |
+|--------------------------|------------|-----------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/detect` executable     |
+| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan               |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory       |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                  |
 
-| Output             | Description
-|--------------------|----------------------------------------------
-| [exit status]      | Pass (0), fail (100), or error (1-99, 101+)
-| Standard output    | Logs (info)
-| Standard error     | Logs (warnings, errors)
-| `<plan>`           | Contributions to the the Build Plan (TOML)
+| Output                 | Description                                 |
+|------------------------|---------------------------------------------|
+| [exit status]          | Pass (0), fail (100), or error (1-99, 101+) |
+| Standard output        | Logs (info)                                 |
+| Standard error         | Logs (warnings, errors)                     |
+| `$CNB_BUILD_PLAN_PATH` | Contributions to the the Build Plan (TOML)  |
 
 ###  Build
 
-Executable: `/bin/build <layers[EIC]> <platform[AR]> <plan[ER]>`, Working Dir: `<app[AI]>`
+Executable: `/bin/build`, Working Dir: `<app[AI]>`
 
-| Input             | Description
-|-------------------|----------------------------------------------
-| `$0`              | Absolute path of `/bin/build` executable
-| `<plan>`          | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML)
-| `<platform>/env/` | User-provided environment variables for build
-| `<platform>/#`    | Platform-specific extensions
+| Input                    | Attributes | Description                                                                   |
+|--------------------------|------------|-------------------------------------------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/build` executable                                      |
+| `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
+| `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
 
-| Output                                   | Description
-|------------------------------------------|--------------------------------------
-| [exit status]                            | Success (0) or failure (1+)
-| Standard output                          | Logs (info)
-| Standard error                           | Logs (warnings, errors)
-| `<layers>/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))
-| `<layers>/launch.sbom.<ext>`             | Launch Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
-| `<layers>/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))
-| `<layers>/build.sbom.<ext>`              | Build Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
-| `<layers>/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))
-| `<layers>/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))
-| `<layers>/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))
-| `<layers>/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks
-| `<layers>/<layer>/profile.d/`            | Scripts sourced by Bash before launch
-| `<layers>/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type
-| `<layers>/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch
-| `<layers>/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch
-| `<layers>/<layer>/include/`              | C/C++ headers for subsequent buildpacks
-| `<layers>/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks
-| `<layers>/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks
-| `<layers>/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)
-| `<layers>/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process
-| `<layers>/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)
-| `<layers>/<layer>/*`                     | Other content for launch and/or subsequent buildpacks
+| Output                                          | Description                                                                                                      |
+|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| [exit status]                                   | Success (0) or failure (1+)                                                                                      |
+| Standard output                                 | Logs (info)                                                                                                      |
+| Standard error                                  | Logs (warnings, errors)                                                                                          |
+| `$CNB_LAYERS_DIR/launch.toml`                   | App metadata (see [launch.toml](#launchtoml-toml))                                                               |
+| `$CNB_LAYERS_DIR/launch.sbom.<ext>`             | Launch Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))                |
+| `$CNB_LAYERS_DIR/build.toml`                    | Build metadata (see [build.toml](#buildtoml-toml))                                                               |
+| `$CNB_LAYERS_DIR/build.sbom.<ext>`              | Build Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))                 |
+| `$CNB_LAYERS_DIR/store.toml`                    | Persistent metadata (see [store.toml](#storetoml-toml))                                                          |
+| `$CNB_LAYERS_DIR/<layer>.toml`                  | Layer metadata (see [Layer Content Metadata](#layer-content-metadata-toml))                                      |
+| `$CNB_LAYERS_DIR/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))                 |
+| `$CNB_LAYERS_DIR/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks                                                                 |
+| `$CNB_LAYERS_DIR/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks                                                         |
+| `$CNB_LAYERS_DIR/<layer>/profile.d/`            | Scripts sourced by Bash before launch                                                                            |
+| `$CNB_LAYERS_DIR/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type                                              |
+| `$CNB_LAYERS_DIR/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch                               |
+| `$CNB_LAYERS_DIR/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch |
+| `$CNB_LAYERS_DIR/<layer>/include/`              | C/C++ headers for subsequent buildpacks                                                                          |
+| `$CNB_LAYERS_DIR/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks                                                             |
+| `$CNB_LAYERS_DIR/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks                                                                 |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)                                                            |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process                                   |
+| `$CNB_LAYERS_DIR/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)                                                                 |
+| `$CNB_LAYERS_DIR/<layer>/*`                     | Other content for launch and/or subsequent buildpacks                                                            |
 
 ### Exec.d
 
@@ -773,16 +778,6 @@ Given the start command and execution strategy,
 
 ### Provided by the Lifecycle
 
-#### Buildpack Specific Variables
-
-The following environment variables MUST be set by the lifecycle in each buildpack's execution environment.
-
-These variables MAY differ between buildpacks.
-
-| Env Variable        | Description                          | Detect | Build | Launch
-|---------------------|--------------------------------------|--------|-------|--------
-| `CNB_BUILDPACK_DIR` | The root of the buildpack source     | [x]    | [x]   |
-
 #### Layer Paths
 
 The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
@@ -1158,9 +1153,30 @@ Each `key`:
 ## Deprecations
 This section describes all the features that are deprecated.
 
-### `0.7`
 
-#### launch.toml (TOML) `bom` Array
+### Positional Arguments to `detect` and `build` Executables
+
+_Deprecated in Buildpack API 0.8._
+
+The positional arguments to the `detect` and `build` executables are deprecated.
+The lifecycle provides these values as environment variables.
+
+To upgrade, buildpack authors SHOULD use the following environment variables:
+
+For `detect`:
+
+- `CNB_PLATFORM_DIR` replaces the first positional argument.
+- `CNB_BUILD_PLAN_PATH` replaces the second positional argument.
+
+For `build`:
+
+* `CNB_LAYERS_DIR` replaces the first positional argument.
+* `CNB_PLATFORM_DIR` replaces the second positional argument.
+* `CNB_BP_PLAN_PATH` replaces the third positional argument.
+
+### launch.toml (TOML) `bom` Array
+
+_Deprecated in Buildpack API 0.7._
 
 The `bom` array is deprecated.
 
@@ -1183,7 +1199,9 @@ When the build is complete, a legacy Bill of Materials (BOM) describing the app 
 
 If generated, this legacy BOM MUST contain all `bom` entries in each `launch.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
 
-#### build.toml (TOML) `bom` Array
+### build.toml (TOML) `bom` Array
+
+_Deprecated in Buildpack API 0.7._
 
 The `bom` array is deprecated.
 
@@ -1204,9 +1222,10 @@ When the build is complete, a legacy build BOM describing the build container MA
 
 If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
 
-### `0.3`
 
-#### Build Plan (TOML) `requires.version` Key
+### Build Plan (TOML) `requires.version` Key
+
+_Deprecated in Buildpack API 0.3._
 
 The `requires.version` and `or.requires.version` keys are deprecated.
 
