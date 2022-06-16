@@ -73,7 +73,7 @@ This document specifies the interface between a lifecycle program and one or mor
       - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.7`
+This document specifies Buildpack API version `0.9`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -90,17 +90,19 @@ A **buildpack group**, or **group**, is a list of one or more buildpacks that ar
 
 An **order** is a list of one or more groups to be tested against application source code, so that the appropriate group for a build can be determined. 
 
-An **executable buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables.
+A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables.
 
-An **order buildpack** is a buildpack containing an order definition in `buildpack.toml`. Order buildpacks do not contain `/bin/detect` or `/bin/build` executables.
+A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables.
 
-**Resolving an order** is the process by which an order (which may contain order buildpacks) is evaluated together with application source code to produce a group of executable buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each executable buildpack is invoked, and the group that is returned is the first group where `/bin/detect` returns true for all non-optional executable buildpacks.
+**Resolving an order** is the process by which an order (which may contain composite buildpacks) is evaluated together with application source code to produce a group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each component buildpack is invoked.
 
-A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility:
-  1. **Detection,** where an optimal selection of compatible buildpacks is chosen by resolving the provided order.
-  2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to executable buildpacks in the selected group.
-  3. **Build,** where the `bin/build` for each executable buildpack in the selected group is invoked, in order, to build the application.
-  4. **Export,** where filesystem changes from the build phase are packaged into layers in an OCI image.
+An **optional buildpack** is a buildpack (either component or composite) that, when failing detection, will be excluded from the group without causing the entire group to fail.
+
+A **build plan** is a file used during detection, in which each component buildpack may express the dependencies that it requires and the dependencies that it provides. A group of component buildpacks will only pass detection if a valid build plan can be produced from the dependencies that all component buildpacks in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by a component buildpack that runs before it.
+
+A **buildpack plan** is a file unique to each component buildpack, used during the build phase to communicate the dependencies that the component buildpack is expected to provide.
+
+A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility.
 
 A **launcher** is an executable that is the `ENTRYPOINT` of the exported OCI image. It is used to start processes at runtime. Having a launcher enables multiple process types to be defined on an image, with process-specific environment variables and other functionality.
 
@@ -108,23 +110,19 @@ A **launcher** is an executable that is the `ENTRYPOINT` of the exported OCI ima
 
 A **platform** is a system or software that orchestrates the lifecycle by invoking each lifecycle phase in order.
 
-A **process type** is a definition, provided by executable buildpacks during the build phase, of a process to launch at runtime.
+A **process definition** is a description, provided by component buildpacks during the build phase, of a process to launch at runtime.
 
-A **build plan** is a file used during detection, in which each executable buildpack may express the dependencies that it requires and the dependencies that it provides. A group of executable buildpacks will only pass detection if a valid build plan can be produced from the dependencies that all executable buildpacks in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each executable buildpack will have its required dependencies provided by an executable buildpack that runs before it.
-
-A **buildpack plan** is a file unique to each executable buildpack, used during the build phase to communicate the dependencies that the executable buildpack is expected to provide.
-
-An **application directory** is a directory containing application source code. Executable buildpacks may make changes to the application directory during the build phase.
+An **application directory** is a directory containing application source code. Component buildpacks may make changes to the application directory during the build phase.
 
 A **layer** is a set of filesystem changes packaged according to the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/layer.md).
 
-A **layer directory** is a directory created by an executable buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
-  * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the executable buildpack that created the layer has the same requirements on the next build
+A **layer directory** is a directory created by a component buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
+  * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the component buildpack that created the layer has the same requirements on the next build
   * a **cache layer** is saved to the cache and its contents may be restored on the next build
   * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
 Any combination of the three layer types are valid for a particular layer directory.
 
-A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to executable buildpacks through the `CNB_STACK_ID` environment variable, enabling each executable buildpack to modify its behavior when executed on different stacks.
+A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to component buildpacks through the `CNB_STACK_ID` environment variable, enabling each component buildpack to modify its behavior when executed on different stacks.
 
 A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
 
