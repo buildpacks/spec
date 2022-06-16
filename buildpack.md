@@ -64,8 +64,8 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
-      - [Buildpack Implementations](#buildpack-implementations)
-      - [Order Buildpacks](#order-buildpacks)
+      - [Stacks](#stacks)
+      - [Order](#order)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
     - [`0.3`](#03)
@@ -346,7 +346,7 @@ These buildpacks must be compatible with the app.
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- An ordered list of buildpack groups resolved into component buildpacks as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
 - A shell, if needed,
 
@@ -412,13 +412,13 @@ A buildpack's mixin requirements must be satisfied by the stack in one of the fo
 
 #### Order Resolution
 
-During detection, an order definition MUST be resolved into individual buildpack implementations.
+During detection, an order definition MUST be resolved into individual component buildpacks.
 
 The resolution process MUST follow this pattern:
 
 Where:
 - O and P are buildpack orders.
-- A through H are buildpack implementations.
+- A through H are component buildpacks.
 
 Given:
 
