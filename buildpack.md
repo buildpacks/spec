@@ -89,9 +89,9 @@ A **buildpack group**, or **group**, is a list of one or more buildpacks that ar
 
 An **order** is a list of one or more groups to be tested against application source code, so that the appropriate group for a build can be determined. 
 
-A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables.
+A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables. Component buildpacks implement the [Buildpack Interface](#buildpack-interface).
 
-A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables.
+A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
 
 **Resolving an order** is the process by which an order (which may contain composite buildpacks) is evaluated together with application source code to produce a group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each component buildpack is invoked.
 
@@ -127,8 +127,8 @@ A **mixin** is a named set of additions to a stack that can be used to make addi
 
 ## Buildpack Interface
 
-The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Phase sections.
+The following specifies the interface implemented by component buildpacks.
+The lifecycle MUST invoke executables in component buildpacks as described in the Phase sections.
 
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
@@ -340,7 +340,7 @@ At the end of each individual buildpack's build phase:
 
 ### Purpose
 
-The purpose of detection is to find an ordered group of buildpacks to use during the build phase.
+The purpose of detection is to find an ordered group of component buildpacks to use during the build phase.
 These buildpacks must be compatible with the app.
 
 ### Process
@@ -472,7 +472,7 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that component buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -503,7 +503,7 @@ After analysis, the lifecycle MUST proceed to the build phase.
 
 The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container image.
 
-During the build phase, typical buildpacks might:
+During the build phase, typical component buildpacks might:
 
 1. Read the Buildpack Plan in `<plan>` to determine what dependencies to provide.
 1. Provide the application with dependencies for launch in `<layers>/<layer>`.
@@ -935,7 +935,7 @@ working-dir = "<working directory>"
 paths = ["<app sub-path glob>"]
 ```
 
-The buildpack MAY specify any number of labels, processes, or slices.
+The component buildpack MAY specify any number of labels, processes, or slices.
 
 For each label, the buildpack:
 
@@ -984,7 +984,7 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 name = "<dependency name>"
 ```
 
-For each unmet entry in the Buildpack Plan, the buildpack:
+For each unmet entry in the Buildpack Plan, the component buildpack:
 - SHOULD add an entry to `unmet`.
 
 For each entry in `unmet`:
@@ -1118,9 +1118,9 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 *Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
-#### Buildpack Implementations
+#### Stacks
 
-A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
+A buildpack descriptor may specify `stacks`.
 
 Each stack in `stacks` either:
 - MUST identify a compatible stack:
@@ -1130,9 +1130,7 @@ Each stack in `stacks` either:
    - `id` MUST be set to the special value `"*"`.
    - `mixins` MUST be empty.
 
-#### Order Buildpacks
-
-A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
+#### Order
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`.
 
