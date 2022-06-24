@@ -75,7 +75,6 @@ Examples of a platform might include:
   - [Data Format](#data-format)
     - [Files](#files)
       - [`analyzed.toml` (TOML)](#analyzedtoml-toml)
-      - [`generated.toml` (TOML)](#generatedtoml-toml)
       - [`group.toml` (TOML)](#grouptoml-toml)
       - [`metadata.toml` (TOML)](#metadatatoml-toml)
       - [`order.toml` (TOML)](#ordertoml-toml)
@@ -361,7 +360,6 @@ Usage:
   [-analyzed <analyzed>] \
   [-buildpacks <buildpacks>] \
   [-extensions <extensions>] \
-  [-generated <generated>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
@@ -378,26 +376,24 @@ Usage:
 | `<app>`        | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                   |
 | `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                  |
 | `<extensions>` | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
-| `<generated>`  | `CNB_GENERATED_PATH` | `<layers>/generated.toml`                              | Path to output metadata about generated Dockerfiles from image extensions                                       |
 | `<group>`      | `CNB_GROUP_PATH`     | `<layers>/group.toml`                                  | Path to output group definition                                                                                 |
 | `<layers>`     | `CNB_LAYERS_DIR`     | `/layers`                                              | Path to layers directory                                                                                        |
 | `<log-level>`  | `CNB_LOG_LEVEL`      | `info`                                                 | Log Level                                                                                                       |
 | `<order>`      | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                      |
-| `<output-dir>` | `CNB_OUTPUT_DIR`     | `<layers>                                              | Path to output directory                                                                                        |
+| `<output-dir>` | `CNB_OUTPUT_DIR`     | `<layers>                                              | Path to output directory for generated Dockerfiles                                                              |
 | `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                              |
 | `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                      |
 
 ##### Outputs
-| Output                                           | Description                                                                                              |
-|--------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| [exit status]                                    | (see Exit Code table below for values)                                                                   |
-| `/dev/stdout`                                    | Logs (info)                                                                                              |
-| `/dev/stderr`                                    | Logs (warnings, errors)                                                                                  |
-| `<group>`                                        | Detected buildpack group  (see [`group.toml`](#grouptoml-toml))                                          |
-| `<plan>`                                         | Resolved Build Plan (see [`plan.toml`](#plantoml-toml))                                                  |
-| `<generated>`                                    | Metadata about generated Dockerfiles from image extensions (see [`generated.toml`](#generatedtoml-toml)) |
-| `<analyzed>`                                     | Updated to include the run image obtained from applying generated Dockerfiles                            |
-| `<output>/<image extension ID>/<run.Dockerfile>` | Generated Dockerfiles (see [Image Extension Specfication](image-extension.md)                            |
+| Output                                                   | Description                                                                                              |
+|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| [exit status]                                            | (see Exit Code table below for values)                                                                   |
+| `/dev/stdout`                                            | Logs (info)                                                                                              |
+| `/dev/stderr`                                            | Logs (warnings, errors)                                                                                  |
+| `<group>`                                                | Detected buildpack group  (see [`group.toml`](#grouptoml-toml))                                          |
+| `<plan>`                                                 | Resolved Build Plan (see [`plan.toml`](#plantoml-toml))                                                  |
+| `<analyzed>`                                             | Updated to include the run image obtained from applying generated Dockerfiles                            |
+| `<output>/generated/run/<image extension ID>/Dockerfile` | Generated Dockerfiles (see [Image Extension Specfication](image-extension.md)                            |
 
 | Exit Code       | Result                                                                            |
 |-----------------|-----------------------------------------------------------------------------------|
@@ -408,7 +404,8 @@ Usage:
 | `20`            | All buildpacks groups have failed to detect w/o error                             |
 | `21`            | All buildpack groups have failed to detect and at least one buildpack has errored |
 | `22-29`         | Detection-specific lifecycle errors                                               |
-| `80-89`         | Generation-specific lifecycle errors                                              |
+| `81`            | Extension generate error                                                          |
+| `82-89`         | Generation-specific lifecycle errors                                              |
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
@@ -416,8 +413,7 @@ The lifecycle:
 
 When image extensions are present in the order (**experimental**), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
-- SHALL record all generated run.Dockerfiles in `<generated>`.
-- SHALL copy all generated run.Dockerfiles to `<output>`/generated.
+- SHALL copy all generated run.Dockerfiles to `<output>/generated/run/<image extension ID>/Dockerfile`.
 - SHALL replace the `run-image` reference in `<analyzed>` with the selected run image reference. The selected run image reference SHALL be the base image referenced in the Dockerfile output by the last image extension in the group.
 - SHALL filter the build plan with dependencies provided by image extensions.
 
@@ -940,15 +936,6 @@ Where:
 - `run-image.reference` MUST be either a digest reference to an image in a docker registry or the ID of an image in a docker daemon
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
-#### `generated.toml` (TOML)
-
-```toml
-[[dockerfiles]]
-  extension_id = "<extension id>"
-  kind = "run"
-  path = "<path to file in output directory>"
-```
-
 #### `group.toml` (TOML)
 
 ```toml
@@ -957,7 +944,12 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 api = "<buildpack API version>"
 homepage = "<buildpack homepage>"
-extension = false
+
+[[group-extensions]]
+id = "<image extension ID>"
+version = "<image extension version>"
+api = "<image extension API version>"
+homepage = "<image extension homepage>"
 ```
 
 Where:
@@ -1004,8 +996,8 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
 
-[[order-ext]]
-[[order-ext.group]]
+[[order-extensions]]
+[[order-extensions.group]]
 id = "<image extension ID>"
 version = "<image extension version>"
 ```
