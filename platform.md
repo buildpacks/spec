@@ -43,22 +43,23 @@ Examples of a platform might include:
         - [Outputs](#outputs-2)
         - [Layer Restoration](#layer-restoration)
       - [`builder`](#builder)
+        - [Inputs](#inputs-3)
+        - [Outputs](#outputs-3)
+      - [`exporter`](#exporter)
         - [Inputs](#inputs-4)
         - [Outputs](#outputs-4)
-      - [`exporter`](#exporter)
+      - [`creator`](#creator)
         - [Inputs](#inputs-5)
         - [Outputs](#outputs-5)
-      - [`creator`](#creator)
+      - [`rebaser`](#rebaser)
         - [Inputs](#inputs-6)
         - [Outputs](#outputs-6)
-      - [`rebaser`](#rebaser)
+      - [`launcher`](#launcher)
         - [Inputs](#inputs-7)
         - [Outputs](#outputs-7)
-      - [`launcher`](#launcher)
-        - [Inputs](#inputs-8)
-        - [Outputs](#outputs-8)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
+    - [Experimental Features](#experimental-features)
   - [Buildpacks](#buildpacks)
     - [Buildpacks Directory Layout](#buildpacks-directory-layout)
   - [Image Extensions](#image-extensions)
@@ -228,9 +229,10 @@ Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](http
 During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
 
 ## Lifecycle Interface
+
 ### Platform API Compatibility
 
-The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecycle's execution environment
+The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecycle's execution environment.
 
 If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifecycle:
   - MUST either conform to the matching version of this specification or
@@ -370,19 +372,19 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Environment Variable | Default Value                                          | Description                                                                                                     |
-|----------------|----------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `<analyzed>`   | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                     |
-| `<app>`        | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                   |
-| `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                  |
-| `<extensions>` | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
-| `<group>`      | `CNB_GROUP_PATH`     | `<layers>/group.toml`                                  | Path to output group definition                                                                                 |
-| `<layers>`     | `CNB_LAYERS_DIR`     | `/layers`                                              | Path to layers directory                                                                                        |
-| `<log-level>`  | `CNB_LOG_LEVEL`      | `info`                                                 | Log Level                                                                                                       |
-| `<order>`      | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                      |
-| `<output-dir>` | `CNB_OUTPUT_DIR`     | `<layers>                                              | Path to output directory for generated Dockerfiles                                                              |
-| `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                              |
-| `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                      |
+| Input          | Environment Variable | Default Value                                          | Description                                                                                                                                                  |
+|----------------|----------------------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `<analyzed>`   | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | (**[experimental](#experimental-features)**) Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                     |
+| `<app>`        | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                                                                |
+| `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
+| `<extensions>` | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
+| `<group>`      | `CNB_GROUP_PATH`     | `<layers>/group.toml`                                  | Path to output group definition                                                                                                                              |
+| `<layers>`     | `CNB_LAYERS_DIR`     | `/layers`                                              | Path to layers directory                                                                                                                                     |
+| `<log-level>`  | `CNB_LOG_LEVEL`      | `info`                                                 | Log Level                                                                                                                                                    |
+| `<order>`      | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
+| `<output-dir>` | `CNB_OUTPUT_DIR`     | `<layers>                                              | (**[experimental](#experimental-features)**) Path to output directory for generated Dockerfiles                                                              |
+| `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
+| `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                                                                   |
 
 ##### Outputs
 | Output                                                   | Description                                                                                              |
@@ -411,7 +413,7 @@ The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
 
-When image extensions are present in the order (**experimental**), the lifecycle:
+When image extensions are present in the order (**[experimental](#experimental-features)**), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - SHALL copy all generated run.Dockerfiles to `<output>/generated/run/<image extension ID>/Dockerfile`.
 - SHALL replace the `run-image` reference in `<analyzed>` with the selected run image reference. The selected run image reference SHALL be the base image referenced in the Dockerfile output by the last image extension in the group.
@@ -826,6 +828,18 @@ The lifecycle SHOULD adhere to established docker conventions when checking for 
 The lifecycle MAY provide other mechanisms by which a platform can supply registry credentials.
 
 The lifecycle MUST attempt to authenticate anonymously if no matching credentials are found.
+
+### Experimental Features
+
+Where noted, certain features are considered experimental and susceptible to change in a future API version.
+
+The platform SHOULD set `CNB_PLATFORM_EXPERIMENTAL_MODE=<warn|error|silent>` in the lifecycle's execution environment to control the behavior of experimental features.
+
+When an experimental feature is invoked, the lifecycle:
+- SHALL warn and continue if `CNB_PLATFORM_EXPERIMENTAL_MODE` is unset
+- SHALL warn and continue if `CNB_PLATFORM_EXPERIMENTAL_MODE=warn`
+- SHALL fail if `CNB_PLATFORM_EXPERIMENTAL_MODE=error`
+- SHALL continue without warning if `CNB_PLATFORM_EXPERIMENTAL_MODE=silent`
 
 ## Buildpacks
 
