@@ -402,25 +402,25 @@ Where:
 
 Given:
 
-<img src="http://tex.s2cms.ru/svg/%0AO%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%20%5C%5C%0AC%2C%20%26%20D%0A%5Cend%7Bbmatrix%7D%0A" alt="
-O =
+![
+  O =
 \begin{bmatrix}
 A, &amp; B \\
 C, &amp; D
 \end{bmatrix}
-" />
+](img/matrix1.svg)
 
-<img src="http://tex.s2cms.ru/svg/%0AP%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20F%20%5C%5C%0AG%2C%20%26%20H%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 P =
 \begin{bmatrix}
 E, &amp; F \\
 G, &amp; H
 \end{bmatrix}
-" />
+"](img/matrix2.svg)
 
 It MUST follow that:
 
-<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20O%2C%20%26%20F%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20A%2C%20%26%20B%2C%20%26%20F%20%5C%5C%0AE%2C%20%26%20C%2C%20%26%20D%2C%20%26%20F%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 \begin{bmatrix}
 E, &amp; O, &amp; F
 \end{bmatrix} =
@@ -428,9 +428,9 @@ E, &amp; O, &amp; F
 E, &amp; A, &amp; B, &amp; F \\
 E, &amp; C, &amp; D, &amp; F \\
 \end{bmatrix}
-" />
+](img/matrix3.svg)
 
-<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AO%2C%20%26%20P%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AA%2C%20%26%20B%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 \begin{bmatrix}
 O, &amp; P
 \end{bmatrix} =
@@ -440,7 +440,7 @@ A, &amp; B, &amp; G, &amp; H \\
 C, &amp; D, &amp; E, &amp; F \\
 C, &amp; D, &amp; G, &amp; H \\
 \end{bmatrix}
-" />
+](img/matrix4.svg)
 
 Note that buildpack IDs are expanded depth-first in left-to-right order.
 
