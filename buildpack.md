@@ -2,18 +2,6 @@
 
 This document specifies the interface between a lifecycle program and one or more buildpacks.
 
-The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
-
-This is accomplished in five phases:
-
-1. **Detection**, where an optimal selection of compatible buildpacks is chosen.
-1. **Analysis**, where metadata about OCI layers generated during a previous build are made available to buildpacks.
-1. **Generation** (optional, see the [Image Extension Interface](image-extension.md)), where image extensions generate Dockerfiles that can be used to select the runtime base image.
-1. **Build**, where buildpacks use analyzed metadata to generate only the OCI layers that need to be replaced.
-1. **Export**, where the remote layers are replaced by the generated layers.
-
-The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
-
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
@@ -80,8 +68,8 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
-      - [Buildpack Implementations](#buildpack-implementations)
-      - [Order Buildpacks](#order-buildpacks)
+      - [Stacks](#stacks)
+      - [Order](#order)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
     - [Positional Arguments to `detect` and `build` Executables](#positional-arguments-to-detect-and-build-executables)
@@ -90,22 +78,68 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.8`
+This document specifies Buildpack API version `0.9`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - `<major>` and `<minor>` MUST only contain numbers (unsigned 64 bit integer)
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
+## Terminology
+
+### CNB Terminology
+
+A **buildpack** is a directory containing a `buildpack.toml`. A buildpack analyzes application source code and determines the best way to build it.
+
+A **buildpack group**, or **group**, is a list of one or more buildpacks that are designed to work together - for example, a buildpack that provides `node` and a buildpack that provides `npm`.
+
+An **order** is a list of one or more groups to be tested against application source code, so that the appropriate group for a build can be determined. 
+
+A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables. Component buildpacks implement the [Buildpack Interface](#buildpack-interface).
+
+A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
+
+**Resolving an order** is the process by which an order (which may contain composite buildpacks) is evaluated together with application source code to produce a group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each component buildpack is invoked.
+
+An **optional buildpack** is a buildpack (either component or composite) that, when failing detection, will be excluded from the group without causing the entire group to fail.
+
+A **build plan** is a file used during detection, in which each component buildpack may express the dependencies that it requires and the dependencies that it provides. A group of component buildpacks will only pass detection if a valid build plan can be produced from the dependencies that all component buildpacks in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by a component buildpack that runs before it.
+
+A **buildpack plan** is a file unique to each component buildpack, used during the build phase to communicate the dependencies that the component buildpack is expected to provide.
+
+A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility.
+
+A **launcher** is an executable that is the `ENTRYPOINT` of the exported OCI image. It is used to start processes at runtime. Having a launcher enables multiple process types to be defined on an image, with process-specific environment variables and other functionality.
+
+**Launch** describes the process of running an application by creating a container from the exported OCI image.
+
+A **platform** is a system or software that orchestrates the lifecycle by invoking each lifecycle phase in order.
+
+A **process definition** is a description, provided by component buildpacks during the build phase, of a process to launch at runtime.
+
+An **application directory** is a directory containing application source code. Component buildpacks may make changes to the application directory during the build phase.
+
+A **layer** is a set of filesystem changes packaged according to the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/layer.md).
+
+A **layer directory** is a directory created by a component buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
+  * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the component buildpack that created the layer has the same requirements on the next build
+  * a **cache layer** is saved to the cache and its contents may be restored on the next build
+  * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
+Any combination of the three layer types are valid for a particular layer directory.
+
+A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to component buildpacks through the `CNB_STACK_ID` environment variable, enabling each component buildpack to modify its behavior when executed on different stacks.
+
+A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
+
 ## Buildpack Interface
 
-The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Phase sections.
+The following specifies the interface implemented by component buildpacks.
+The lifecycle MUST invoke executables in component buildpacks as described in the Phase sections.
 
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
-- return an error to the platform if it does not support `<buildpack API Version>`
+- MUST return an error to the platform if it does not support `<buildpack API Version>`
 
 The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
@@ -312,7 +346,8 @@ At the end of each individual buildpack's build phase:
 
 ### Purpose
 
-The purpose of detection is to find an ordered group of image extensions and executable buildpacks to use during the generation and build phases.
+The purpose of detection is to find an ordered group of component buildpacks - and, optionally, image extensions - to use during the generation and build phases.
+These buildpacks must be compatible with the app.
 
 For detect requirements that are specific to image extensions, see the [Image Extension Interface](image-extension.md).
 
@@ -323,7 +358,7 @@ For detect requirements that are specific to image extensions, see the [Image Ex
 - A directory containing application source code
 - A shell, if needed,
 
-For each image extension ("extension") or executable buildpack ("buildpack") in each group in order, the lifecycle MUST execute `/bin/detect`. Image extensions MUST always be optional during detection.
+For each image extension ("extension") or component buildpack ("buildpack") in each group in order, the lifecycle MUST execute `/bin/detect`. Image extensions MUST always be optional during detection.
 
 1. **If** the exit status of a buildpack `/bin/detect` is non-zero and the buildpack is not marked optional, \
    **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
@@ -388,7 +423,7 @@ A buildpack's mixin requirements must be satisfied by the stack in one of the fo
 
 #### Order Resolution
 
-During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and executable buildpacks.
+During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and component buildpacks.
 
 Order definitions for image extensions MUST NOT contain nested orders.
 
@@ -397,8 +432,8 @@ If an order definition for image extensions is present, it MUST be prepended to 
 The resolution process MUST follow this pattern:
 
 Where:
-- O and P are image extension or buildpack orders.
-- A through H are image extensions or executable buildpacks.
+- O and P are orders for image extensions or buildpacks.
+- A through H are image extensions or component buildpacks.
 
 Given:
 
@@ -452,7 +487,7 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that component buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -491,9 +526,9 @@ See the [Image Extension Specification](#image-extension.md).
 
 ### Purpose
 
-The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container.
+The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container image.
 
-During the build phase, typical buildpacks might:
+During the build phase, typical component buildpacks might:
 
 1. Read the Buildpack Plan in `<plan>` to determine what dependencies to provide.
 1. Provide the application with dependencies for launch in `<layers>/<layer>`.
@@ -573,14 +608,14 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-An image extension or executable buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
+An image extension or component buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
 The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
-    - MUST include the entry in the `<plan>` of the next image extension or executable buildpack that provided an entry with that name during the detection phase.
+    - MUST include the entry in the `<plan>` of the next image extension or component buildpack that provided an entry with that name during the detection phase.
   - **Else**, the lifecycle
-    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent image extensions or executable buildpacks.
+    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent image extensions or component buildpacks.
 
 #### Software-Bill-of-Materials
 
@@ -925,7 +960,7 @@ working-dir = "<working directory>"
 paths = ["<app sub-path glob>"]
 ```
 
-The buildpack MAY specify any number of labels, processes, or slices.
+The component buildpack MAY specify any number of labels, processes, or slices.
 
 For each label, the buildpack:
 
@@ -974,7 +1009,7 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 name = "<dependency name>"
 ```
 
-For each unmet entry in the Buildpack Plan, the buildpack:
+For each unmet entry in the Buildpack Plan, the component buildpack:
 - SHOULD add an entry to `unmet`.
 
 For each entry in `unmet`:
@@ -1038,7 +1073,6 @@ For a given layer, the buildpack MAY specify:
 
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
-
 
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
@@ -1109,9 +1143,9 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 *Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
-#### Buildpack Implementations
+#### Stacks
 
-A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
+A buildpack descriptor may specify `stacks`.
 
 Each stack in `stacks` either:
 - MUST identify a compatible stack:
@@ -1120,12 +1154,10 @@ Each stack in `stacks` either:
 - Or MUST indicate compatibility with any stack:
    - `id` MUST be set to the special value `"*"`.
    - `mixins` MUST be empty.
+   
+#### Order
 
-#### Order Buildpacks
-
-A buildpack that specifies `order` in its `buildpack.toml` MUST be [resolvable](#order-resolution) into an ordering of executable buildpacks that implement the [Buildpack Interface](#buildpack-interface). The `order` MUST include only executable buildpacks and MUST NOT include image extensions.
-
-A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+A buildpack reference inside of a `group` MUST contain an `id` and `version`. The `order` MUST include only buildpacks and MUST NOT include image extensions.
 
 ### Exec.d Output (TOML)
 ```
