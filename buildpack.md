@@ -89,7 +89,7 @@ Buildpack API versions:
 
 ### CNB Terminology
 
-A **buildpack** is a directory containing a `buildpack.toml`. A buildpack analyzes application source code and determines the best way to build it.
+A **buildpack** is a directory containing a `buildpack.toml`. Buildpacks analyze application source code and determine the best way to build it.
 
 A **buildpack group**, or **group**, is a list of one or more buildpacks that are designed to work together - for example, a buildpack that provides `node` and a buildpack that provides `npm`.
 
@@ -99,13 +99,15 @@ A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/buil
 
 A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
 
-**Resolving an order** is the process by which an order (which may contain composite buildpacks) is evaluated together with application source code to produce a group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each component buildpack is invoked.
+An **image extension** (**experimental**) is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image-extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
 
-An **optional buildpack** is a buildpack (either component or composite) that, when failing detection, will be excluded from the group without causing the entire group to fail.
+**Resolving an order** is the process by which an order (which may contain image extensions, component buildpacks, or composite buildpacks) is evaluated together with application source code to produce an optional group of image extensions and a required group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each image extension (if present) and the `/bin/detect` executable for each component buildpack is invoked.
 
-A **build plan** is a file used during detection, in which each component buildpack may express the dependencies that it requires and the dependencies that it provides. A group of component buildpacks will only pass detection if a valid build plan can be produced from the dependencies that all component buildpacks in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by a component buildpack that runs before it.
+An **optional** buildpack or extension is a group element that, when failing detection, will be excluded from the group without causing the entire group to fail.
 
-A **buildpack plan** is a file unique to each component buildpack, used during the build phase to communicate the dependencies that the component buildpack is expected to provide.
+A **build plan** is a file used during detection, in which each image extension or component buildpack may express the dependencies that it requires and the dependencies that it provides. A group will only pass detection if a valid build plan can be produced from the dependencies that all elements in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by an image extension or component buildpack that runs before it.
+
+A **buildpack plan** is a file unique to each image extension or component buildpack, used during the generation or build phase to communicate the dependencies that it is expected to provide.
 
 A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility.
 
@@ -510,7 +512,7 @@ For each buildpack in the group, the lifecycle
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
-## Phase #3: Generation (optional)
+## Phase #3: Generation (image extensions only)
 
 ### Purpose
 
@@ -520,7 +522,7 @@ The purpose of the generation phase is to generate Dockerfiles that can be used 
 
 See the [Image Extension Specification](#image-extension.md).
 
-## Phase #4: Build
+## Phase #4: Build (component buildpacks only)
 
 ![Build](img/build.svg)
 

@@ -2,8 +2,6 @@
 
 This document specifies the interface between a lifecycle program and one or more image extensions.
 
-The lifecycle program uses image extensions to generate Dockerfiles that can be used to select the runtime base image prior to buildpack builds.
-
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
