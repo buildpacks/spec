@@ -44,14 +44,14 @@ Executable: `/bin/generate`, Working Dir: `<app[AR]>`
 
 Image extensions participate in a generation process that is similar to the buildpack [build](buildpack.md#build) process, with an interface that is similar to `/bin/build`. However:
 - Image extensions' `/bin/generate` MUST NOT write to the app directory.
-- Instead of the `CNB_LAYERS_DIR`, image extensions receive a `CNB_OUTPUT_DIR` which MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
+- Instead of the `CNB_LAYERS_DIR` input, image extensions MUST receive a `CNB_OUTPUT_DIR` which MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
 - If an image extension is missing `/bin/generate`, the image extension root MUST be treated as a pre-populated `<output>` directory.
 
 ## Phase: Generation
 
 ### Purpose
 
-The purpose of the generation phase is to generate Dockerfiles that can be used to select the runtime base image.
+The purpose of the generation phase is to generate Dockerfiles that can be used to define the runtime base image.
 
 ### Process
 
