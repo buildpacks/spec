@@ -406,8 +406,8 @@ Usage:
 | `20`            | All buildpacks groups have failed to detect w/o error                             |
 | `21`            | All buildpack groups have failed to detect and at least one buildpack has errored |
 | `22-29`         | Detection-specific lifecycle errors                                               |
-| `81`            | Extension generate error                                                          |
-| `82-89`         | Generation-specific lifecycle errors                                              |
+| `91`            | Extension generate error                                                          |
+| `92-99`         | Generation-specific lifecycle errors                                              |
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
