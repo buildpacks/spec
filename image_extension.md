@@ -33,7 +33,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
 Image extensions participate in the buildpack [detection](buildpack.md#detection) process, with the same interface for `/bin/detect`. However:
 - Detection is optional for image extensions, and they are assumed to pass detection when `/bin/detect` is not present.
-- If an image extension is missing `/bin/detect`, the image extension root MUST be treated as a pre-populated `<output>` directory.
+- If an image extension is missing `/bin/detect`, the image extension root `/detect` directory MUST be treated as a pre-populated `<output>` directory.
 - Image extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
 
 ### Generation
@@ -43,7 +43,7 @@ Executable: `/bin/generate`, Working Dir: `<app[AR]>`
 Image extensions participate in a generation process that is similar to the buildpack [build](buildpack.md#build) process, with an interface that is similar to `/bin/build`. However:
 - Image extensions' `/bin/generate` MUST NOT write to the app directory.
 - Instead of the `CNB_LAYERS_DIR` input, image extensions MUST receive a `CNB_OUTPUT_DIR` which MUST be the absolute path of an `<output>` directory and MUST NOT be the path of the buildpack layers directory.
-- If an image extension is missing `/bin/generate`, the image extension root MUST be treated as a pre-populated `<output>` directory.
+- If an image extension is missing `/bin/generate`, the image extension root `/generate` directory MUST be treated as a pre-populated `<output>` directory.
 
 ## Phase: Generation
 
@@ -122,7 +122,7 @@ uri = "<uri>"
 
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
 
-The image extension `id`, `version`, `api`, `licenses`, and `sbom-formats` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+The image extension `id`, `version`, `api`, and `licenses` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
 ### build.toml (TOML)
 

@@ -103,7 +103,7 @@ An **image extension** (**experimental**) is a directory containing an `extensio
 
 **Resolving an order** is the process by which an order (which may contain image extensions, component buildpacks, or composite buildpacks) is evaluated together with application source code to produce an optional group of image extensions and a required group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each image extension (if present) and the `/bin/detect` executable for each component buildpack is invoked.
 
-An **optional** buildpack or extension is a group element that, when failing detection, will be excluded from the group without causing the entire group to fail.
+An **optional** image extension or buildpack is a group element that, when failing detection, will be excluded from the group without causing the entire group to fail.
 
 A **build plan** is a file used during detection, in which each image extension or component buildpack may express the dependencies that it requires and the dependencies that it provides. A group will only pass detection if a valid build plan can be produced from the dependencies that all elements in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by an image extension or component buildpack that runs before it.
 
@@ -425,7 +425,7 @@ A buildpack's mixin requirements must be satisfied by the stack in one of the fo
 
 #### Order Resolution
 
-During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and component buildpacks.
+During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and a group of component buildpacks.
 
 Order definitions for image extensions MUST NOT contain nested orders.
 
