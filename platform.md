@@ -833,13 +833,13 @@ The lifecycle MUST attempt to authenticate anonymously if no matching credential
 
 Where noted, certain features are considered experimental and susceptible to change in a future API version.
 
-The platform SHOULD set `CNB_PLATFORM_EXPERIMENTAL_MODE=<warn|error|silent>` in the lifecycle's execution environment to control the behavior of experimental features.
+The platform SHOULD set `CNB_EXPERIMENTAL_MODE=<warn|error|silent>` in the lifecycle's execution environment to control the behavior of experimental features.
 
 When an experimental feature is invoked, the lifecycle:
-- SHALL warn and continue if `CNB_PLATFORM_EXPERIMENTAL_MODE` is unset
-- SHALL warn and continue if `CNB_PLATFORM_EXPERIMENTAL_MODE=warn`
-- SHALL fail if `CNB_PLATFORM_EXPERIMENTAL_MODE=error`
-- SHALL continue without warning if `CNB_PLATFORM_EXPERIMENTAL_MODE=silent`
+- SHALL warn and continue if `CNB_EXPERIMENTAL_MODE` is unset
+- SHALL warn and continue if `CNB_EXPERIMENTAL_MODE=warn`
+- SHALL fail if `CNB_EXPERIMENTAL_MODE=error`
+- SHALL continue without warning if `CNB_EXPERIMENTAL_MODE=silent`
 
 ## Buildpacks
 
