@@ -692,14 +692,8 @@ The purpose of launch is to modify the running app environment using app-provide
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
 1. The lifecycle MUST
-   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` as described in the [Platform Interface Specification](platform.md).
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` as described in the [Platform Interface Specification](platform.md).
 
 1. The lifecycle MUST invoke the command with its arguments, environment, and working directory following the process outlined in the [Platform Interface Specification](platform.md).
 
