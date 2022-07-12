@@ -1026,8 +1026,8 @@ Where:
 [[entries]]
 
   [[entries.providers]]
-    id = "<buildpack ID>"
-    version = "buildpack Version"
+    id = "<buildpack or extension ID>"
+    version = "<buildpack or extension Version>"
     extension = false
 
   [[entries.requires]]
