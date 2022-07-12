@@ -395,7 +395,7 @@ Usage:
 | `<group>`                                                | Detected buildpack group  (see [`group.toml`](#grouptoml-toml))                                          |
 | `<plan>`                                                 | Resolved Build Plan (see [`plan.toml`](#plantoml-toml))                                                  |
 | `<analyzed>`                                             | Updated to include the run image obtained from applying generated Dockerfiles                            |
-| `<output>/generated/run/<image extension ID>/Dockerfile` | Generated Dockerfiles (see [Image Extension Specfication](image-extension.md)                            |
+| `<output>/generated/run/<image extension ID>/Dockerfile` | Generated Dockerfiles (see [Image Extension Specfication](image-extension.md))                           |
 
 | Exit Code       | Result                                                                            |
 |-----------------|-----------------------------------------------------------------------------------|
