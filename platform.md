@@ -1019,15 +1019,15 @@ version = "<image extension version>"
 Where:
 
 - Both `id` and `version` MUST be present for each buildpack object in a group.
-- The value of `optional` MUST default to false if not specified.
+- The value of `optional` MUST default to `false` if not specified.
 
 #### `plan.toml` (TOML)
 ```toml
 [[entries]]
 
   [[entries.providers]]
-    id = "<buildpack or extension ID>"
-    version = "<buildpack or extension Version>"
+    id = "<buildpack or image extension ID>"
+    version = "<buildpack or image extension version>"
     extension = false
 
   [[entries.requires]]
@@ -1038,7 +1038,8 @@ Where:
 Where:
 - `entries` MAY be empty
 - Each entry:
-    - MUST contain at least one buildpack in `providers`
+    - MUST contain at least one buildpack or image extension in `providers`
+      - If the provider is an image extension (**[experimental](#experimental-features)**), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
     - MUST contain at least one dependency requirement in `requires`
     - MUST exclusively contain dependency requirements with the same `<dependency name>`
 
