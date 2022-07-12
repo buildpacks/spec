@@ -134,3 +134,7 @@ name = "<dependency name>"
 ```
 
 The image extension `unmet` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+
+### Build Plan (TOML)
+
+See the [Buildpack Interface Specification](buildpack.md).
