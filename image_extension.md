@@ -124,8 +124,6 @@ Image extension authors MUST choose a globally unique ID, for example: "io.build
 
 The image extension `id`, `version`, `api`, and `licenses` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
-The image extension `unmet` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
-
 ### Build Plan (TOML)
 
 See the [Buildpack Interface Specification](buildpack.md).
