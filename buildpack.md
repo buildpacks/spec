@@ -610,12 +610,14 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-An image extension or component buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
+A component buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
 The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
+
+Image extensions MUST satisfy all entries in the Buildpack Plan.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
-    - MUST include the entry in the `<plan>` of the next image extension or component buildpack that provided an entry with that name during the detection phase.
+    - MUST include the entry in the `<plan>` of the next component buildpack that provided an entry with that name during the detection phase.
   - **Else**, the lifecycle
     - MUST NOT include entries with matching names in the `<plan>` provided to subsequent image extensions or component buildpacks.
 
