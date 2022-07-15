@@ -195,21 +195,6 @@ Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app
 | Standard error     | Logs (warnings, errors)
 | [†](README.md#linux-only)FD 3 or [‡](README.md#windows-only)`<handle>` | Launch time environment variables (see [Exec.d Output](#execd-output-toml))
 
-### Process Definition
-
-Each buildpack may write a [launch.toml](#launchtoml-toml) file in order to define processes that the launcher can run on the app image.
-
-| Field         | Type            | Definition                                                                                   |
-|---------------|-----------------|----------------------------------------------------------------------------------------------|
-| `type`        | String          | An identifier for the process                                                          |
-| `command`     | Array of string | The command to execute, followed by arguments that should always be provided [^command-args] |
-| `args`        | Array of string | Default arguments to the command that can be overridden by the user                          |
-| `default`     | Boolean         | If `true`, use this as the default process for the app image                                 |
-| `working-dir` | Path            | Working directory for this process in the app image                                          |
-
-[^command-args]: For versions of the Platform API that do not support overridable arguments, `args` are always applied.
-In general, check the [Platform Interface Specification](platform.md) for details on process execution.
-
 ### Layer Types
 
 Using the [Layer Content Metadata](#layer-content-metadata-toml) provided by a buildpack in the `[types]` table of a `<layers>/<layer>.toml` file, the lifecycle MUST determine:
@@ -872,18 +857,19 @@ If multiple buildpacks define labels with the same key, the lifecycle MUST use t
 
 For each process, the buildpack:
 
-- MUST specify a `type`, which:
+- MUST specify a `type`, an identifier for the process, which:
   - MUST NOT be identical to other process types provided by the same buildpack.
   - MUST only contain numbers, letters, and the characters ., _, and -.
 - MUST specify a `command` list such that:
   - The first element of `command` is a path to an executable or the file name of an executable in `$PATH`.
-  - Any remaining elements of `command` are arguments that are always passed directly to the executable.
+  - Any remaining elements of `command` are arguments that should always passed directly to the executable [^command-args].
 - MAY specify an `args` list to be passed directly to the specified executable, after arguments specified in `command`.
-  - The `args` list is a default list of arguments that may be overridden by the user.
+  - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
 
-Note that the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
+[^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied.
+In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 
