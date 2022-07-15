@@ -862,13 +862,13 @@ For each process, the buildpack:
   - MUST only contain numbers, letters, and the characters ., _, and -.
 - MUST specify a `command` list such that:
   - The first element of `command` is a path to an executable or the file name of an executable in `$PATH`.
-  - Any remaining elements of `command` are arguments that should always passed directly to the executable [^command-args].
+  - Any remaining elements of `command` are arguments that are always passed directly to the executable [^command-args].
 - MAY specify an `args` list to be passed directly to the specified executable, after arguments specified in `command`.
   - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
 
-[^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied.
+[^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied together with any user-provided arguments.
 In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
