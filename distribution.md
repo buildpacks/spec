@@ -47,7 +47,7 @@ Distribution API versions:
 
 ### Buildpackage
 
-A buildpackage is a buildpack packaged for distribution.
+A buildpackage is a buildpack or image extension (**experimental**) packaged for distribution.
 
 A buildpackage MUST exist in one of the following formats:
 
@@ -56,7 +56,7 @@ A buildpackage MUST exist in one of the following formats:
 * An uncompressed tar archive in [oci-layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format.
   * The file SHOULD have the extension `.cnb`.
 
-[†](README.md#linux-only)For Linux buildpackages, all FS layers MUST be buildpack layers.
+[†](README.md#linux-only)For Linux buildpackages, all FS layers MUST be buildpack or extension layers.
 
 [‡](README.md#windows-only)For Windows buildpackages, all FS layers MUST be either buildpack or OS layers.
 
@@ -66,18 +66,30 @@ Each buildpack layer blob MUST contain a single [buildpack](./buildpack.md) at t
 /cnb/buildpacks/<buildpack ID>/<buildpack version>/
 ```
 
-If the buildpack ID contains a `/`, it MUST be replaced with `_` in the directory name.
-
 A buildpack MUST contain a `buildpack.toml` file at its root directory.
+
+Each extension layer blob MUST contain a single [image extension](./image-extension.md) at the following file path:
+
+```
+/cnb/extensions/<extension ID>/<extension version>/
+```
+
+An image extension MUST contain an `extension.toml` file at its root directory.
+
+If the buildpack or extension ID contains a `/`, it MUST be replaced with `_` in the directory name.
 
 #### Labels
 
-The following labels MUST be set in the buildpack image(through the image config's `Labels` field):
+The following labels MUST be set on a buildpackage image (through the image config's `Labels` field):
 
-| Label                                | Description                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Label                              | Description                                                                                       |
+|------------------------------------|---------------------------------------------------------------------------------------------------|
 | `io.buildpacks.buildpack.metadata` | A JSON object representing information about the packaged entrypoint buildpack                    |
+| `io.buildpacks.extension.metadata` | A JSON object representing information about the packaged entrypoint extension                    |
 | `io.buildpacks.buildpack.layers`   | A JSON object representing information about all packaged buildpacks and their associated layers. |
+| `io.buildpacks.extension.layers`   | A JSON object representing information about all packaged extensions and their associated layers. |
+
+`io.buildpacks.buildpack.metadata` and `io.buildpacks.extension.metadata` MUST NOT both be set (as there can be only one entrypoint).
 
 ##### `io.buildpacks.buildpack.metadata` (JSON)
 
@@ -87,6 +99,17 @@ The following labels MUST be set in the buildpack image(through the image config
   "name": "<buildpack name (optional)>",
   "version": "<buildpack version (required)>",
   "homepage": "<buildpack home page (optional)>",
+}
+```
+
+##### `io.buildpacks.extension.metadata` (JSON)
+
+```json
+{
+  "id": "<extension ID (required)>",
+  "name": "<extension name (optional)>",
+  "version": "<extension version (required)>",
+  "homepage": "<extension home page (optional)>",
 }
 ```
 
@@ -125,9 +148,24 @@ The following labels MUST be set in the buildpack image(through the image config
 }
 ```
 
-For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpack.layers`.
+##### `io.buildpacks.extension.layers` (JSON)
 
-The buildpack ID and version MUST match a buildpack provided by a layer blob.
+```json
+{
+  "<extension ID (required)>": {
+    "<extension version (required)>": {
+      "api": "<extension API (required)>",
+      "layerDiffID": "<diff ID of extension layer (required)>",
+      "homepage": "<extension homepage (optional)>",
+      "name": "<extension name (optional)>"
+    }
+  }
+}
+```
+
+For each buildpack layer, the buildpack ID and the buildpack version MUST be provided in `io.buildpacks.buildpack.layers`. The buildpack ID and version MUST match a buildpack provided by a layer blob.
+
+For each extension layer, the extension ID and the extension version MUST be provided in `io.buildpacks.extension.layers`. The extension ID and version MUST match a extension provided by a layer blob.
 
 For a buildpackage to be valid, each `buildpack.toml` describing a buildpack implementation MUST have all listed targets.
 
@@ -295,15 +333,17 @@ A builder image MUST contain an implementation of the [lifecycle](#lifecycle), a
 
 A builder image MAY contain buildpacks, and MAY retain all the specified Labels set on the original buildpackage, as specified in the [buildpackage](#buildpackage) specification with the following exceptions:
 
-- `io.buildpacks.buildpack.metadata` MUST not be set.
-- `io.buildpacks.buildpack.layers`  on the builder SHOULD be a merged version based on all buildpackages combined and thereby have of all packaged buildpacks represented.
+- `io.buildpacks.buildpack.metadata` and `io.buildpacks.extension.metadata` MUST NOT be set.
+- `io.buildpacks.buildpack.layers` on the builder SHOULD be a merged version based on all buildpack buildpackages combined and thereby have all packaged buildpacks represented.
+- `io.buildpacks.extension.layers` on the builder SHOULD be a merged version based on all extension buildpackages combined and thereby have all packaged extensions represented.
 
 In addition to all inherited labels above, the following labels MUST be set in the builder environment (through the image config's `Labels` field):
 
-| Label                            | Description                                                   |
-| -------------------------------- | ------------------------------------------------------------- |
-| `io.buildpacks.builder.metadata` | A JSON object representing builder metadata.                  |
-| `io.buildpacks.buildpack.order`  | A JSON object representation of the `/cnb/order.toml` file.   |
+| Label                                      | Description                                                                             |
+|--------------------------------------------|-----------------------------------------------------------------------------------------|
+| `io.buildpacks.builder.metadata`           | A JSON object representing builder metadata.                                            |
+| `io.buildpacks.buildpack.order`            | A JSON object representation of the `/cnb/order.toml` file `[[order]]` list.            |
+| `io.buildpacks.buildpack.order-extensions` | A JSON object representation of the `/cnb/order.toml` file `[[order-extensions]]` list. |
 
 ##### `io.buildpacks.builder.metadata` (JSON)
 
