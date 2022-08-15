@@ -83,7 +83,7 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.8`
+This document specifies Buildpack API version `0.9`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -163,15 +163,13 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))                 |
 | `$CNB_LAYERS_DIR/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks                                                         |
-| `$CNB_LAYERS_DIR/<layer>/profile.d/`            | Scripts sourced by Bash before launch                                                                            |
-| `$CNB_LAYERS_DIR/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type                                              |
 | `$CNB_LAYERS_DIR/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch                               |
 | `$CNB_LAYERS_DIR/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch |
 | `$CNB_LAYERS_DIR/<layer>/include/`              | C/C++ headers for subsequent buildpacks                                                                          |
 | `$CNB_LAYERS_DIR/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks                                                             |
 | `$CNB_LAYERS_DIR/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks                                                                 |
-| `$CNB_LAYERS_DIR/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)                                                            |
-| `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process                                   |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/`           | Env vars for launch (after `env`, before `exec.d`)                                                               |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `exec.d`) for the launched process                                      |
 | `$CNB_LAYERS_DIR/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/*`                     | Other content for launch and/or subsequent buildpacks                                                            |
 
@@ -293,13 +291,6 @@ At the end of each individual buildpack's build phase:
 - The lifecycle:
   - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`, in order to prevent subsequent buildpacks from accidentally depending on an ignored layer.
 
-## App Interface
-
-| Output                 | Description
-|------------------------|----------------------------------------------
-| `<app>/.profile`       | [†](README.md#linux-only) Bash-formatted script sourced by shell before launch
-| `<app>/.profile.bat`   | [‡](README.md#windows-only) BAT-formatted script sourced by shell before launch
-
 ## Phase #1: Detection
 
 ![Detection](img/detection.svg)
@@ -314,7 +305,6 @@ These buildpacks must be compatible with the app.
 **GIVEN:**
 - An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
-- A shell, if needed,
 
 For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
 
@@ -501,9 +491,8 @@ This is achieved by:
 - The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
 - The Buildpack Plan,
-- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
-- Any locally cached `<layers>/<layer>` directories, and
-- A shell, if needed,
+- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase, and
+- Any locally cached `<layers>/<layer>` directories,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
@@ -684,61 +673,16 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- A shell, if needed,
-
-First, the lifecycle MUST locate a start command and choose an execution strategy.
-
-To locate a start command, the lifecycle MUST follow the process outlined in the [Platform Interface Specification](platform.md).
-
-To choose an execution strategy,
-
-1. **If** a buildpack-provided process type is chosen as the start command,
-   1. **If** the process type has `direct` set to `false`,
-      1. **If** the process has one or more `args`
-         **Then** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
-      2. **If** the process has zero `args`
-         **Then** the lifecycle MUST invoke the value of `command` as a command using the shell.
-
-   2. **If** the process type does have `direct` set to `true`,
-      **Then** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
-
-2. **If** a user-defined process type is chosen as the start command,
-   **Then** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
-
-Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
 1. The lifecycle MUST
-   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` as described in the [Platform Interface Specification](platform.md).
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` as described in the [Platform Interface Specification](platform.md).
 
-1. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process, with working directory `<app>`, to
-   1. source each file in each `<layers>/<layer>/profile.d` directory,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   2. source each file in each `<layers>/<layer>/profile.d/<process>` directory,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+1. The lifecycle MUST invoke the command with its arguments, environment, and working directory following the process outlined in the [Platform Interface Specification](platform.md).
 
-1. The lifecycle MUST set the working directory for the start command to `<working-dir>`, or to `<app>` if `<working-dir>` is not specified.
-
-1. The lifecycle MUST invoke the start command with the decided execution strategy.
-
-[†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
-
-[†](README.md#linux-only)When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
-
-[‡](README.md#windows-only)When executing a process with Command Prompt, the lifecycle SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
+[†](README.md#linux-only)When executing a process, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
 ## Environment
 
@@ -775,7 +719,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 |-----------------|------------------------------------------------|--------|-------|--------
 | `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
+| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
@@ -891,9 +835,8 @@ value = "<label valu>"
 
 [[processes]]
 type = "<process type>"
-command = "<command>"
+command = ["<command>"]
 args = ["<arguments>"]
-direct = false
 default = false
 working-dir = "<working directory>"
 
@@ -914,16 +857,19 @@ If multiple buildpacks define labels with the same key, the lifecycle MUST use t
 
 For each process, the buildpack:
 
-- MUST specify a `type`, which:
+- MUST specify a `type`, an identifier for the process, which:
   - MUST NOT be identical to other process types provided by the same buildpack.
   - MUST only contain numbers, letters, and the characters ., _, and -.
-- MUST specify a `command` that is either:
-  - A command sequence that is valid when executed using the shell, if `args` is not specified.
-  - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
-- MAY specify an `args` list to be passed directly to the specified executable.
-- MAY specify a `direct` boolean that bypasses the shell.
+- MUST specify a `command` list such that:
+  - The first element of `command` is a path to an executable or the file name of an executable in `$PATH`.
+  - Any remaining elements of `command` are arguments that are always passed directly to the executable [^command-args].
+- MAY specify an `args` list to be passed directly to the specified executable, after arguments specified in `command`.
+  - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
+
+[^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied together with any user-provided arguments.
+In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 

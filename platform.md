@@ -754,6 +754,7 @@ Usage:
 A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
+
 - MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
@@ -772,6 +773,43 @@ The launcher:
         - `<cmd>` SHALL be `$1`
         - `<args>` SHALL be `${@2:}`
         - `<working-dir` SHALL be `<app>`
+
+##### Execution
+
+Given the start command and execution strategy,
+
+1. The launcher MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
+
+1. The launcher MUST
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+
+1. If using an execution strategy involving a shell, the launcher MUST use a single shell process, with working directory `<app>`, to
+   1. source each file in each `<layers>/<layer>/profile.d` directory,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   2. source each file in each `<layers>/<layer>/profile.d/<process>` directory,
+      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
+      2. Secondly, in alphabetically ascending order by layer directory name.
+      3. Thirdly, in alphabetically ascending order by file name.
+   3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+
+1. The launcher MUST set the working directory for the start command to `<working-dir>`, or to `<app>` if `<working-dir>` is not specified.
+
+1. The launcher MUST invoke the start command with the decided execution strategy.
+
+[†](README.md#linux-only)When executing a process using any execution strategy, the launcher SHOULD replace the launcher process in memory without forking it.
+
+[†](README.md#linux-only)When executing a process with Bash, the launcher SHOULD additionally replace the Bash process in memory without forking it.
+
+[‡](README.md#windows-only)When executing a process with Command Prompt, the launcher SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
