@@ -836,7 +836,7 @@ Where noted, certain features are considered experimental and susceptible to cha
 The platform SHOULD set `CNB_EXPERIMENTAL_MODE=<warn|error|silent>` in the lifecycle's execution environment to control the behavior of experimental features.
 
 When an experimental feature is invoked, the lifecycle:
-- SHALL warn and continue if `CNB_EXPERIMENTAL_MODE` is unset
+- SHALL fail if `CNB_EXPERIMENTAL_MODE` is unset
 - SHALL warn and continue if `CNB_EXPERIMENTAL_MODE=warn`
 - SHALL fail if `CNB_EXPERIMENTAL_MODE=error`
 - SHALL continue without warning if `CNB_EXPERIMENTAL_MODE=silent`
