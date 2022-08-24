@@ -90,7 +90,7 @@ Examples of a platform might include:
 
 ## Platform API Version
 
-This document specifies Platform API version `0.9`.
+This document specifies Platform API version `0.10`.
 
 Platform API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -525,6 +525,7 @@ Usage:
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
+    - For buildpacks implementing a Buildpack API where the `direct` field on process types is supported, the lifecycle SHALL combine each process' `command` and `args` in `launch.toml` into `command` in `<layers>/config/metadata.toml`, and leave `args` empty in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
@@ -761,9 +762,9 @@ Usage:
 #### `launcher`
 Usage:
 ```
-/cnb/process/<process-type> [<arg>...]
+/cnb/process/<process-type> [<args>...]
 # OR
-/cnb/lifecycle/launcher [--] [<cmd> <arg>...]
+/cnb/lifecycle/launcher [<cmd> <args>...]
 ```
 ##### Inputs
 | Input                              | Environment Variable | Default Value | Description                                               |
@@ -771,33 +772,42 @@ Usage:
 | `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
 | `<layers>`                         | `CNB_LAYERS_DIR`     | `/layers`     | Path to layer directory                                   |
 | `<process-type>`                   |                      |               | `type` of process to launch                               |
-| `<direct>`                         |                      |               | Process execution strategy                                |
 | `<cmd>`                            |                      |               | Command to execute                                        |
 | `<args>`                           |                      |               | Arguments to command                                      |
 | `<layers>/config/metadata.toml`    |                      |               | Build metadata (see [`metadata.toml`](#metadatatoml-toml) |
 | `<layers>/<buildpack-id>/<layer>/` |                      |               | Launch Layers                                             |
 
-A command (`<cmd>`), arguments to that command (`<args>`), a working directory (`<working-dir>`), and an execution strategy (`<direct>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
+A command (`<cmd>`), arguments to that command (`<args>`), and a working directory (`<working-dir>`) comprise a process definition. Processes MAY be buildpack-defined or user-defined.
 
 The launcher:
 - MUST derive the values of `<cmd>`, `<args>`, `<working-dir>`, and `<direct>` as follows:
-- **If** the final path element in `$0`, matches the type of any buildpack-provided process type
-    - `<process-type>` SHALL be the final path element in `$0`
-    - The lifecycle:
-        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
-        - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
-        - MUST append any user-provided `<args>` to process arguments
-- **Else**
-    - **If** `$1` is `--`
-        - `<direct>` SHALL be `true`
-        - `<cmd>` SHALL be `$2`
-        - `<args>` SHALL be `${@3:}`
-        - `<working-dir>` SHALL be `<app>`
+    - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
+        - `<process-type>` SHALL be the final path element in `$0`
+        - **If** the buildpack API version supports the `direct` field on process definitions, **and** the `direct` field for this process definition is set to `false`
+            - `<direct>` is `false`
+        - **Else**
+            - `<direct>` is `true`.
+        - The lifecycle:
+            - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+            - MUST set `<cmd>` to the first element of `command` in the selected process type.
+            - MUST set `<args>` to any remaining elements of `command` in the selected process type, followed by:
+                - **If** there are user-provided `<args>`, the user-provided `<args>`
+                - **Else** any `args` defined in the selected process type
+            - MUST set `<working-dir>` to the `working-dir` defined for the selected process type, or to `<app>` if not defined
     - **Else**
-        - `<direct>` SHALL be `false`
-        - `<cmd>` SHALL be `$1`
-        - `<args>` SHALL be `${@2:}`
-        - `<working-dir` SHALL be `<app>`
+        - `<direct>` SHALL be `true`
+        - `<cmd>` SHALL be the user-provided `<cmd>`
+        - `<args>` SHALL be the user-provided `<args>`
+        - `<working-dir>` SHALL be `<app>`
+
+- **If** `<direct>` is `true`
+    - MUST invoke the command `<cmd>` with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+- **Else** `<direct>` is `false`, and
+    - MUST invoke the command `<cmd>` using a shell with its arguments `<args>`, environment `<env>`, and working directory `<working-dir>`.
+
+- MUST replace all occurrences of `$(<env>)` in `<args>`, where `<env>` is the name of a variable defined in the launch environment, with the value of the environment variable after applying buildpack-provided environment modifications, before it launches the process.
+  If the environment variable `<env>` is undefined, MUST treat `$(<env>)` like a normal string and perform no replacements.
+  - MUST NOT replace any environment variable references escaped with a double `$`, i.e., `$$(<env>)`.
 
 ##### Outputs
 If the launcher errors before executing the process it will have one of the following error codes:
@@ -991,7 +1001,7 @@ api = "<image extension API version>"
 
 [[processes]]
 type = "<process type>"
-command = "<command>"
+command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
@@ -1107,7 +1117,9 @@ Where:
   "processes": [
     {
       "type": "<process-type>",
-      "command": "<command>",
+      "command": [
+        "<command>"
+      ],
       "args": [
         "<args>"
       ],
@@ -1225,3 +1237,14 @@ Where:
 }
 ```
 This label MUST contain the JSON representation of [`project-metadata.toml`](#project-metadatatoml-toml)
+
+## Deprecations
+
+### Sourcing `.profile` or `.profile.bat` Scripts
+
+_Unsupported in Platform API 0.10._
+
+The launcher no longer sources `<app>/.profile` or `<app>/.profile.bat` files if present.
+The launcher previously sourced these files when the command was run in a shell (i.e., `direct = false`), before executing the command in the same shell.
+
+Platform operators who wish to continue supporting `.profile` or `.profile.bat` scripts to avoid regressions can use the [.profile utility buildpack](https://github.com/buildpacks/profile).
