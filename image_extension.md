@@ -49,7 +49,7 @@ Image extensions participate in a generation process that is similar to the buil
 
 ### Purpose
 
-The purpose of the generation phase is to generate Dockerfiles that can be used to define the runtime base image.
+The purpose of the generation phase is to generate Dockerfiles that can be used to define the build and/or runtime base image.
 
 ### Process
 
@@ -86,15 +86,50 @@ Correspondingly, each `/bin/generate` executable:
 - MAY read the Buildpack Plan.
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
-- MAY write a run.Dockerfile to the `<output>` directory. This file MUST adhere to the requirements listed below.
+- MAY write either or both of `build.Dockerfile` and `run.Dockerfile` to the `<output>` directory. This file MUST adhere to the requirements listed below.
+- MAY write key-value pairs to `<output>/extend-config.toml` that are provided as build args to build.Dockerfile when extending the build image.
 - MUST NOT write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section.
 
 #### Dockerfile Requirements
 
-run.Dockerfiles:
+A `run.Dockerfile`
 
 - MAY contain a single `FROM` instruction
 - MUST NOT contain any other instructions
+
+A `build.Dockerfile`
+
+- MUST begin with:
+```bash
+ARG base_image
+FROM ${base_image}
+```
+- MUST NOT contain any other `FROM` instructions
+- MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
+- MUST NOT contain any other instructions
+- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change)
+- SHOULD NOT edit `<app>`, `<layers>`, or `<workspace>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
+
+## Phase: Extension
+
+### Purpose
+
+The purpose of the extension phase is to apply the Dockerfiles generated in the generation phase to the appropriate base image. The extension phase MUST NOT be run for Windows builds.
+
+### Process
+
+**GIVEN:**
+- The final ordered group of Dockerfiles generated during the generation phase,
+- A list of build args for each Dockerfile specified during the generation phase,
+
+For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfile to the base image as follows:
+
+- The lifecycle MUST provide each Dockerfile with:
+- A `base_image` build arg
+    - For the first Dockerfile, the value MUST be the original base image.
+    - When there are multiple Dockerfiles, the value MUST be the intermediate image generated from the application of the previous Dockerfile.
+- A `build_id` build arg
+    - The value MUST be a UUID
 
 ## Data Format
 
@@ -123,6 +158,20 @@ uri = "<uri>"
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
 
 The image extension `id`, `version`, `api`, and `licenses` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+
+### extend-config.toml (TOML)
+
+```toml
+[[build.args]]
+name = "<build arg name>"
+value = "<build arg value>"
+```
+
+The image extension MAY specify any number of args.
+
+For each arg, the image extension:
+- MUST specify a `name` to be the name of a build argument that will be provided to any output build.Dockerfile when extending the build base image.
+- MUST specify a `value` to be the value of the build argument that is provided.
 
 ### Build Plan (TOML)
 
