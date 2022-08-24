@@ -1,6 +1,1 @@
-/platform.md @buildpacks/implementation-team-lead @buildpacks/platform-team-lead
-/buildpack.md @buildpacks/bat-team-lead @buildpacks/implementation-team-lead 
-/distribution.md @buildpacks/distribution-team-lead @buildpacks/platform-team-lead
-/extensions/buildpack-registry.md @buildpacks/distribution-team-lead
-/extensions/project-descriptor.md @buildpacks/platform-team-lead
-* @buildpacks/team-leads
+* @buildpacks/core-team
