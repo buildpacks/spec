@@ -499,6 +499,7 @@ Usage:
   [-generated <generated>] \
   [-gid <gid>] \
   [-group <group>] \
+  [-kaniko-cache-ttl <kaniko-cache-ttl>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-plan <plan>] \
@@ -507,18 +508,19 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Env                  | Default Value         | Description                                                                                     |
-|----------------|----------------------|-----------------------|-------------------------------------------------------------------------------------------------|
-| `<app>`        | `CNB_APP_DIR`        | `/workspace`          | Path to application directory                                                                   |
-| `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
-| `<generated>`  | `CNB_GENERATED_DIR`  | `<layers>/generated`  | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
-| `<gid>`        | `CNB_GROUP_ID`       |                       | Primary GID of the build image `User`                                                           |
-| `<group>`      | `CNB_GROUP_PATH`     | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
-| `<layers>`     | `CNB_LAYERS_DIR`     | `/layers`             | Path to layers directory                                                                        |
-| `<log-level>`  | `CNB_LOG_LEVEL`      | `info`                | Log Level                                                                                       |
-| `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
-| `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`           | Path to platform directory                                                                      |
-| `<uid>`        | `CNB_USER_ID`        |                       | UID of the build image `User`                                                                   |
+| Input                | Env                    | Default Value         | Description                                                                                     |
+|----------------------|------------------------|-----------------------|-------------------------------------------------------------------------------------------------|
+| `<app>`              | `CNB_APP_DIR`          | `/workspace`          | Path to application directory                                                                   |
+| `<buildpacks>`       | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
+| `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`  | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
+| `<gid>`              | `CNB_GROUP_ID`         |                       | Primary GID of the build image `User`                                                           |
+| `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
+| `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks               | Kaniko cache TTL                                                                                |
+| `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`             | Path to layers directory                                                                        |
+| `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                       |
+| `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
+| `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`           | Path to platform directory                                                                      |
+| `<uid>`              | `CNB_USER_ID`          |                       | UID of the build image `User`                                                                   |
 
 ##### Outputs
 
