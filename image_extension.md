@@ -34,6 +34,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 Image extensions participate in the buildpack [detection](buildpack.md#detection) process, with the same interface for `/bin/detect`. However:
 - Detection is optional for image extensions, and they are assumed to pass detection when `/bin/detect` is not present.
 - If an image extension is missing `/bin/detect`, the image extension root `/detect` directory MUST be treated as a pre-populated `<output>` directory.
+- Instead of the `CNB_BUILDPACK_DIR` input, image extensions MUST receive a `CNB_EXTENSION_DIR` which MUST be the absolute path of the extension root directory.
 - Image extensions MUST only output `provides` entries to the build plan. They MUST NOT output `requires`.
 
 ### Generation
@@ -107,7 +108,7 @@ FROM ${base_image}
 ```
 - MUST NOT contain any other `FROM` instructions
 - MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
-- MUST NOT contain any other instructions
+- SHOULD NOT contain any other instructions
 - SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change)
 - SHOULD NOT edit `<app>`, `<layers>`, or `<workspace>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
 
