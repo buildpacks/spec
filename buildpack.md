@@ -509,7 +509,7 @@ After analysis, the lifecycle MUST proceed to the build phase.
 
 ### Purpose
 
-The purpose of the generation phase is to generate Dockerfiles that can be used to define the build and/or runtime base image.
+The purpose of the generation phase is to generate Dockerfiles that can be used to define the build and/or runtime base image. The generation phase MUST NOT be run for Windows builds.
 
 ### Process
 
