@@ -541,6 +541,7 @@ Usage:
   [-group <group>] \
   [-launch-cache <launch-cache> ] \
   [-launcher <launcher> ] \
+  [-launcher-sbom <launcher-sbom> ] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
@@ -552,27 +553,28 @@ Usage:
 ```
 
 ##### Inputs
-| Input               | Environment Variable       | Default Value       | Description
-|---------------------|----------------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`        | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<app>`             | `CNB_APP_DIR`              | `/workspace`        | Path to application directory
-| `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
-| `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI registry
-| `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the build image `User`
-| `<group>`           | `CNB_GROUP_PATH`           | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
-| `<image>`           |                            |                     | Tag reference to which the app image will be written
-| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`     |                     | Path to a cache directory containing launch layers
-| `<launcher>`        |                            | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
-| `<layers>`          | `CNB_LAYERS_DIR`           | `/layers`           | Path to layer directory
-| `<log-level>`       | `CNB_LOG_LEVEL`            | `info`              | Log Level
-| `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
-| `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
-| `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
-| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
-|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config                                           |
+| Input                           | Environment Variable        | Default Value                    | Description                                                                                |
+|---------------------------------|-----------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| `<analyzed>`                    | `CNB_ANALYZED_PATH`         | `<layers>/analyzed.toml`         | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<app>`                         | `CNB_APP_DIR`               | `/workspace`                     | Path to application directory                                                              |
+| `<cache-dir>`                   | `CNB_CACHE_DIR`             |                                  | Path to a cache directory                                                                  |
+| `<cache-image>`                 | `CNB_CACHE_IMAGE`           |                                  | Reference to a cache image in an OCI registry                                              |
+| `<daemon>`                      | `CNB_USE_DAEMON`            | `false`                          | Export image to docker daemon                                                              |
+| `<gid>`                         | `CNB_GROUP_ID`              |                                  | Primary GID of the build image `User`                                                      |
+| `<group>`                       | `CNB_GROUP_PATH`            | `<layers>/group.toml`            | Path to group file (see [`group.toml`](#grouptoml-toml))                                   |
+| `<image>`                       |                             |                                  | Tag reference to which the app image will be written                                       |
+| `<launch-cache>`                | `CNB_LAUNCH_CACHE_DIR`      |                                  | Path to a cache directory containing launch layers                                         |
+| `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
+| `<launcher-sbom>`               |                             | `/cnb/lifecycle`                 | Path to directory containing SBOM files describing the `launcher` executable               |
+| `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
+| `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
+| `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
+| `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
+| `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                      |
+| `<stack>`                       | `CNB_STACK_PATH`            | `/cnb/stack.toml`                | Path to stack file (see [`stack.toml`](#stacktoml-toml)                                    |
+| `<uid>`                         | `CNB_USER_ID`               |                                  | UID of the build image `User`                                                              |
+| `<layers>/config/metadata.toml` |                             |                                  | Build metadata (see [`metadata.toml`](#metadatatoml-toml)                                  |
+|                                 | `SOURCE_DATE_EPOCH`         |                                  | Timestamp for `created` time in app image config                                           |
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -601,10 +603,11 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
+    - MUST contain a layer containing all Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
       - `<layers>/sbom/launch/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
-      - `<layers>/sbom/launch/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
+      - `<layers>/sbom/launch/sbom.legacy.json` MAY contain the legacy buildpack-provided non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
+      - `<layers>/sbom/launch/buildpacksio_lifecycle/launcher/sbom.<ext>` MUST contain the CNB-provided launcher SBOM if present in the `/cnb/lifecycle` directory
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -634,10 +637,11 @@ Usage:
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
-  - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
+  - MUST include all Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
     - `<layers>/sbom/build/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
     - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer.
-    - `<layers>/sbom/build/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `build` (where [supported](buildpack.md))
+    - `<layers>/sbom/build/sbom.legacy.json` MAY contain the legacy buildpack-provided non-standard Bill of Materials for `build` (where [supported](buildpack.md))
+    - `<layers>/sbom/build/buildpacksio_lifecycle/sbom.<ext>` MUST contain the CNB-provided lifecycle SBOM if present in the `/cnb/lifecycle` directory
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
