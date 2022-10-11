@@ -504,7 +504,8 @@ Usage:
   [-log-level <log-level>] \
   [-plan <plan>] \
   [-platform <platform>]
-  [-uid <uid>]
+  [-uid <uid>] \
+  <image>
 ```
 
 ##### Inputs
@@ -515,6 +516,7 @@ Usage:
 | `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`  | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
 | `<gid>`              | `CNB_GROUP_ID`         |                       | Primary GID of the build image `User`                                                           |
 | `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
+| `<image>`            |                        |                       | Digest reference to an image to extend                                                          |
 | `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks               | Kaniko cache TTL                                                                                |
 | `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`             | Path to layers directory                                                                        |
 | `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                       |
