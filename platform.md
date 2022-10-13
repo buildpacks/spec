@@ -338,6 +338,9 @@ Usage:
 - The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
 - The lifecycle MUST ensure registry read access to `<previous-image>`, `<cache-image>`, and `<run-image>`.
+- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
+  - `image` MUST describe the `<previous-image>`, if accessible
+  - `run-image` MUST describe the `<run-image>`
 
 ##### Outputs
 | Output             | Description
@@ -354,10 +357,6 @@ Usage:
 | `12`            | Buildpack API incompatibility error
 | `1-10`, `13-19` | Generic lifecycle errors
 | `30-39`         | Analysis-specific lifecycle errors
-
-- The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
-  - `image` MUST describe the `<previous-image>`, if accessible
-  - `run-image` MUST describe the `<run-image>`
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -485,6 +484,7 @@ Usage:
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 - When the provided `<group>` contains image extensions (**[experimental](#experimental-features)**), the lifecycle:
+  - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
   - MUST copy the OCI manifest and config file for `<build-image>` to `/kaniko/cache`
 
 ##### Layer Restoration
@@ -494,6 +494,7 @@ lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache co
 Usage:
 ```
 /cnb/lifecycle/extender \
+  [-analyzed <analyzed>] \
   [-app <app>] \
   [-buildpacks <buildpacks>] \
   [-generated <generated>] \
@@ -505,24 +506,23 @@ Usage:
   [-plan <plan>] \
   [-platform <platform>]
   [-uid <uid>] \
-  <image>
 ```
 
 ##### Inputs
-| Input                | Env                    | Default Value         | Description                                                                                     |
-|----------------------|------------------------|-----------------------|-------------------------------------------------------------------------------------------------|
-| `<app>`              | `CNB_APP_DIR`          | `/workspace`          | Path to application directory                                                                   |
-| `<buildpacks>`       | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
-| `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`  | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
-| `<gid>`              | `CNB_GROUP_ID`         |                       | Primary GID of the build image `User`                                                           |
-| `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
-| `<image>`            |                        |                       | Digest reference to an image to extend                                                          |
-| `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks               | Kaniko cache TTL                                                                                |
-| `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`             | Path to layers directory                                                                        |
-| `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                       |
-| `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
-| `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`           | Path to platform directory                                                                      |
-| `<uid>`              | `CNB_USER_ID`          |                       | UID of the build image `User`                                                                   |
+| Input                | Env                    | Default Value            | Description                                                                                     |
+|----------------------|------------------------|--------------------------|-------------------------------------------------------------------------------------------------|
+| `<analyzed>`         | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                            |
+| `<app>`              | `CNB_APP_DIR`          | `/workspace`             | Path to application directory                                                                   |
+| `<buildpacks>`       | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
+| `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
+| `<gid>`              | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
+| `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
+| `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks                  | Kaniko cache TTL                                                                                |
+| `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                        |
+| `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                       |
+| `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
+| `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                      |
+| `<uid>`              | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
 
 ##### Outputs
 
@@ -545,6 +545,7 @@ In addition to the outputs enumerated below, outputs produced by `extender` incl
 
 - For each extension in `<group>`, if a Dockerfile exists in `<generated>/build/<buildpack-id>`, the lifecycle:
   - MUST apply the Dockerfile to the build environment according to the process outlined in the [Image Extension Specification](image-extension.md).
+- The extended image MUST be an extension of the `build-image` in [`analyzed.toml`](#analyzedtoml-toml)
 - After all Dockerfiles are applied, the lifecycle:
   - MUST proceed with the `build` phase using the provided `<gid>` and `<uid>`
 
