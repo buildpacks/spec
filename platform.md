@@ -681,7 +681,7 @@ Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restor
 | `<skip-restore>`  | `CNB_SKIP_RESTORE`  | `false`      | Prevent buildpacks from reusing layers from previous builds, by skipping the restoration of any data to each buildpack's layers directory, with the exception of `store.toml`.
 | `<tag>...`        |                     |              | Additional tag to apply to exported image
 
-- **If** `<skip-restore>` is `true` the `creator` SHALL skip sbom layer restoration and skip the entire Restore phase.
+- **If** `<skip-restore>` is `true` the `creator` SHALL skip the restoration of any data to each buildpack's layers directory, with the exception of `store.toml`.
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 ##### Outputs
