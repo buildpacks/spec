@@ -526,7 +526,7 @@ Usage:
 
 ##### Outputs
 
-In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image. When using the `extender` platforms MUST skip the `builder` and proceed to the `exporter`. 
+In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image. When using the `extender` platforms MUST skip the `builder` and proceed to the `exporter`.
 
 | Output          | Description                            |
 |-----------------|----------------------------------------|
@@ -1017,6 +1017,9 @@ For more information on build reproducibility see [https://reproducible-builds.o
 # layer metadata
 
 [run-image]
+  reference = "<image reference>"
+
+[build-image]
   reference = "<image reference>"
 ```
 
