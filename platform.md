@@ -1112,7 +1112,7 @@ Where:
   "processes": [
     {
       "type": "<process-type>",
-      "command": "<command>",
+      "command": ["<command>"],
       "args": [
         "<args>"
       ],
