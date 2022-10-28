@@ -449,7 +449,7 @@ Usage:
 | Input           | Environment Variable | Default Value            | Description                                                                 |
 |-----------------|----------------------|--------------------------|-----------------------------------------------------------------------------|
 | `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) |
-| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry                     |
+| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided)                     |
 | `<cache-dir>`   | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                   |
 | `<cache-image>` | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                               |
 | `<gid>`         | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                       |
@@ -458,6 +458,7 @@ Usage:
 | `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                   |
 | `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                               |
 | `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                      |
+|`<kaniko-dir>`| | | Kaniko directory (must be `/kaniko`) |
 
 ##### Outputs
 | Output                                      | Description                                                                                                                               |
@@ -469,7 +470,7 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md)) |
 | `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the Software Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))           |
 | `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents                                                                                                                   |
-| `/kaniko/cache`                             | Kaniko cache contents                                                                                                                     |
+| `<kaniko-dir>/cache`                             | Kaniko cache contents                                                                                                                     |
 
 
 | Exit Code       | Result|
@@ -485,7 +486,7 @@ Usage:
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
 - When the provided `<group>` contains image extensions (**[experimental](#experimental-features)**), the lifecycle:
   - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
-  - MUST copy the OCI manifest and config file for `<build-image>` to `/kaniko/cache`
+  - MUST copy the OCI manifest and config file for `<build-image>` to `<kaniko-dir>/cache`
 
 ##### Layer Restoration
 lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
@@ -533,7 +534,7 @@ In addition to the outputs enumerated below, outputs produced by `extender` incl
 | [exit status]   | (see Exit Code table below for values) |
 | `/dev/stdout`   | Logs (info)                            |
 | `/dev/stderr`   | Logs (warnings, errors)                |
-| `/kaniko/cache` | Kaniko cache contents                  |
+| `<kaniko-dir>/cache` | Kaniko cache contents                  |
 
 | Exit Code       | Result                              |
 |-----------------|-------------------------------------|
