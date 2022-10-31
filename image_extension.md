@@ -109,7 +109,7 @@ FROM ${base_image}
 - MUST NOT contain any other `FROM` instructions
 - MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
 - SHOULD NOT contain any other instructions
-- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change)
+- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change); the `build_id` build arg SHOULD be defaulted to 0 if used (this ensures portability)
 - SHOULD NOT edit `<app>`, `<layers>`, or `<workspace>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
 
 ## Phase: Extension
