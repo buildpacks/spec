@@ -8,6 +8,8 @@ This document specifies the interface between a lifecycle program and one or mor
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
   - [Buildpack API Version](#buildpack-api-version)
+  - [Terminology](#terminology)
+    - [CNB Terminology](#cnb-terminology)
   - [Buildpack Interface](#buildpack-interface)
     - [Buildpack API Compatibility](#buildpack-api-compatibility)
     - [Key](#key)
@@ -19,7 +21,6 @@ This document specifies the interface between a lifecycle program and one or mor
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
       - [Ignored Layers](#ignored-layers)
-  - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
@@ -28,11 +29,13 @@ This document specifies the interface between a lifecycle program and one or mor
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
     - [Process](#process-1)
-  - [Phase #3: Generation (optional)](#phase-3-generation-optional)
+  - [Phase #3: Generation (image extensions only)](#phase-3-generation-image-extensions-only)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
-  - [Phase #4: Build](#phase-4-build)
+  - [Phase #4: Extension (image extensions only)](#phase-4-extension-image-extensions-only)
     - [Purpose](#purpose-3)
+  - [Phase #5: Build (component buildpacks only)](#phase-5-build-component-buildpacks-only)
+    - [Purpose](#purpose-4)
     - [Process](#process-3)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
       - [Software-Bill-of-Materials](#software-bill-of-materials)
@@ -40,11 +43,11 @@ This document specifies the interface between a lifecycle program and one or mor
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
         - [Slice Layers](#slice-layers)
-  - [Phase #5: Export](#phase-5-export)
-    - [Purpose](#purpose-4)
+  - [Phase #6: Export](#phase-6-export)
+    - [Purpose](#purpose-5)
     - [Process](#process-4)
   - [Launch](#launch)
-    - [Purpose](#purpose-5)
+    - [Purpose](#purpose-6)
     - [Process](#process-5)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
@@ -506,13 +509,19 @@ After analysis, the lifecycle MUST proceed to the build phase.
 
 ### Purpose
 
-The purpose of the generation phase is to generate Dockerfiles that can be used to define the runtime base image.
+The purpose of the generation phase is to generate Dockerfiles that can be used to define the build and/or runtime base image. The generation phase MUST NOT be run for Windows builds.
 
 ### Process
 
 See the [Image Extension Specification](#image-extension.md).
 
-## Phase #4: Build (component buildpacks only)
+## Phase #4: Extension (image extensions only)
+
+### Purpose
+
+The purpose of the extension phase is to apply the Dockerfiles generated in the generation phase to the appropriate base image. The extension phase MUST NOT be run for Windows builds.
+
+## Phase #5: Build (component buildpacks only)
 
 ![Build](img/build.svg)
 
@@ -664,7 +673,7 @@ Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `l
 Separate layers MUST be created during the export phase for each slice with one or more files or directories.
 This minimizes data transfer when the app directory contains a known set of files.
 
-## Phase #5: Export
+## Phase #6: Export
 
 ![Export](img/export.svg)
 
@@ -884,7 +893,7 @@ Prohibited:
 
 ### Requirements
 
-The lifecycle MUST be implemented so that the detection, generation, and build phases do not have access to OCI image store credentials used in the analysis and export phases.
+The lifecycle MUST be implemented so that the detection, generation, extension, and build phases do not have access to OCI image store credentials used in the analysis and export phases.
 The lifecycle SHOULD be implemented so that each phase may run in a different container.
 
 ## Data Format
@@ -1064,7 +1073,7 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
 
 *Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be `config`, `app`, or `sbom`.
+- MUST NOT be `app`, `config`, `generated`, or `sbom`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
 **The buildpack version:**
