@@ -2,23 +2,14 @@
 
 This document specifies the interface between a lifecycle program and one or more buildpacks.
 
-The lifecycle program uses buildpacks to build software artifacts from source code and pack the result into an OCI image.
-
-This is accomplished in four phases:
-
-1. **Detection,** where an optimal selection of compatible buildpacks is chosen.
-2. **Analysis,** where metadata about OCI layers generated during a previous build are made available to buildpacks.
-3. **Build,** where buildpacks use that metadata to generate only the OCI layers that need to be replaced.
-4. **Export,** where the remote layers are replaced by the generated layers.
-
-The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle that executes during the **Launch** phase.
-
 ## Table of Contents
 
 <!-- Using https://github.com/yzhang-gh/vscode-markdown to manage toc -->
 - [Buildpack Interface Specification](#buildpack-interface-specification)
   - [Table of Contents](#table-of-contents)
   - [Buildpack API Version](#buildpack-api-version)
+  - [Terminology](#terminology)
+    - [CNB Terminology](#cnb-terminology)
   - [Buildpack Interface](#buildpack-interface)
     - [Buildpack API Compatibility](#buildpack-api-compatibility)
     - [Key](#key)
@@ -30,29 +21,34 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
       - [Build Layers](#build-layers)
       - [Cached Layers](#cached-layers)
       - [Ignored Layers](#ignored-layers)
-  - [App Interface](#app-interface)
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
+      - [Mixin Satisfaction](#mixin-satisfaction)
       - [Order Resolution](#order-resolution)
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
     - [Process](#process-1)
-  - [Phase #3: Build](#phase-3-build)
+  - [Phase #3: Generation (image extensions only)](#phase-3-generation-image-extensions-only)
     - [Purpose](#purpose-2)
     - [Process](#process-2)
+  - [Phase #4: Extension (image extensions only)](#phase-4-extension-image-extensions-only)
+    - [Purpose](#purpose-3)
+  - [Phase #5: Build (component buildpacks only)](#phase-5-build-component-buildpacks-only)
+    - [Purpose](#purpose-4)
+    - [Process](#process-3)
       - [Unmet Buildpack Plan Entries](#unmet-buildpack-plan-entries)
-      - [Software Bill of Materials](#software-bill-of-materials)
+      - [Software-Bill-of-Materials](#software-bill-of-materials)
       - [Layers](#layers)
         - [Providing Layers](#providing-layers)
         - [Reusing Layers](#reusing-layers)
         - [Slice Layers](#slice-layers)
-  - [Phase #4: Export](#phase-4-export)
-    - [Purpose](#purpose-3)
-    - [Process](#process-3)
-  - [Launch](#launch)
-    - [Purpose](#purpose-4)
+  - [Phase #6: Export](#phase-6-export)
+    - [Purpose](#purpose-5)
     - [Process](#process-4)
+  - [Launch](#launch)
+    - [Purpose](#purpose-6)
+    - [Process](#process-5)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
       - [Layer Paths](#layer-paths)
@@ -75,30 +71,80 @@ The `ENTRYPOINT` of the OCI image contains logic implemented by the lifecycle th
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
-      - [Buildpack Implementations](#buildpack-implementations)
-      - [Order Buildpacks](#order-buildpacks)
+      - [Stacks](#stacks)
+      - [Order](#order)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
-    - [`0.3`](#03)
-      - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
+    - [Positional Arguments to `detect` and `build` Executables](#positional-arguments-to-detect-and-build-executables)
+    - [launch.toml (TOML) `bom` Array](#launchtoml-toml-bom-array)
+    - [build.toml (TOML) `bom` Array](#buildtoml-toml-bom-array)
+    - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.8`
+This document specifies Buildpack API version `0.9`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - `<major>` and `<minor>` MUST only contain numbers (unsigned 64 bit integer)
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
 
+## Terminology
+
+### CNB Terminology
+
+A **buildpack** is a directory containing a `buildpack.toml`. Buildpacks analyze application source code and determine the best way to build it.
+
+A **buildpack group**, or **group**, is a list of one or more buildpacks that are designed to work together - for example, a buildpack that provides `node` and a buildpack that provides `npm`.
+
+An **order** is a list of one or more groups to be tested against application source code, so that the appropriate group for a build can be determined. 
+
+A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/build` executables. Component buildpacks implement the [Buildpack Interface](#buildpack-interface).
+
+A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
+
+An **image extension** (**experimental**) is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image-extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
+
+**Resolving an order** is the process by which an order (which may contain image extensions, component buildpacks, or composite buildpacks) is evaluated together with application source code to produce an optional group of image extensions and a required group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each image extension (if present) and the `/bin/detect` executable for each component buildpack is invoked.
+
+An **optional** image extension or buildpack is a group element that, when failing detection, will be excluded from the group without causing the entire group to fail.
+
+A **build plan** is a file used during detection, in which each image extension or component buildpack may express the dependencies that it requires and the dependencies that it provides. A group will only pass detection if a valid build plan can be produced from the dependencies that all elements in the group require and provide. A valid build plan is a plan where all required dependencies are provided in the necessary order, meaning that during the build phase, each component buildpack will have its required dependencies provided by an image extension or component buildpack that runs before it.
+
+A **buildpack plan** is a file unique to each image extension or component buildpack, used during the generation or build phase to communicate the dependencies that it is expected to provide.
+
+A **lifecycle** is software that orchestrates a build. It executes in a series of phases that each have a distinct responsibility.
+
+A **launcher** is an executable that is the `ENTRYPOINT` of the exported OCI image. It is used to start processes at runtime. Having a launcher enables multiple process types to be defined on an image, with process-specific environment variables and other functionality.
+
+**Launch** describes the process of running an application by creating a container from the exported OCI image.
+
+A **platform** is a system or software that orchestrates the lifecycle by invoking each lifecycle phase in order.
+
+A **process definition** is a description, provided by component buildpacks during the build phase, of a process to launch at runtime.
+
+An **application directory** is a directory containing application source code. Component buildpacks may make changes to the application directory during the build phase.
+
+A **layer** is a set of filesystem changes packaged according to the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/layer.md).
+
+A **layer directory** is a directory created by a component buildpack that contains build and/or runtime dependencies, and can be used to configure the build and/or runtime environment. There are three **layer types**:
+  * a **launch layer** is added as a layer in the exported OCI image; it can be re-used on the next build (the lifecycle can avoid re-uploading it) if the component buildpack that created the layer has the same requirements on the next build
+  * a **cache layer** is saved to the cache and its contents may be restored on the next build
+  * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
+Any combination of the three layer types are valid for a particular layer directory.
+
+A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to component buildpacks through the `CNB_STACK_ID` environment variable, enabling each component buildpack to modify its behavior when executed on different stacks.
+
+A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
+
 ## Buildpack Interface
 
-The following specifies the interface implemented by executables in each buildpack.
-The lifecycle MUST invoke these executables as described in the Phase sections.
+The following specifies the interface implemented by component buildpacks.
+The lifecycle MUST invoke executables in component buildpacks as described in the Phase sections.
 
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
-- return an error to the platform if it does not support `<buildpack API Version>`
+- MUST return an error to the platform if it does not support `<buildpack API Version>`
 
 The lifecycle MAY return an error to the platform if two or more buildpacks within a group declare buildpack API versions that the lifecycle cannot support together within a single build, even if both are supported independently.
 
@@ -134,7 +180,6 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | Standard error         | Logs (warnings, errors)                     |
 | `$CNB_BUILD_PLAN_PATH` | Contributions to the the Build Plan (TOML)  |
 
-
 ###  Build
 
 Executable: `/bin/build`, Working Dir: `<app[AI]>`
@@ -163,15 +208,13 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR/<layer>.sbom.<ext>`            | Layer Software Bill of Materials (see [Software-Bill-of-Materials](#software-bill-of-materials))                 |
 | `$CNB_LAYERS_DIR/<layer>/bin/`                  | Binaries for launch and/or subsequent buildpacks                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/lib/`                  | Shared libraries for launch and/or subsequent buildpacks                                                         |
-| `$CNB_LAYERS_DIR/<layer>/profile.d/`            | Scripts sourced by Bash before launch                                                                            |
-| `$CNB_LAYERS_DIR/<layer>/profile.d/<process>/`  | Scripts sourced by Bash before launch for a particular process type                                              |
 | `$CNB_LAYERS_DIR/<layer>/exec.d/`               | Executables that provide env vars via the [Exec.d Interface](#execd) before launch                               |
 | `$CNB_LAYERS_DIR/<layer>/exec.d/<process>/`     | Executables that provide env vars for a particular process type via the [Exec.d Interface](#execd) before launch |
 | `$CNB_LAYERS_DIR/<layer>/include/`              | C/C++ headers for subsequent buildpacks                                                                          |
 | `$CNB_LAYERS_DIR/<layer>/pkgconfig/`            | Search path for pkg-config for subsequent buildpacks                                                             |
 | `$CNB_LAYERS_DIR/<layer>/env/`                  | Env vars for launch and/or subsequent buildpacks                                                                 |
-| `$CNB_LAYERS_DIR/<layer>/env.launch/`           | Env vars for launch (after `env`, before `profile.d`)                                                            |
-| `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `profile.d`) for the launched process                                   |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/`           | Env vars for launch (after `env`, before `exec.d`)                                                               |
+| `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `exec.d`) for the launched process                                      |
 | `$CNB_LAYERS_DIR/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/*`                     | Other content for launch and/or subsequent buildpacks                                                            |
 
@@ -293,49 +336,43 @@ At the end of each individual buildpack's build phase:
 - The lifecycle:
   - MUST rename `<layers>/<layer>/` to `<layers>/<layer>.ignore/` for all layers where `launch = false`, `build = false`, and `cache = false`, in order to prevent subsequent buildpacks from accidentally depending on an ignored layer.
 
-## App Interface
-
-| Output                 | Description
-|------------------------|----------------------------------------------
-| `<app>/.profile`       | [†](README.md#linux-only) Bash-formatted script sourced by shell before launch
-| `<app>/.profile.bat`   | [‡](README.md#windows-only) BAT-formatted script sourced by shell before launch
-
 ## Phase #1: Detection
 
 ![Detection](img/detection.svg)
 
 ### Purpose
 
-The purpose of detection is to find an ordered group of buildpacks to use during the build phase.
+The purpose of detection is to find an ordered group of component buildpacks - and, optionally, image extensions - to use during the generation and build phases.
 These buildpacks must be compatible with the app.
+
+For detect requirements that are specific to image extensions, see the [Image Extension Interface](image-extension.md).
 
 ### Process
 
 **GIVEN:**
-- An ordered list of buildpack groups resolved into buildpack implementations as described in [Order Resolution](#order-resolution)
+- An ordered list of resolved groups as described in [Order Resolution](#order-resolution)
 - A directory containing application source code
-- A shell, if needed,
 
-For each buildpack in each group in order, the lifecycle MUST execute `/bin/detect`.
+For each image extension ("extension") or component buildpack ("buildpack") in each group in order, the lifecycle MUST execute `/bin/detect`. Image extensions MUST always be optional during detection.
 
-1. **If** the exit status of `/bin/detect` is non-zero and the buildpack is not marked optional, \
+1. **If** the exit status of a buildpack `/bin/detect` is non-zero and the buildpack is not marked optional, \
    **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-2. **If** the exit status of `/bin/detect` is zero or the buildpack is marked optional,
-   1. **If** the buildpack is not the last buildpack in the group, \
-      **Then** the lifecycle MUST proceed to the next buildpack in the group.
+2. **If** the exit status of `/bin/detect` is zero or the extension or buildpack is marked optional,
+   1. **If** the extension or buildpack is not the last in the group, \
+      **Then** the lifecycle MUST proceed to the next extension or buildpack in the group.
 
-   2. **If** the buildpack is the last buildpack in the group,
-      1. **If** no exit statuses from `/bin/detect` in the group are zero \
+   2. **If** the extension or buildpack is the last in the group,
+      1. **If** no exit statuses from buildpack `/bin/detect` in the group are zero \
          **Then** the lifecycle MUST proceed to the next group or fail detection completely if no more groups are present.
 
-      2. **If** at least one exit status from `/bin/detect` in the group is zero \
-         **Then** the lifecycle MUST select this group and proceed to the analysis phase.
+      2. **If** at least one exit status from a buildpack `/bin/detect` in the group is zero \
+         **Then** the lifecycle MUST select this group and MAY proceed to the generation phase.
 
-The selected group MUST be filtered to only include buildpacks with exit status zero.
-The order of the buildpacks in the group MUST otherwise be preserved.
+The selected group MUST be filtered to only include extensions and buildpacks with exit status zero.
+The order of the extensions and buildpacks in the group MUST otherwise be preserved.
 
-The `/bin/detect` executable in each buildpack, when executed:
+The `/bin/detect` executable in each extension or buildpack, when executed:
 
 - MAY read the app directory.
 - MAY read the detect environment as described in the [Environment](#environment) section.
@@ -349,23 +386,26 @@ Each `requires` and `provides` section MUST be a list of entries formatted as de
 
 Each pairing of `requires` and `provides` sections (at the top level, or inside of an `or` array) is a potential Build Plan.
 
-For a given buildpack group, a sequence of trials is generated by selecting a single potential Build Plan from each buildpack in a left-to-right, depth-first order.
+For a given group, a sequence of trials is generated by selecting a single potential Build Plan from each extension or buildpack in a left-to-right, depth-first order.
 The group fails to detect if all trials fail to detect.
 
 For each trial,
 - If a required buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the trial MUST fail to detect.
 - If a required buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the trial MUST fail to detect.
 - If an optional buildpack provides a dependency that is not required by the same buildpack or a subsequent buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
+- If an extension provides a dependency that is not required by a subsequent buildpack, the extension MUST be excluded from the build phase and its provides MUST be excluded from the Build Plan.
 - If an optional buildpack requires a dependency that is not provided by the same buildpack or a previous buildpack, the optional buildpack MUST be excluded from the build phase and its requires and provides MUST be excluded from the Build Plan.
 - Multiple buildpacks MAY require or provide the same dependency.
+- Multiple extensions MAY provide the same dependency.
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
-The lifecycle MUST run `/bin/detect` for all buildpacks in a group in a container using common stack with a common set of mixins.
-The lifecycle MUST fail detection if any of those buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of those buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
+The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using common stack with a common set of mixins.
+The lifecycle MUST fail detection if any of the buildpacks does not list that stack in `buildpack.toml`.
+The lifecycle MUST fail detection if any of the buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
 
 #### Mixin Satisfaction
+
 A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
 
 1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
@@ -378,35 +418,39 @@ A buildpack's mixin requirements must be satisfied by the stack in one of the fo
 
 #### Order Resolution
 
-During detection, an order definition MUST be resolved into individual buildpack implementations.
+During detection, an order definition for image extensions (if present) and an order definition for buildpacks MUST be resolved into a group of image extensions and a group of component buildpacks.
+
+Order definitions for image extensions MUST NOT contain nested orders.
+
+If an order definition for image extensions is present, it MUST be prepended to the order definition for buildpacks before the resolution process occurs.
 
 The resolution process MUST follow this pattern:
 
 Where:
-- O and P are buildpack orders.
-- A through H are buildpack implementations.
+- O and P are orders for image extensions or buildpacks.
+- A through H are image extensions or component buildpacks.
 
 Given:
 
-<img src="http://tex.s2cms.ru/svg/%0AO%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%20%5C%5C%0AC%2C%20%26%20D%0A%5Cend%7Bbmatrix%7D%0A" alt="
-O =
+![
+  O =
 \begin{bmatrix}
 A, &amp; B \\
 C, &amp; D
 \end{bmatrix}
-" />
+](img/matrix1.svg)
 
-<img src="http://tex.s2cms.ru/svg/%0AP%20%3D%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20F%20%5C%5C%0AG%2C%20%26%20H%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 P =
 \begin{bmatrix}
 E, &amp; F \\
 G, &amp; H
 \end{bmatrix}
-" />
+"](img/matrix2.svg)
 
 It MUST follow that:
 
-<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20O%2C%20%26%20F%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AE%2C%20%26%20A%2C%20%26%20B%2C%20%26%20F%20%5C%5C%0AE%2C%20%26%20C%2C%20%26%20D%2C%20%26%20F%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 \begin{bmatrix}
 E, &amp; O, &amp; F
 \end{bmatrix} =
@@ -414,9 +458,9 @@ E, &amp; O, &amp; F
 E, &amp; A, &amp; B, &amp; F \\
 E, &amp; C, &amp; D, &amp; F \\
 \end{bmatrix}
-" />
+](img/matrix3.svg)
 
-<img src="http://tex.s2cms.ru/svg/%0A%5Cbegin%7Bbmatrix%7D%0AO%2C%20%26%20P%0A%5Cend%7Bbmatrix%7D%20%3D%20%0A%5Cbegin%7Bbmatrix%7D%0AA%2C%20%26%20B%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AA%2C%20%26%20B%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20E%2C%20%26%20F%20%5C%5C%0AC%2C%20%26%20D%2C%20%26%20G%2C%20%26%20H%20%5C%5C%0A%5Cend%7Bbmatrix%7D%0A" alt="
+![
 \begin{bmatrix}
 O, &amp; P
 \end{bmatrix} =
@@ -426,7 +470,7 @@ A, &amp; B, &amp; G, &amp; H \\
 C, &amp; D, &amp; E, &amp; F \\
 C, &amp; D, &amp; G, &amp; H \\
 \end{bmatrix}
-" />
+](img/matrix4.svg)
 
 Note that buildpack IDs are expanded depth-first in left-to-right order.
 
@@ -438,7 +482,7 @@ If a buildpack order entry within a group has the parameter `optional = true`, t
 
 ### Purpose
 
-The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that buildpacks may use to optimize the build and export phases.
+The purpose of analysis is to restore `<layers>/<layer>.toml`, `<layers>/<layer>.sbom.<ext>`, and `<layers>/store.toml` files that component buildpacks may use to optimize the build and export phases.
 
 ### Process
 
@@ -461,15 +505,31 @@ For each buildpack in the group, the lifecycle
 
 After analysis, the lifecycle MUST proceed to the build phase.
 
-## Phase #3: Build
+## Phase #3: Generation (image extensions only)
+
+### Purpose
+
+The purpose of the generation phase is to generate Dockerfiles that can be used to define the build and/or runtime base image. The generation phase MUST NOT be run for Windows builds.
+
+### Process
+
+See the [Image Extension Specification](#image-extension.md).
+
+## Phase #4: Extension (image extensions only)
+
+### Purpose
+
+The purpose of the extension phase is to apply the Dockerfiles generated in the generation phase to the appropriate base image. The extension phase MUST NOT be run for Windows builds.
+
+## Phase #5: Build (component buildpacks only)
 
 ![Build](img/build.svg)
 
 ### Purpose
 
-The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container.
+The purpose of build is to transform application source code into runnable artifacts that can be packaged into a container image.
 
-During the build phase, typical buildpacks might:
+During the build phase, typical component buildpacks might:
 
 1. Read the Buildpack Plan in `<plan>` to determine what dependencies to provide.
 1. Provide the application with dependencies for launch in `<layers>/<layer>`.
@@ -501,9 +561,8 @@ This is achieved by:
 - The final ordered group of buildpacks determined during the detection phase,
 - A directory containing application source code,
 - The Buildpack Plan,
-- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase,
-- Any locally cached `<layers>/<layer>` directories, and
-- A shell, if needed,
+- Any `<layers>/<layer>.toml` files placed on the filesystem during the analysis phase, and
+- Any locally cached `<layers>/<layer>` directories,
 
 For each buildpack in the group in order, the lifecycle MUST execute `/bin/build`.
 
@@ -549,14 +608,16 @@ Correspondingly, each `/bin/build` executable:
 
 #### Unmet Buildpack Plan Entries
 
-A buildpack SHOULD designate a Buildpack Plan entry as unmet if the buildpack did not satisfy the requirement described by the entry.
+A component buildpack SHOULD designate a Buildpack Plan entry as unmet if it did not satisfy the requirement described by the entry.
 The lifecycle SHALL assume that all entries in the Buildpack Plan were satisfied by the buildpack unless the buildpack writes an entry with the given name to the `unmet` section of `build.toml`.
+
+Image extensions MUST satisfy all entries in the Buildpack Plan.
 
 For each entry in `<plan>`:
   - **If** there is an unmet entry in `build.toml` with a matching `name`, the lifecycle
-    - MUST include the entry in the `<plan>` of the next buildpack that provided an entry with that name during the detection phase.
+    - MUST include the entry in the `<plan>` of the next component buildpack that provided an entry with that name during the detection phase.
   - **Else**, the lifecycle
-    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent buildpacks.
+    - MUST NOT include entries with matching names in the `<plan>` provided to subsequent image extensions or component buildpacks.
 
 #### Software-Bill-of-Materials
 
@@ -612,7 +673,7 @@ Additionally, a buildpack MAY specify sub-paths within `<app>` as `slices` in `l
 Separate layers MUST be created during the export phase for each slice with one or more files or directories.
 This minimizes data transfer when the app directory contains a known set of files.
 
-## Phase #4: Export
+## Phase #6: Export
 
 ![Export](img/export.svg)
 
@@ -684,61 +745,16 @@ The purpose of launch is to modify the running app environment using app-provide
 
 **GIVEN:**
 - An OCI image exported by the lifecycle,
-- A shell, if needed,
-
-First, the lifecycle MUST locate a start command and choose an execution strategy.
-
-To locate a start command, the lifecycle MUST follow the process outlined in the [Platform Interface Specification](platform.md).
-
-To choose an execution strategy,
-
-1. **If** a buildpack-provided process type is chosen as the start command,
-   1. **If** the process type has `direct` set to `false`,
-      1. **If** the process has one or more `args`
-         **Then** the lifecycle MUST invoke a command using the shell, where `command` and each entry in `args` are shell-parsed tokens in the command.
-      2. **If** the process has zero `args`
-         **Then** the lifecycle MUST invoke the value of `command` as a command using the shell.
-
-   2. **If** the process type does have `direct` set to `true`,
-      **Then** the lifecycle MUST invoke the value of `command` using the `execve` syscall with values of `args` provided as arguments.
-
-2. **If** a user-defined process type is chosen as the start command,
-   **Then** the lifecycle MUST select an execution strategy as described in the [Platform Interface Specification](platform.md).
-
-Given the start command and execution strategy,
 
 1. The lifecycle MUST set all buildpack-provided launch environment variables as described in the [Environment](#environment) section.
 
 1. The lifecycle MUST
-   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   2. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` directory in the launch environment, with working directory `<app>`, and set the [returned variables](#execd-output-toml) in the launch environment before continuing,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d` as described in the [Platform Interface Specification](platform.md).
+   1. [execute](#execd) each file in each `<layers>/<layer>/exec.d/<process>` as described in the [Platform Interface Specification](platform.md).
 
-1. If using an execution strategy involving a shell, the lifecycle MUST use a single shell process, with working directory `<app>`, to
-   1. source each file in each `<layers>/<layer>/profile.d` directory,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   2. source each file in each `<layers>/<layer>/profile.d/<process>` directory,
-      1. Firstly, in order of `/bin/build` execution used to construct the OCI image.
-      2. Secondly, in alphabetically ascending order by layer directory name.
-      3. Thirdly, in alphabetically ascending order by file name.
-   3. source [†](README.md#linux-only)`<app>/.profile` or [‡](README.md#windows-only)`<app>/.profile.bat` if it is present.
+1. The lifecycle MUST invoke the command with its arguments, environment, and working directory following the process outlined in the [Platform Interface Specification](platform.md).
 
-1. The lifecycle MUST set the working directory for the start command to `<working-dir>`, or to `<app>` if `<working-dir>` is not specified.
-
-1. The lifecycle MUST invoke the start command with the decided execution strategy.
-
-[†](README.md#linux-only)When executing a process using any execution strategy, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
-
-[†](README.md#linux-only)When executing a process with Bash, the lifecycle SHOULD additionally replace the Bash process in memory without forking it.
-
-[‡](README.md#windows-only)When executing a process with Command Prompt, the lifecycle SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
+[†](README.md#linux-only)When executing a process, the lifecycle SHOULD replace the lifecycle process in memory without forking it.
 
 ## Environment
 
@@ -775,7 +791,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 |-----------------|------------------------------------------------|--------|-------|--------
 | `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
 | `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for profile.d or exec.d |        |       | [x]
+| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
 | `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
 
 During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
@@ -877,7 +893,7 @@ Prohibited:
 
 ### Requirements
 
-The lifecycle MUST be implemented so that the detection and build phases do not have access to OCI image store credentials used in the analysis and export phases.
+The lifecycle MUST be implemented so that the detection, generation, extension, and build phases do not have access to OCI image store credentials used in the analysis and export phases.
 The lifecycle SHOULD be implemented so that each phase may run in a different container.
 
 ## Data Format
@@ -891,9 +907,8 @@ value = "<label valu>"
 
 [[processes]]
 type = "<process type>"
-command = "<command>"
+command = ["<command>"]
 args = ["<arguments>"]
-direct = false
 default = false
 working-dir = "<working directory>"
 
@@ -901,7 +916,7 @@ working-dir = "<working directory>"
 paths = ["<app sub-path glob>"]
 ```
 
-The buildpack MAY specify any number of labels, processes, or slices.
+The component buildpack MAY specify any number of labels, processes, or slices.
 
 For each label, the buildpack:
 
@@ -914,16 +929,19 @@ If multiple buildpacks define labels with the same key, the lifecycle MUST use t
 
 For each process, the buildpack:
 
-- MUST specify a `type`, which:
+- MUST specify a `type`, an identifier for the process, which:
   - MUST NOT be identical to other process types provided by the same buildpack.
   - MUST only contain numbers, letters, and the characters ., _, and -.
-- MUST specify a `command` that is either:
-  - A command sequence that is valid when executed using the shell, if `args` is not specified.
-  - A path to an executable or the file name of an executable in `$PATH`, if `args` is a list with zero or more elements.
-- MAY specify an `args` list to be passed directly to the specified executable.
-- MAY specify a `direct` boolean that bypasses the shell.
+- MUST specify a `command` list such that:
+  - The first element of `command` is a path to an executable or the file name of an executable in `$PATH`.
+  - Any remaining elements of `command` are arguments that are always passed directly to the executable [^command-args].
+- MAY specify an `args` list to be passed directly to the specified executable, after arguments specified in `command`.
+  - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
+
+[^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied together with any user-provided arguments.
+In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
 
 An individual buildpack may only specify one process type with `default = true`. The lifecycle MUST select, from all buildpack-provided process types, the last process type with `default = true` as the buildpack-provided default. If multiple buildpacks define processes of the same type, the lifecycle MUST use the last process type definition ordered by buildpack execution for the combined process list (a non-default process type definition may override a default process type definition, leaving the app image with no default).
 
@@ -950,7 +968,7 @@ The lifecycle MUST include all unmatched files in the app directory in any numbe
 name = "<dependency name>"
 ```
 
-For each unmet entry in the Buildpack Plan, the buildpack:
+For each unmet entry in the Buildpack Plan, the component buildpack:
 - SHOULD add an entry to `unmet`.
 
 For each entry in `unmet`:
@@ -1015,7 +1033,6 @@ For a given layer, the buildpack MAY specify:
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
 
-
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
 
@@ -1056,7 +1073,7 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
 
 *Key: `id = "<buildpack ID>"`*
 - MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- MUST NOT be `config`, `app`, or `sbom`.
+- MUST NOT be `app`, `config`, `generated`, or `sbom`.
 - MUST NOT be identical to any other buildpack ID when using a case-insensitive comparison.
 
 **The buildpack version:**
@@ -1085,9 +1102,9 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 *Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
-#### Buildpack Implementations
+#### Stacks
 
-A buildpack descriptor that specifies `stacks` MUST describe a buildpack that implements the [Buildpack Interface](#buildpack-interface).
+A buildpack descriptor may specify `stacks`.
 
 Each stack in `stacks` either:
 - MUST identify a compatible stack:
@@ -1096,12 +1113,10 @@ Each stack in `stacks` either:
 - Or MUST indicate compatibility with any stack:
    - `id` MUST be set to the special value `"*"`.
    - `mixins` MUST be empty.
+   
+#### Order
 
-#### Order Buildpacks
-
-A buildpack descriptor that specifies `order` MUST be [resolvable](#order-resolution) into an ordering of buildpacks that implement the [Buildpack Interface](#buildpack-interface).
-
-A buildpack reference inside of a `group` MUST contain an `id` and `version`.
+A buildpack reference inside of a `group` MUST contain an `id` and `version`. The `order` MUST include only buildpacks and MUST NOT include image extensions.
 
 ### Exec.d Output (TOML)
 ```
@@ -1119,7 +1134,6 @@ Each `key`:
 
 ## Deprecations
 This section describes all the features that are deprecated.
-
 
 ### Positional Arguments to `detect` and `build` Executables
 
