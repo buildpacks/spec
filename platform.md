@@ -858,7 +858,12 @@ The launcher:
     - The lifecycle:
         - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
         - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
-        - MUST append any user-provided `<args>` to process arguments
+        - **If** the buildpack that provided the process supports default process args
+          - `<direct>` SHALL be `true`
+          - MUST replace any buildpack provided default `<args>` with any user-provided `<args>`
+        - **Else**
+          - `<direct>` value defined by buildpack SHALL be honored
+          - MUST append any user-provided `<args>` to process arguments
 - **Else**
     - **If** `$1` is `--`
         - `<direct>` SHALL be `true`
@@ -1066,7 +1071,7 @@ api = "<image extension API version>"
 
 [[processes]]
 type = "<process type>"
-command = "<command>"
+command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
@@ -1182,7 +1187,7 @@ Where:
   "processes": [
     {
       "type": "<process-type>",
-      "command": "<command>",
+      "command": ["<command>"],
       "args": [
         "<args>"
       ],
