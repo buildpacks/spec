@@ -62,11 +62,8 @@ Examples of a platform might include:
         - [Outputs](#outputs-8)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
-    - [Experimental Features](#experimental-features)
   - [Buildpacks](#buildpacks)
     - [Buildpacks Directory Layout](#buildpacks-directory-layout)
-  - [Image Extensions](#image-extensions)
-    - [Image Extensions Directory Layout](#image-extensions-directory-layout)
   - [Security Considerations](#security-considerations)
   - [Additional Guidance](#additional-guidance)
     - [Environment](#environment)
@@ -127,8 +124,6 @@ A **run image layer** refers to a layer in the **app image** originating from th
 A **launcher layer** refers to a layer in the app OCI image containing the **launcher** itself and/or launcher configuration.
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
-
-An **image extension** refers to software compliant with the [Image Extension Interface Specification](image-extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
@@ -236,10 +231,9 @@ Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](http
 During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
 
 ## Lifecycle Interface
-
 ### Platform API Compatibility
 
-The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecycle's execution environment.
+The platform SHOULD set `CNB_PLATFORM_API=<platform API version>` in the lifecycle's execution environment
 
 If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifecycle:
   - MUST either conform to the matching version of this specification or
@@ -350,13 +344,13 @@ Usage:
 | `/dev/stderr`      | Logs (warnings, errors)
 | `<analyzed>`       | Analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
 
-| Exit Code       | Result|
-|-----------------|-------|
-| `0`             | Success
-| `11`            | Platform API incompatibility error
-| `12`            | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
-| `30-39`         | Analysis-specific lifecycle errors
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `30-39` | Analysis-specific lifecycle errors
 
 #### `detector`
 The platform MUST execute `detector` in the **build environment**
@@ -365,7 +359,6 @@ Usage:
 ```
 /cnb/lifecycle/detector \
   [-app <app>] \
-  [-analyzed <analyzed>] \
   [-buildpacks <buildpacks>] \
   [-extensions <extensions>] \
   [-generated <generated>] \
@@ -473,13 +466,13 @@ Usage:
 | `<kaniko-dir>/cache`                             | Kaniko cache contents                                                                                                                     |
 
 
-| Exit Code       | Result|
-|-----------------|-------|
-| `0`             | Success
-| `11`            | Platform API incompatibility error
-| `12`            | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
-| `40-49`         | Restoration-specific lifecycle errors
+| Exit Code | Result|
+|-----------|-------|
+| `0`       | Success
+| `11`      | Platform API incompatibility error
+| `12`      | Buildpack API incompatibility error
+| `1-10`, `13-99` | Generic lifecycle errors
+| `40-49` | Restoration-specific lifecycle errors
 
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
@@ -910,18 +903,6 @@ The lifecycle MAY provide other mechanisms by which a platform can supply regist
 
 The lifecycle MUST attempt to authenticate anonymously if no matching credentials are found.
 
-### Experimental Features
-
-Where noted, certain features are considered experimental and susceptible to change in a future API version.
-
-The platform SHOULD set `CNB_EXPERIMENTAL_MODE=<warn|error|silent>` in the lifecycle's execution environment to control the behavior of experimental features.
-
-When an experimental feature is invoked, the lifecycle:
-- SHALL fail if `CNB_EXPERIMENTAL_MODE` is unset
-- SHALL warn and continue if `CNB_EXPERIMENTAL_MODE=warn`
-- SHALL fail if `CNB_EXPERIMENTAL_MODE=error`
-- SHALL continue without warning if `CNB_EXPERIMENTAL_MODE=silent`
-
 ## Buildpacks
 
 ### Buildpacks Directory Layout
@@ -930,15 +911,6 @@ The buildpacks directory MUST contain unarchived buildpacks such that:
 
 - Each top-level directory is a buildpack ID.
 - Each second-level directory is a buildpack version.
-
-## Image Extensions
-
-### Image Extensions Directory Layout
-
-The image extensions directory MUST contain unarchived image extensions such that:
-
-- Each top-level directory is an image extension ID.
-- Each second-level directory is an image extension version.
 
 ## Security Considerations
 
@@ -1042,12 +1014,6 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 api = "<buildpack API version>"
 homepage = "<buildpack homepage>"
-
-[[group-extensions]]
-id = "<image extension ID>"
-version = "<image extension version>"
-api = "<image extension API version>"
-homepage = "<image extension homepage>"
 ```
 
 Where:
@@ -1063,11 +1029,6 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 api = "<buildpack API version>"
 optional = false
-
-[[extensions]]
-id = "<image extension ID>"
-version = "<image extension version>"
-api = "<image extension API version>"
 
 [[processes]]
 type = "<process type>"
@@ -1093,26 +1054,20 @@ Where:
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
-
-[[order-extensions]]
-[[order-extensions.group]]
-id = "<image extension ID>"
-version = "<image extension version>"
 ```
 
 Where:
 
 - Both `id` and `version` MUST be present for each buildpack object in a group.
-- The value of `optional` MUST default to `false` if not specified.
+- The value of `optional` MUST default to false if not specified.
 
 #### `plan.toml` (TOML)
 ```toml
 [[entries]]
 
   [[entries.providers]]
-    id = "<buildpack or image extension ID>"
-    version = "<buildpack or image extension version>"
-    extension = false
+    id = "<buildpack ID>"
+    version = "buildpack Version"
 
   [[entries.requires]]
     name = "<dependency name>"
@@ -1122,8 +1077,7 @@ Where:
 Where:
 - `entries` MAY be empty
 - Each entry:
-    - MUST contain at least one buildpack or image extension in `providers`
-      - If the provider is an image extension (**[experimental](#experimental-features)**), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
+    - MUST contain at least one buildpack in `providers`
     - MUST contain at least one dependency requirement in `requires`
     - MUST exclusively contain dependency requirements with the same `<dependency name>`
 
@@ -1200,13 +1154,6 @@ Where:
       "id": "<buildpack ID>",
       "version": "<buildpack version>",
       "homepage": "<buildpack homepage>"
-    }
-  ],
-  "extensions": [
-    {
-      "id": "<extension ID>",
-      "version": "<extension version>",
-      "homepage": "<extension homepage>"
     }
   ],
  "launcher": {
