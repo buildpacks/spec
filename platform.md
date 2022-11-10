@@ -446,19 +446,19 @@ Usage:
 ```
 
 ##### Inputs
-| Input           | Environment Variable | Default Value            | Description                                                                 |
-|-----------------|----------------------|--------------------------|-----------------------------------------------------------------------------|
-| `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) |
-| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided)                     |
-| `<cache-dir>`   | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                   |
-| `<cache-image>` | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                               |
-| `<gid>`         | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                       |
-| `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))              |
-| `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                    |
-| `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                   |
-| `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                               |
-| `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                      |
-|`<kaniko-dir>`| | | Kaniko directory (must be `/kaniko`) |
+| Input           | Environment Variable | Default Value            | Description                                                                                       |
+|-----------------|----------------------|--------------------------|---------------------------------------------------------------------------------------------------|
+| `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided) |
+| `<cache-dir>`   | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                                         |
+| `<cache-image>` | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                                                     |
+| `<gid>`         | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                                             |
+| `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
+| `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
+| `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
+| `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                                         |
+| `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                                                     |
+| `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
 
 ##### Outputs
 | Output                                      | Description                                                                                                                               |
@@ -470,16 +470,16 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md)) |
 | `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the Software Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))           |
 | `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents                                                                                                                   |
-| `<kaniko-dir>/cache`                             | Kaniko cache contents                                                                                                                     |
+| `<kaniko-dir>/cache`                        | Kaniko cache contents                                                                                                                     |
 
 
-| Exit Code       | Result|
-|-----------------|-------|
-| `0`             | Success
-| `11`            | Platform API incompatibility error
-| `12`            | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
-| `40-49`         | Restoration-specific lifecycle errors
+| Exit Code       | Result                                |
+|-----------------|---------------------------------------|
+| `0`             | Success                               |
+| `11`            | Platform API incompatibility error    |
+| `12`            | Buildpack API incompatibility error   |
+| `1-10`, `13-19` | Generic lifecycle errors              |
+| `40-49`         | Restoration-specific lifecycle errors |
 
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
@@ -519,6 +519,7 @@ Usage:
 | `<gid>`              | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
 | `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
 | `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks                  | Kaniko cache TTL                                                                                |
+| `<kaniko-dir>`       |                        |                          | Kaniko directory (must be `/kaniko`)                                                            |
 | `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                        |
 | `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                       |
 | `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
@@ -529,11 +530,11 @@ Usage:
 
 In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image. When using the `extender` platforms MUST skip the `builder` and proceed to the `exporter`.
 
-| Output          | Description                            |
-|-----------------|----------------------------------------|
-| [exit status]   | (see Exit Code table below for values) |
-| `/dev/stdout`   | Logs (info)                            |
-| `/dev/stderr`   | Logs (warnings, errors)                |
+| Output               | Description                            |
+|----------------------|----------------------------------------|
+| [exit status]        | (see Exit Code table below for values) |
+| `/dev/stdout`        | Logs (info)                            |
+| `/dev/stderr`        | Logs (warnings, errors)                |
 | `<kaniko-dir>/cache` | Kaniko cache contents                  |
 
 | Exit Code       | Result                              |
