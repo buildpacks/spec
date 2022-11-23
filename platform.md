@@ -1236,20 +1236,23 @@ Where:
       ],
       "direct": false,
       "working-dir": "<working-dir>",
+      "buildpackID": "<buildpack ID>"
     }
   ],
   "buildpacks": [
     {
       "id": "<buildpack ID>",
       "version": "<buildpack version>",
-      "homepage": "<buildpack homepage>"
+      "homepage": "<buildpack homepage>",
+      "api": "<buildpack API version>"
     }
   ],
   "extensions": [
     {
       "id": "<extension ID>",
       "version": "<extension version>",
-      "homepage": "<extension homepage>"
+      "homepage": "<extension homepage>",
+      "api": "<buildpack API version>"
     }
   ],
  "launcher": {
