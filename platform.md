@@ -146,6 +146,10 @@ The following is a non-exhaustive list of terms defined in the [OCI Distribution
 
 * **registry** - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#definitions
 
+* **image manifest** provides a configuration and set of layers for a single container image for a specific architecture and operating system.
+
+* **OCI Image Layout** format is the [directory structure](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) for OCI content-addressable blobs and [location-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage#Content-addressed_vs._location-addressed) references.
+
 ## Stacks
 
 A typical stack might specify:
@@ -307,6 +311,8 @@ Usage:
   [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
+  [-layout] \ # analize images in OCI layout format
+  [-layout-dir <layout-dir>]
   <image>
 ```
 
@@ -327,6 +333,8 @@ Usage:
 | `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
 | `<tag>...`        |                       |                          | Additional tag to apply to exported image
 | `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
+| `<layout>`        | `CNB_USE_OCI_LAYOUT`  | false                    | Enables the capability of resolving image from/to in OCI layout format on disk
+| `<layout-dir>`    | `CNB_OCI_LAYOUT_PATH` | /layout-repo             | Path to a root directory where the images are saved in OCI layout format
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
@@ -341,6 +349,7 @@ Usage:
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
   - `image` MUST describe the `<previous-image>`, if accessible
   - `run-image` MUST describe the `<run-image>`
+- **If** `<layout>` is `true` the lifecycle MUST [resolve](#map-an-image-reference-into-a-path-in-the-layout-repository) `<run-image>` and `<previous-image>` following the rules to convert the reference to a path
 
 ##### Outputs
 | Output             | Description
@@ -446,6 +455,7 @@ Usage:
 ```
 
 ##### Inputs
+<<<<<<< HEAD
 | Input           | Environment Variable | Default Value            | Description                                                                 |
 |-----------------|----------------------|--------------------------|-----------------------------------------------------------------------------|
 | `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) |
@@ -459,6 +469,23 @@ Usage:
 | `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                               |
 | `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                      |
 |`<kaniko-dir>`| | | Kaniko directory (must be `/kaniko`) |
+| `<layout>`      | `CNB_USE_OCI_LAYOUT`  | false                   | Enables the capability of resolving image from/to in OCI layout format on disk|
+| `<layout-dir>`  | `CNB_OCI_LAYOUT_PATH` | /layout-repo            | Path to a root directory where the images are saved in OCI layout format |
+=======
+| Input           | Environment Variable | Default Value            | Description                                                                                       |
+|-----------------|----------------------|--------------------------|---------------------------------------------------------------------------------------------------|
+| `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided) |
+| `<cache-dir>`   | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                                         |
+| `<cache-image>` | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                                                     |
+| `<gid>`         | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                                             |
+| `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
+| `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
+| `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
+| `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                                         |
+| `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                                                     |
+| `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
+>>>>>>> a7c0c9d (Clarify: `<kaniko-dir>` is an input to the extender)
 
 ##### Outputs
 | Output                                      | Description                                                                                                                               |
@@ -470,16 +497,16 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md)) |
 | `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the Software Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))           |
 | `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents                                                                                                                   |
-| `<kaniko-dir>/cache`                             | Kaniko cache contents                                                                                                                     |
+| `<kaniko-dir>/cache`                        | Kaniko cache contents                                                                                                                     |
 
 
-| Exit Code       | Result|
-|-----------------|-------|
-| `0`             | Success
-| `11`            | Platform API incompatibility error
-| `12`            | Buildpack API incompatibility error
-| `1-10`, `13-19` | Generic lifecycle errors
-| `40-49`         | Restoration-specific lifecycle errors
+| Exit Code       | Result                                |
+|-----------------|---------------------------------------|
+| `0`             | Success                               |
+| `11`            | Platform API incompatibility error    |
+| `12`            | Buildpack API incompatibility error   |
+| `1-10`, `13-19` | Generic lifecycle errors              |
+| `40-49`         | Restoration-specific lifecycle errors |
 
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
@@ -519,6 +546,7 @@ Usage:
 | `<gid>`              | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
 | `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
 | `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks                  | Kaniko cache TTL                                                                                |
+| `<kaniko-dir>`       |                        |                          | Kaniko directory (must be `/kaniko`)                                                            |
 | `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                        |
 | `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                       |
 | `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
@@ -529,11 +557,11 @@ Usage:
 
 In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image. When using the `extender` platforms MUST skip the `builder` and proceed to the `exporter`.
 
-| Output          | Description                            |
-|-----------------|----------------------------------------|
-| [exit status]   | (see Exit Code table below for values) |
-| `/dev/stdout`   | Logs (info)                            |
-| `/dev/stderr`   | Logs (warnings, errors)                |
+| Output               | Description                            |
+|----------------------|----------------------------------------|
+| [exit status]        | (see Exit Code table below for values) |
+| `/dev/stdout`        | Logs (info)                            |
+| `/dev/stderr`        | Logs (warnings, errors)                |
 | `<kaniko-dir>/cache` | Kaniko cache contents                  |
 
 | Exit Code       | Result                              |
@@ -614,6 +642,7 @@ Usage:
   [-group <group>] \
   [-launch-cache <launch-cache> ] \
   [-launcher <launcher> ] \
+  [-launcher-sbom <launcher-sbom> ] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
@@ -625,6 +654,7 @@ Usage:
 ```
 
 ##### Inputs
+<<<<<<< HEAD
 | Input               | Environment Variable       | Default Value       | Description
 |---------------------|----------------------------|---------------------|---------------------------------------
 | `<analyzed>`        | `CNB_ANALYZED_PATH`        | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
@@ -645,7 +675,33 @@ Usage:
 | `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
 | `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
 | `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
-|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config                                           |
+|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config     
+| `<layout>`          | `CNB_USE_OCI_LAYOUT`       | false               | Enables the capability of resolving image from/to in OCI layout format on disk
+| `<layout-dir>`      | `CNB_OCI_LAYOUT_PATH`      | /layout-repo        | Path to a root directory where the images are saved in OCI layout format                          
+=======
+| Input                           | Environment Variable        | Default Value                    | Description                                                                                |
+|---------------------------------|-----------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| `<analyzed>`                    | `CNB_ANALYZED_PATH`         | `<layers>/analyzed.toml`         | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<app>`                         | `CNB_APP_DIR`               | `/workspace`                     | Path to application directory                                                              |
+| `<cache-dir>`                   | `CNB_CACHE_DIR`             |                                  | Path to a cache directory                                                                  |
+| `<cache-image>`                 | `CNB_CACHE_IMAGE`           |                                  | Reference to a cache image in an OCI registry                                              |
+| `<daemon>`                      | `CNB_USE_DAEMON`            | `false`                          | Export image to docker daemon                                                              |
+| `<gid>`                         | `CNB_GROUP_ID`              |                                  | Primary GID of the build image `User`                                                      |
+| `<group>`                       | `CNB_GROUP_PATH`            | `<layers>/group.toml`            | Path to group file (see [`group.toml`](#grouptoml-toml))                                   |
+| `<image>`                       |                             |                                  | Tag reference to which the app image will be written                                       |
+| `<launch-cache>`                | `CNB_LAUNCH_CACHE_DIR`      |                                  | Path to a cache directory containing launch layers                                         |
+| `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
+| `<launcher-sbom>`               |                             | `/cnb/lifecycle`                 | Path to directory containing SBOM files describing the `launcher` executable               |
+| `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
+| `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
+| `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
+| `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
+| `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                      |
+| `<stack>`                       | `CNB_STACK_PATH`            | `/cnb/stack.toml`                | Path to stack file (see [`stack.toml`](#stacktoml-toml)                                    |
+| `<uid>`                         | `CNB_USER_ID`               |                                  | UID of the build image `User`                                                              |
+| `<layers>/config/metadata.toml` |                             |                                  | Build metadata (see [`metadata.toml`](#metadatatoml-toml)                                  |
+|                                 | `SOURCE_DATE_EPOCH`         |                                  | Timestamp for `created` time in app image config                                           |
+>>>>>>> b31f86d (Platform API changes for lifecycle/launcher SBOM RFC)
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -674,10 +730,11 @@ Usage:
       - All run-image layers SHALL be preserved
       - All run-image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
-    - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
+    - MUST contain a layer containing all Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
       - `<layers>/sbom/launch/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is a `launch` layer
-      - `<layers>/sbom/launch/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
+      - `<layers>/sbom/launch/sbom.legacy.json` MAY contain the legacy buildpack-provided non-standard Bill of Materials for `launch` (where [supported](buildpack.md))
+      - `<layers>/sbom/launch/buildpacksio_lifecycle/launcher/sbom.<ext>` MUST contain the CNB-provided launcher SBOM if present in the `/cnb/lifecycle` directory
     - MUST contain one or more app layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain one or more launcher layers that include:
         - A file with the contents of the `<launcher>` file at path `/cnb/lifecycle/launcher`
@@ -707,10 +764,11 @@ Usage:
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the exported app image
 
 - The `<layers>` directory:
-  - MUST include all buildpack-provided Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
+  - MUST include all Software Bill of Materials (SBOM) files for `build` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
     - `<layers>/sbom/build/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `build` SBOM
     - `<layers>/sbom/build/<buildpack-id>/<layer-id>/sbom.<ext>` MUST contain the buildpack-provided layer SBOM if `<layer-id>` is not a `launch` layer.
-    - `<layers>/sbom/build/sbom.legacy.json` MAY contain the legacy non-standard Bill of Materials for `build` (where [supported](buildpack.md))
+    - `<layers>/sbom/build/sbom.legacy.json` MAY contain the legacy buildpack-provided non-standard Bill of Materials for `build` (where [supported](buildpack.md))
+    - `<layers>/sbom/build/buildpacksio_lifecycle/sbom.<ext>` MUST contain the CNB-provided lifecycle SBOM if present in the `/cnb/lifecycle` directory
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
@@ -1047,6 +1105,18 @@ All app image labels SHOULD contain only reproducible values.
 
 For more information on build reproducibility see [https://reproducible-builds.org/](https://reproducible-builds.org/)
 
+### Map an image reference into a path in the layout repository
+
+Considering an **image reference** refers to either a tag reference or digest reference. It could have the following formats
+- A tag reference refers to an identifier of form `<registry>/<repo>/<image>:<tag>`
+- A digest reference refers to a content addressable identifier of form `<registry>/<repo>/<image>@<algorithm>:<digest>`
+
+The image look up will be done following these rules:
+  - WHEN `the image points to a tag reference`
+    - Lifecycle will load/save the image from/to disk in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format at `<layout-dir>/<registry>/<repo>/<image>/<tag>`
+  - WHEN `the image points to a digest reference`
+    - Lifecycle will load the image from disk in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format at `<layout-dir>/<registry>/<repo>/<image>/<algorithm>/<digest>`
+
 ## Data Format
 
 ### Files
@@ -1069,7 +1139,11 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 Where:
 - `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+  - In case an image in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format is being used, it will also include the path of the image in OCI layout format following the rules describe [previously](#how-to-map-an-image-reference-into-a-path-in-the-layout-repository) 
+  - The format MUST be as follows: `[path]@[digest]`  
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+  - In case an image in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format is being used, it will also include the path of the image in OCI layout format following the rules describe [previously](#how-to-map-an-image-reference-into-a-path-in-the-layout-repository) 
+  - The format MUST be as follows: `[path]@[digest]`  
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
@@ -1231,20 +1305,23 @@ Where:
       ],
       "direct": false,
       "working-dir": "<working-dir>",
+      "buildpackID": "<buildpack ID>"
     }
   ],
   "buildpacks": [
     {
       "id": "<buildpack ID>",
       "version": "<buildpack version>",
-      "homepage": "<buildpack homepage>"
+      "homepage": "<buildpack homepage>",
+      "api": "<buildpack API version>"
     }
   ],
   "extensions": [
     {
       "id": "<extension ID>",
       "version": "<extension version>",
-      "homepage": "<extension homepage>"
+      "homepage": "<extension homepage>",
+      "api": "<buildpack API version>"
     }
   ],
  "launcher": {
