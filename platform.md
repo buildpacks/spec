@@ -104,15 +104,9 @@ Platform API versions:
 #### CNB Terminology
 A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
 
-A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**.
-
-A **stack ID** uniquely identifies a particular **stack**.
-
 A **build image** is an OCI image that provides the base of the **build environment**.
 
 A **run image** is an OCI image that provides the base from which **app images** are built.
-
-A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract.
 
 The **build environment** refers to the containerized environment in which the lifecycle executes buildpacks.
 
@@ -146,94 +140,68 @@ The following is a non-exhaustive list of terms defined in the [OCI Distribution
 
 * **registry** - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#definitions
 
-## Stacks
+### Build Image
 
-A typical stack might specify:
+A typical build image might specify:
 * The OS distro in the build environment.
 * OS packages installed in the build environment.
 * Trusted CA certificates in the build environment.
-* The OS distro or distroless OS in the launch environment.
-* OS packages installed in the launch environment.
-* Trusted CA certificates in the launch environment.
-* The default user and the build and launch environments.
-
-Stack authors SHOULD define the contract such that any stack images CVEs can be addressed with security patches without violating the [compatibility guarantees](#compatibility-guarantees).
-
-### Stack ID
-
-Stack authors MUST choose a globally unique ID, for example: "io.buildpacks.mystack".
-
-The stack ID:
-- MUST NOT be identical to any other stack ID when using a case-insensitive comparison.
-- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
-- SHOULD use reverse domain name notation to avoid name collisions.
-
-### Build Image
+* The default user in the build environment.
 
 The platform MUST ensure that:
 
 - The image config's `User` field is set to a non-root user with a writable home directory.
-- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
 - The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
-- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
-- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+- The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
 
 The platform SHOULD ensure that:
 
-- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
-- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
-- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
-- The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
+- The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
+- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version. 
+  - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
+  - For Windows-based images, `distribution` should be empty, and `version` should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
+- The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
+- The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
 
 ### Run Image
 
+A typical run image might specify:
+* The OS distro or distroless OS in the launch environment.
+* OS packages installed in the launch environment.
+* Trusted CA certificates in the launch environment.
+* The default user in the run environment.
+
+Run image authors SHOULD define the contract such that any CVEs can be addressed with security patches without violating the [compatibility guarantees](#compatibility-guarantees).
+
 The platform MUST ensure that:
 
-- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
-- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
+- The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
 
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.stack.maintainer` set to the name of the stack maintainer.
-- The image config's `Label` field has the label `io.buildpacks.stack.homepage` set to the homepage of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.distro.name` set to the name of the stack's OS distro.
-- The image config's `Label` field has the label `io.buildpacks.stack.distro.version` set to the version of the stack's OS distro.
-- The image config's `Label` field has the label `io.buildpacks.stack.released` set to the release date of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.description` set to the description of the stack.
-- The image config's `Label` field has the label `io.buildpacks.stack.metadata` set to additional metadata related to the stack.
-
-### Mixins
-
-A mixin name MUST only be defined by the author of its corresponding stack.
-A mixin name MUST always be used to specify the same set of changes.
-A mixin name MUST only contain a `:` character as part of an optional stage specifier.
-
-A mixin prefixed with the `build:` stage specifier only affects the build image and does not need to be specified on the run image.
-A mixin prefixed with the `run:` stage specifier only affects the run image and does not need to be specified on the build image.
-A mixin WITHOUT a `build:` or `run:` prefix affects both the build and the run images.
-
-A platform MAY support any number of mixins for a given stack in order to support application code or buildpacks that require those mixins.
-
-Changes introduced by mixins SHOULD be restricted to the addition of operating system software packages that are regularly patched with strictly backwards-compatible security fixes.
-However, mixins MAY consist of any changes that follow the [Compatibility Guarantees](#compatibility-guarantees).
+- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the image.
+- The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
+- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
+  - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
+  - For Windows-based images, distribution should be empty. Version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
+- The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
+- The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
+- The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
 
 ### Compatibility Guarantees
 
-Stack image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
-
-Stack image authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
-Stack image authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
-
-Mixin authors MUST ensure that mixins do not affect the [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) of any object code compiled to run on the base stack images without mixins.
-
-During build, platforms MUST use the same set of mixins for the run image as were used in the build image (excluding mixins that have a stage specifier).
+- Base image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
+- Base image authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
+- Base image authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
 
 ## Lifecycle Interface
 
