@@ -29,8 +29,8 @@ This document specifies Project Descriptor Schema Version `0.2`.
 
 The Schema Version format follows the form of the [Buildpack API Version](https://github.com/buildpacks/spec/blob/main/buildpack.md#buildpack-api-version):
 
-* MUST be in form <major>.<minor> or <major>, where <major> is equivalent to <major>.0
-* When <major> is greater than 0 increments to <minor> SHALL exclusively indicate additive changes
+* MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
+* When `<major>` is greater than 0, increments to `<minor>` SHALL exclusively indicate additive changes
 
 ## Special Value Types
 
