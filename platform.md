@@ -19,11 +19,9 @@ Examples of a platform might include:
   - [Terminology](#terminology)
       - [CNB Terminology](#cnb-terminology)
       - [Additional Terminology](#additional-terminology)
-  - [Stacks](#stacks)
-    - [Stack ID](#stack-id)
     - [Build Image](#build-image)
     - [Run Image](#run-image)
-    - [Mixins](#mixins)
+      - [Platform Data](#platform-data)
     - [Compatibility Guarantees](#compatibility-guarantees)
   - [Lifecycle Interface](#lifecycle-interface)
     - [Platform API Compatibility](#platform-api-compatibility)
@@ -59,6 +57,7 @@ Examples of a platform might include:
         - [Outputs](#outputs-7)
       - [`launcher`](#launcher)
         - [Inputs](#inputs-8)
+        - [Execution](#execution)
         - [Outputs](#outputs-8)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
@@ -71,7 +70,7 @@ Examples of a platform might include:
   - [Additional Guidance](#additional-guidance)
     - [Environment](#environment)
       - [Buildpack Environment](#buildpack-environment)
-        - [Stack-Provided Variables](#stack-provided-variables)
+        - [Base Image-Provided Variables](#base-image-provided-variables)
         - [User-Provided Variables](#user-provided-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
@@ -1060,7 +1059,7 @@ Where:
 - `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
-- `run-image.platform` contains the [platform data](#TODO) for the image
+- `run-image.platform` contains the [platform data](#platform-data) for the image
 
 #### `group.toml` (TOML)
 
