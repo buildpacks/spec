@@ -1046,9 +1046,10 @@ For more information on build reproducibility see [https://reproducible-builds.o
   target-id = "<target identifer>"
   [platform]
     os = "<OS name>"
-    arch = "<architecture>"
+    architecture = "<architecture>"
     variant = "<architecture variant>"
     distro-name = "<OS distribution name>"
+    distro-version = "<OS distribution version>"
 
 [build-image]
   reference = "<image reference>"
@@ -1060,6 +1061,11 @@ Where:
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
 - `run-image.platform` contains the [platform data](#platform-data) for the image
+  - If platform data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
+    - `run-image.platform.os = "linux"`
+    - `run-image.platform.architecture = "x86_64"`
+    - `run-image.platform.distro-name = "ubuntu"`
+    - `run-image.platform.distro-version = "18.04"`
 
 #### `group.toml` (TOML)
 
