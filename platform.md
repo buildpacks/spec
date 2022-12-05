@@ -249,6 +249,10 @@ Rebasing allows for fast runtime OS-level dependency updates for app images with
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
 
+If an SBOM is available, platforms MAY:
+- Warn when a rebase operation would add OS packages.
+- Fail if a rebase operation would remove OS packages.
+
 #### Launch
 `/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher`, or a symlink to it (see [exporter outputs](#outputs-4)), SHALL be the `ENTRYPOINT` for all app images.
