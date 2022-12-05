@@ -337,8 +337,8 @@ The platform MUST execute `detector` in the **build environment**
 Usage:
 ```
 /cnb/lifecycle/detector \
-  [-app <app>] \
   [-analyzed <analyzed>] \
+  [-app <app>] \
   [-buildpacks <buildpacks>] \
   [-extensions <extensions>] \
   [-generated <generated>] \
@@ -353,7 +353,7 @@ Usage:
 ##### Inputs
 | Input          | Environment Variable | Default Value                                          | Description                                                                                                                                                  |
 |----------------|----------------------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `<analyzed>`   | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | (**[experimental](#experimental-features)**) Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                     |
+| `<analyzed>`   | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                                                                  |
 | `<app>`        | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                                                                |
 | `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
 | `<extensions>` | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
@@ -393,6 +393,7 @@ Usage:
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
+- SHALL provide `run-image.platform` data in `<analyzed>` to buildpacks according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 
 When image extensions are present in the order (**[experimental](#experimental-features)**), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
