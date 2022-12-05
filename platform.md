@@ -21,7 +21,7 @@ Examples of a platform might include:
       - [Additional Terminology](#additional-terminology)
     - [Build Image](#build-image)
     - [Run Image](#run-image)
-      - [Platform Data](#platform-data)
+    - [Platform Data](#platform-data)
     - [Compatibility Guarantees](#compatibility-guarantees)
   - [Lifecycle Interface](#lifecycle-interface)
     - [Platform API Compatibility](#platform-api-compatibility)
@@ -186,7 +186,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
 
-#### Platform Data
+### Platform Data
 
 For both build images and run images, the platform MUST ensure that:
 
