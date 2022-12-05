@@ -170,8 +170,6 @@ A typical run image might specify:
 * Trusted CA certificates in the launch environment.
 * The default user in the run environment.
 
-Run image authors SHOULD define the contract such that any CVEs can be addressed with security patches without violating the [compatibility guarantees](#compatibility-guarantees).
-
 The platform MUST ensure that:
 
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
