@@ -154,14 +154,9 @@ The platform MUST ensure that:
 - The image config's `Env` field has the environment variable `CNB_USER_ID` set to the user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `CNB_GROUP_ID` set to the primary group [†](README.md#operating-system-conventions)GID/[‡](README.md#operating-system-conventions)SID of the user specified in the `User` field.
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
-- The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
 
 The platform SHOULD ensure that:
 
-- The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version. 
-  - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
-  - For Windows-based images, `distribution` should be empty, and `version` should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
@@ -181,21 +176,30 @@ Run image authors SHOULD define the contract such that any CVEs can be addressed
 The platform MUST ensure that:
 
 - The image config's `Env` field has the environment variable `PATH` set to a valid set of paths or explicitly set to empty (`PATH=`).
-- The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
 
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
 - The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the image.
-- The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
-  - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
-  - For Windows-based images, distribution should be empty. Version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
+
+#### Platform Data
+
+For both build images and run images, the platform MUST ensure that:
+
+- The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
+- The build image config and the run image config both specify the same `os`, `architecture`, `variant` (if specified), `io.buildpacks.distribution.name` (if specified), and `io.buildpacks.distribution.version` (if specified).
+
+The platform SHOULD ensure that:
+
+- The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
+- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
+  - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
+  - For Windows-based images, distribution should be empty. Version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 
 ### Compatibility Guarantees
 
@@ -237,7 +241,7 @@ or by executing `/cnb/lifecycle/creator`.
 > The meaning of any particular instance of the word **build** must be assessed in context
 
 #### Rebase
-When an updated run image with the same stack ID is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
+When an updated run image is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
 When layers are rebased, any app image metadata referencing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
@@ -426,7 +430,7 @@ Usage:
 | `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                   |
 | `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                               |
 | `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                      |
-|`<kaniko-dir>`| | | Kaniko directory (must be `/kaniko`) |
+| `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                        |
 
 ##### Outputs
 | Output                                      | Description                                                                                                                               |
@@ -745,6 +749,7 @@ Usage:
 ```
 /cnb/lifecycle/rebaser \
   [-daemon] \ # sets <daemon>
+  [-force] \
   [-gid <gid>] \
   [-log-level <log-level>] \
   [-report <report> ] \
@@ -754,20 +759,27 @@ Usage:
 ```
 
 ##### Inputs
-| Input               | Environment Variable  | Default Value          | Description
-|---------------------|-----------------------|------------------------|---------------------------------------
-| `<daemon>`          | `CNB_USE_DAEMON`      | `false`                | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the build image `User`
-| `<image>`           |                       |                        | App image to rebase
-| `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
-| `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
-| `<uid>`             | `CNB_USER_ID`         |                        | UID of the build image `User`
+| Input         | Environment Variable | Default Value          | Description                                              |
+|---------------|----------------------|------------------------|----------------------------------------------------------|
+| `<daemon>`    | `CNB_USE_DAEMON`     | `false`                | Export image to docker daemon                            |
+| `<force>`     | `CNB_FORCE_REBASE`   | `false`                | Allow mismatched metadata between new and old run images |
+| `<gid>`       | `CNB_GROUP_ID`       |                        | Primary GID of the build image `User`                    |
+| `<image>`     |                      |                        | App image to rebase                                      |
+| `<log-level>` | `CNB_LOG_LEVEL`      | `info`                 | Log Level                                                |
+| `<report>`    | `CNB_REPORT_PATH`    | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)    |
+| `<run-image>` | `CNB_RUN_IMAGE`      | derived from `<image>` | Run image reference                                      |
+| `<uid>`       | `CNB_USER_ID`        |                        | UID of the build image `User`                            |
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
-- **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
-- **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`.
+- **If** `<daemon>` is `false` and more than one `<image>` is provided, the images MUST refer to the same registry
+- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
+- **If** `<force>` is true the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is false:
+  - `os`
+  - `architecture`
+  - `variant` (if specified)
+  - `io.buildpacks.distribution.name` (if specified)
+  - `io.buildpacks.distribution.version` (if specified)
 
 ##### Outputs
 | Output             | Description
@@ -955,22 +967,24 @@ A more thorough explanation is provided in the [Buildpack Interface Specificatio
 
 ### Environment
 #### Buildpack Environment
-##### Stack-Provided Variables
-The following variables SHOULD be set in the lifecycle execution environment and SHALL be directly inherited by the buildpack without modification:
-| Env Variable    | Description
-|-----------------|--------------------------------------
-| `CNB_STACK_ID`  | Chosen stack ID
-| `HOME`          | Current user's home directory
+##### Base Image-Provided Variables
+
+The following variables SHOULD be set in the lifecycle execution environment and SHALL be directly inherited by the
+buildpack without modification:
+
+| Env Variable                | Description                    |
+|-----------------------------|--------------------------------|
+| `HOME`                      | Current user's home directory  |
 
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
-| Env Variable      | Layer Path   | Contents
-|-------------------|--------------|------------------
-| `PATH`            | `/bin`       | binaries
-| `LD_LIBRARY_PATH` | `/lib`       | shared libraries
-| `LIBRARY_PATH`    | `/lib`       | static libraries
-| `CPATH`           | `/include`   | header files
-| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files
+| Env Variable      | Layer Path   | Contents         |
+|-------------------|--------------|------------------|
+| `PATH`            | `/bin`       | binaries         |
+| `LD_LIBRARY_PATH` | `/lib`       | shared libraries |
+| `LIBRARY_PATH`    | `/lib`       | static libraries |
+| `CPATH`           | `/include`   | header files     |
+| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         |
 
 The platform SHOULD NOT assume any other stack-provided environment variables are inherited by the buildpack.
 
@@ -985,7 +999,7 @@ The platform SHOULD NOT set user-provided environment variables directly in the 
 #### Launch Environment
 User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
 
-The process SHALL inherit both stack-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
+The process SHALL inherit both base-image-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
 * `CNB_APP_DIR`, `CNB_LAYERS_DIR` and `CNB_PROCESS_TYPE` SHALL NOT be set in the process execution environment.
 * `/cnb/process` SHALL be removed from the beginning of `PATH`.
 * The lifecycle SHALL apply buildpack-provided modifications to the environment as outlined in the [Buildpack Interface Specification](buildpack.md).
@@ -1030,15 +1044,23 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 [run-image]
   reference = "<image reference>"
+  target-id = "<target identifer>"
+  [platform]
+    os = "<OS name>"
+    arch = "<architecture>"
+    variant = "<architecture variant>"
+    distro-name = "<OS distribution name>"
 
 [build-image]
   reference = "<image reference>"
 ```
 
 Where:
-- `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+- `image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+- `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-- `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
+- `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
+- `run-image.platform` contains the [platform data](#TODO) for the image
 
 #### `group.toml` (TOML)
 
