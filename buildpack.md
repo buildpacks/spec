@@ -132,10 +132,6 @@ A **layer directory** is a directory created by a component buildpack that conta
   * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
 Any combination of the three layer types are valid for a particular layer directory.
 
-A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to component buildpacks through the `CNB_STACK_ID` environment variable, enabling each component buildpack to modify its behavior when executed on different stacks.
-
-A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
-
 ## Buildpack Interface
 
 The following specifies the interface implemented by component buildpacks.
@@ -400,21 +396,8 @@ For each trial,
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
-The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using common stack with a common set of mixins.
-The lifecycle MUST fail detection if any of the buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of the buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
-
-#### Mixin Satisfaction
-
-A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
-
-1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
-2) the stack provides the mixin `build:<mixin>` and the buildpack requires `build:<mixin>`
-3) the stack provides the mixin `<mixin>` and the buildpack requires `<mixin>`
-4) the stack provides the mixin `<mixin>` and the buildpack requires `build:<mixin>`
-5) the stack provides the mixin `<mixin>` and the buildpack requires `run:<mixin>`
-6) the stack provides the mixin `<mixin>` and the buildpack requires both `run:<mixin>` and `build:<mixin>`
-7) the stack provides the mixins `build:<mixin>` and `run:<mixin>` the buildpack requires `<mixin>`
+The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using a common build environment.
+If any buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, the lifecycle MUST fail detection for the group.
 
 #### Order Resolution
 
@@ -687,7 +670,7 @@ The purpose of export is to create a new OCI image using a combination of remote
 - The `<layers>` directories provided to each buildpack during the build phase,
 - The `<app>` directory processed by the buildpacks during the build phase,
 - The buildpack IDs associated with the buildpacks used during the build phase, in order of execution,
-- A reference to the most recent version of the run image associated with the stack and mixins,
+- A reference to the most recent version of the run image,
 - A reference to the old OCI image processed during the analysis phase, if available, and
 - A tag for a new OCI image,
 
@@ -813,8 +796,6 @@ When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the
 When `clear-env` in `buildpack.toml` is not set to `true` for a given buildpack, the lifecycle MUST set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` such that:
 1. For layer path environment variables, user-provided values are prepended before any existing values and are delimited by the OS path list separator.
 2. For all other environment variables, user-provided values override any existing values.
-
-Buildpacks MAY use the value of `CNB_STACK_ID` to modify their behavior when executed on different stacks.
 
 The environment variable prefix `CNB_` is reserved.
 It MUST NOT be used for environment variables that are not defined in this specification or approved extensions.
@@ -1097,8 +1078,6 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
    - Each element MUST increase numerically.
    - Buildpack authors will define what changes will increment `X`, `Y`, and `Z`.
 
-If an `order` is specified, then `stacks` MUST NOT be specified.
-
 **The buildpack API:**
 
 *Key: `api = "<buildpack API version>"`*
@@ -1176,6 +1155,8 @@ Each stack in `stacks` either:
 - Or MUST indicate compatibility with any stack:
     - `id` MUST be set to the special value `"*"`.
     - `mixins` MUST be empty.
+
+If an `order` is specified, then `stacks` MUST NOT be specified.
 
 Tools reading `buildpack.toml` will translate any section that sets `stacks.id = "io.buildpacks.stacks.bionic` to:
 
