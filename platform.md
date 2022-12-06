@@ -21,7 +21,7 @@ Examples of a platform might include:
       - [Additional Terminology](#additional-terminology)
     - [Build Image](#build-image)
     - [Run Image](#run-image)
-    - [Platform Data](#platform-data)
+    - [Target Data](#target-data)
     - [Compatibility Guarantees](#compatibility-guarantees)
   - [Lifecycle Interface](#lifecycle-interface)
     - [Platform API Compatibility](#platform-api-compatibility)
@@ -184,7 +184,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
 
-### Platform Data
+### Target Data
 
 For both build images and run images, the platform MUST ensure that:
 
@@ -1047,7 +1047,7 @@ For more information on build reproducibility see [https://reproducible-builds.o
 [run-image]
   reference = "<image reference>"
   target-id = "<target identifer>"
-  [platform]
+  [target]
     os = "<OS name>"
     architecture = "<architecture>"
     variant = "<architecture variant>"
@@ -1063,8 +1063,8 @@ Where:
 - `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
-- `run-image.platform` contains the [platform data](#platform-data) for the image
-  - If platform data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
+- `run-image.platform` contains the [target data](#target-data) for the image
+  - If target data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.platform.os = "linux"`
     - `run-image.platform.architecture = "x86_64"`
     - `run-image.platform.distro-name = "ubuntu"`
