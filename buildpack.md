@@ -1061,10 +1061,11 @@ optional = false
 
 [[targets]]
 os = "<OS name>"
-architecture = "<architecture>"
+arch = "<architecture>"
 variant = "<architecture variant>"
-distro-name = ["<OS distribution name>"]
-distro-version = ["<OS distribution version>"]
+[[targets.distributions]]
+name = "<OS distribution name>"
+versions = ["<OS distribution version>"]
 
 [metadata]
 # buildpack-specific data
@@ -1111,11 +1112,11 @@ A buildpack descriptor MAY specify `targets`.
 
 Each target in `targets`:
 - MUST identify a compatible runtime environment:
-   - `os` and `architecture` are required and MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
+   - `os` and `arch` are required and MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
    - `variant` is optional and MUST be a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
-   - `distro-name` and `distro-version` are optional and MUST be the OS distribution name and OS distribution version
-     - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
-     - For Windows-based images, distribution should be empty; version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+   - `distributions` are optional and MUST describe the OS distributions supported by the buildpack
+     - For Linux-based images, `distributions.name` and `distributions.versions` should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distributions.name` should be empty; `distributions.versions` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "linux"` and `arch = "x86_64"` if `./bin/build` is present
@@ -1141,6 +1142,27 @@ Each `key`:
 
 ## Deprecations
 This section describes all the features that are deprecated.
+
+### buildpack.toml (TOML) `stacks` Array
+
+_Deprecated in Buildpack API 0.10._
+
+The `stacks` array is deprecated.
+
+```toml
+[[stacks]]
+id = "<stack ID>"
+mixins = ["<mixin name>"]
+```
+
+Each stack in `stacks` either:
+- MUST identify a compatible stack:
+    - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
+    - `mixins` MAY contain one or more mixin names.
+- Or MUST indicate compatibility with any stack:
+    - `id` MUST be set to the special value `"*"`.
+    - `mixins` MUST be empty.
+
 
 ### Positional Arguments to `detect` and `build` Executables
 
