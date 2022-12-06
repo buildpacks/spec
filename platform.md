@@ -806,7 +806,7 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
-    - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
+    - The value of `io.buildpacks.base.*` labels SHALL be modified to that of the new `run-image`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 
@@ -914,7 +914,7 @@ The launcher:
 
 ### Run Image Resolution
 
-Given stack metadata containing `run-image.image` and a set of `run-image.mirrors`. The `<run-image>` for a given `<image>` shall be resolved as follows:
+Given [stack](#stacktoml-toml) metadata containing `run-image.image` and a set of `run-image.mirrors`. The `<run-image>` for a given `<image>` shall be resolved as follows:
 - **If** any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
 - **If** none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
 
@@ -988,7 +988,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 | `CPATH`           | `/include`   | header files     |
 | `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         |
 
-The platform SHOULD NOT assume any other stack-provided environment variables are inherited by the buildpack.
+The platform SHOULD NOT assume any other base-image-provided environment variables are inherited by the buildpack.
 
 ##### User-Provided Variables
 User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
