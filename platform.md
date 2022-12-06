@@ -196,7 +196,7 @@ The platform SHOULD ensure that:
 - The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
 - The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
   - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
-  - For Windows-based images, distribution should be empty. Version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
+  - For Windows-based images, distribution should be empty; version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 
 ### Compatibility Guarantees
 
