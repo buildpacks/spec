@@ -1059,9 +1059,12 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
 
-[[stacks]]
-id = "<stack ID>"
-mixins = ["<mixin name>"]
+[[targets]]
+os = "<OS name>"
+architecture = "<architecture>"
+variant = "<architecture variant>"
+distro-name = ["<OS distribution name>"]
+distro-version = ["<OS distribution version>"]
 
 [metadata]
 # buildpack-specific data
@@ -1102,17 +1105,21 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 *Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
-#### Stacks
+#### Targets
 
-A buildpack descriptor may specify `stacks`.
+A buildpack descriptor MAY specify `targets`.
 
-Each stack in `stacks` either:
-- MUST identify a compatible stack:
-   - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
-   - `mixins` MAY contain one or more mixin names.
-- Or MUST indicate compatibility with any stack:
-   - `id` MUST be set to the special value `"*"`.
-   - `mixins` MUST be empty.
+Each target in `targets`:
+- MUST identify a compatible runtime environment:
+   - `os` and `architecture` are required and MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
+   - `variant` is optional and MUST be a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
+   - `distro-name` and `distro-version` are optional and MUST be the OS distribution name and OS distribution version
+     - For Linux-based images, each field should be the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, distribution should be empty; version should be the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+
+If the `targets` list is empty, tools reading `buildpack.toml` will assume:
+  - `os = "linux"` and `arch = "x86_64"` if `./bin/build` is present
+  - `os = "windows"` and `arch = "x86_64"` if `./bin/build.bat` or `./bin/build.exe` are present
    
 #### Order
 
