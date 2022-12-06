@@ -1063,7 +1063,7 @@ optional = false
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
-[[targets.distributions]]
+[[targets.distros]]
 name = "<OS distribution name>"
 versions = ["<OS distribution version>"]
 
@@ -1114,13 +1114,15 @@ Each target in `targets`:
 - MUST identify a compatible runtime environment:
    - `os` and `arch` are required and MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
    - `variant` is optional and MUST be a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
-   - `distributions` are optional and MUST describe the OS distributions supported by the buildpack
-     - For Linux-based images, `distributions.name` and `distributions.versions` should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
-     - For Windows-based images, `distributions.name` should be empty; `distributions.versions` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+   - `distros` are optional and MUST describe the OS distributions supported by the buildpack
+     - For Linux-based images, `distros.name` and `distros.versions` should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distros.name` should be empty; `distros.versions` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "linux"` and `arch = "x86_64"` if `./bin/build` is present
   - `os = "windows"` and `arch = "x86_64"` if `./bin/build.bat` or `./bin/build.exe` are present
+
+Metadata specified in `targets` is validated against the runtime and build-time base images.
    
 #### Order
 
@@ -1163,6 +1165,16 @@ Each stack in `stacks` either:
     - `id` MUST be set to the special value `"*"`.
     - `mixins` MUST be empty.
 
+Tools reading `buildpack.toml` will translate any section that sets `stacks.id = "io.buildpacks.stacks.bionic` to:
+
+```toml
+[[targets]]
+os = "linux"
+arch = "x86_64"
+[[targets.distros]]
+name = "ubuntu"
+versions = ["18.04"]
+```
 
 ### Positional Arguments to `detect` and `build` Executables
 
@@ -1231,7 +1243,6 @@ If the `bom` array is used, the buildpack:
 When the build is complete, a legacy build BOM describing the build container MAY be generated for auditing purposes.
 
 If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
-
 
 ### Build Plan (TOML) `requires.version` Key
 
