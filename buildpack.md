@@ -760,9 +760,22 @@ The purpose of launch is to modify the running app environment using app-provide
 
 ### Provided by the Lifecycle
 
+#### Targets
+
+The following environment variables MUST be set by the lifecycle during `detect` and `build` phases to describe the target runtime image.
+
+| Env Variable                | Description                                |
+|-----------------------------|--------------------------------------------|
+| `CNB_TARGET_ID`             | Identifier for the target image (optional) |
+| `CNB_TARGET_OS`             | Target OS                                  |
+| `CNB_TARGET_ARCH`           | Target architecture                        |
+| `CNB_TARGET_VARIANT`        | Target architecture variant (optional)     |
+| `CNB_TARGET_DISTRO_NAME`    | Target OS distribution name (optional)     |
+| `CNB_TARGET_DISTRO_VERISON` | Target OS distribution version (optional)  |
+
 #### Layer Paths
 
-The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
+The following layer path environment variables MUST be set by the lifecycle during the `build` and `launch` phases in order to make buildpack dependencies accessible.
 
 During the build phase, each variable designated for build MUST contain absolute paths of all previous buildpacks’ `<layers>/<layer>/` directories that are designated for build.
 
@@ -787,14 +800,13 @@ In either case,
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                                    | Detect | Build | Launch
-|-----------------|------------------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
-| `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
+| Env Variable    | Description                          | Detect | Build | Launch |
+|-----------------|--------------------------------------|--------|-------|--------|
+| `BP_*`          | User-provided variable for buildpack | [x]    | [x]   |        |
+| `BPL_*`         | User-provided variable for exec.d    |        |       | [x]    |
+| `HOME`          | Current user's home directory        | [x]    | [x]   | [x]    |
 
-During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
+During the `detect` and `build` phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
 
 When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`.
 
