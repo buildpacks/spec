@@ -1049,7 +1049,7 @@ For more information on build reproducibility see [https://reproducible-builds.o
   target-id = "<target identifer>"
   [target]
     os = "<OS name>"
-    architecture = "<architecture>"
+    arch = "<architecture>"
     variant = "<architecture variant>"
     distro-name = "<OS distribution name>"
     distro-version = "<OS distribution version>"
@@ -1065,10 +1065,10 @@ Where:
 - `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
 - `run-image.platform` contains the [target data](#target-data) for the image
   - If target data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
-    - `run-image.platform.os = "linux"`
-    - `run-image.platform.architecture = "x86_64"`
-    - `run-image.platform.distro-name = "ubuntu"`
-    - `run-image.platform.distro-version = "18.04"`
+    - `run-image.target.os = "linux"`
+    - `run-image.target.arch = "x86_64"`
+    - `run-image.target.distro-name = "ubuntu"`
+    - `run-image.target.distro-version = "18.04"`
 
 #### `group.toml` (TOML)
 
