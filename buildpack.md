@@ -1,4 +1,8 @@
-# Buildpack Interface Specification
+# Buildpack Interface Specification (DEPRECATED)
+
+## This API version is considered [deprecated](https://github.com/buildpacks/rfcs/blob/main/text/0049-multi-api-lifecycle-descriptor.md) and will eventually become unsupported.
+
+For information about how to migrate, consult the [migration guides](https://buildpacks.io/docs/reference/spec/migration/).
 
 This document specifies the interface between a lifecycle program and one or more buildpacks.
 
