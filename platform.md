@@ -784,6 +784,7 @@ Usage:
   [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-log-level <log-level>] \
+  [-previous-image <previous-image>] \
   [-report <report> ] \
   [-run-image <run-image> | -image <run-image> ] \ # -image is Deprecated
   [-uid <uid>] \
@@ -797,6 +798,7 @@ Usage:
 | `<gid>`             | `CNB_GROUP_ID`        |                        | Primary GID of the build image `User`
 | `<image>`           |                       |                        | App image to rebase
 | `<log-level>`       | `CNB_LOG_LEVEL`       | `info`                 | Log Level
+| `<previous-image>`  |                       | derived from `<image>` | Previous image reference
 | `<report>`          | `CNB_REPORT_PATH`     | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)
 | `<run-image>`       | `CNB_RUN_IMAGE`       | derived from `<image>` | Run image reference
 | `<uid>`             | `CNB_USER_ID`         |                        | UID of the build image `User`
@@ -804,6 +806,8 @@ Usage:
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided they MUST refer to the same registry
+- **If** `<previous-image>` is provided by the platform, the value will be used as the app image to rebase. `<previous-image>` must NOT be modified unless specified again in `<image>`.
+- **Else** `<previous-image>` value will derived from the first `<image>`.
 - **If** `<run-image>` is not provided by the platform the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`.
 
 ##### Outputs
