@@ -101,6 +101,7 @@ Platform API versions:
 ## Terminology
 
 #### CNB Terminology
+
 A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
 
 A **build image** is an OCI image that provides the base of the **build environment**.
@@ -124,6 +125,7 @@ The **launcher** refers to a lifecycle executable packaged in the **app image** 
 An **image extension** refers to software compliant with the [Image Extension Interface Specification](image-extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
 #### Additional Terminology
+
 An **image reference** refers to either a **tag reference** or **digest reference**.
 
 A **tag reference** refers to an identifier of form `<registry>/<repo>:<tag>` which locates an image manifest in an [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/master/spec.md) compliant registry.
@@ -183,6 +185,7 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.description` set to the description of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
+- The image config's `Label` field has the label `io.buildpacks.rebasable` set to `true` to indicate that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions (see [Compatibility Guarantees](#compatibility-guarantees)).
 
 ### Target Data
 
@@ -217,33 +220,39 @@ If `CNB_PLATFORM_API` is set in the lifecycle's execution environment, the lifec
 ### Operations
 
 #### Build
+
 A single app image build* consists of the following phases:
 
 1. Analysis
-1. Detection
-1. Cache Restoration
-1. Build*
-1. Export
+2. Detection
+3. Cache Restoration
+4. (Optional and Experimental) Base Image Extension
+5. Build*
+6. Export
 
 A platform MUST execute these phases either by invoking the following phase-specific lifecycle binaries in order:
 1. `/cnb/lifecycle/analyzer`
-1. `/cnb/lifecycle/detector`
-1. `/cnb/lifecycle/restorer`
-1. `/cnb/lifecycle/builder`
-1. `/cnb/lifecycle/exporter`
+2. `/cnb/lifecycle/detector`
+3. `/cnb/lifecycle/restorer`
+4. (Optional and Experimental) `/cnb/lifecycle/extender`
+5. `/cnb/lifecycle/builder`
+6. `/cnb/lifecycle/exporter`
 
-or by executing `/cnb/lifecycle/creator`.
+or by executing `/cnb/lifecycle/creator`**.
 
-> \* **build** is an overloaded term that refers to both a single phase and the operation comprised of the above phases.
-> The meaning of any particular instance of the word **build** must be assessed in context
+> \* **Build** is an overloaded term that refers to both a single phase and the operation comprised of the above phases.
+> The meaning of any particular instance of the word **build** must be assessed in context.
+
+> **Does not perform image extension.
 
 #### Rebase
+
 When an updated run image is available, an updated app image SHOULD be generated from the existing app image config by replacing the run image layers in the existing app image with the layers from the new run image.
 This is referred to as rebasing the app, launch, and launcher layers onto the new run image layers.
 When layers are rebased, any app image metadata referencing to the original run image MUST be updated to reference to the new run image.
 This entire operation is referred to as rebasing the app image.
 
-Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are colocated on an OCI registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
+Rebasing allows for fast runtime OS-level dependency updates for app images without requiring a rebuild. A rebase requires minimal data transfer when the app and run images are co-located on an OCI registry that supports [Cross Repository Blob Mounts](https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount).
 
 To rebase an app image a platform MUST execute the `/cnb/lifecycle/rebaser` or perform an equivalent operation.
 
@@ -252,7 +261,8 @@ If an SBOM is available, platforms MAY:
 - Fail if a rebase operation would remove OS packages.
 
 #### Launch
-`/cnb/lifecycle/launcher` is responsible for launching user and buildpack provided processes in the correct execution environment.
+
+`/cnb/lifecycle/launcher` is responsible for launching user- and buildpack-provided processes in the correct execution environment.
 `/cnb/lifecycle/launcher`, or a symlink to it (see [exporter outputs](#outputs-4)), SHALL be the `ENTRYPOINT` for all app images.
 
 ### Usage
@@ -284,6 +294,7 @@ Usage:
 ```
 
 ##### Inputs
+
 | Input             | Environment Variable  | Default Value            | Description
 |-------------------|-----------------------|--------------------------|----------------------
 | `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
@@ -316,6 +327,7 @@ Usage:
   - `run-image` MUST describe the `<run-image>`
 
 ##### Outputs
+
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | (see Exit Code table below for values)
@@ -332,6 +344,7 @@ Usage:
 | `30-39`         | Analysis-specific lifecycle errors
 
 #### `detector`
+
 The platform MUST execute `detector` in the **build environment**
 
 Usage:
@@ -351,21 +364,24 @@ Usage:
 ```
 
 ##### Inputs
-| Input          | Environment Variable | Default Value                                          | Description                                                                                                                                                  |
-|----------------|----------------------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `<analyzed>`   | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                                                                  |
-| `<app>`        | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                                                                |
-| `<buildpacks>` | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
-| `<extensions>` | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
-| `<generated>`  | `CNB_GENERATED_DIR`  | `<layers>/generated`                                   | (**[experimental](#experimental-features)**) Path to output directory for generated Dockerfiles                                                              |
-| `<group>`      | `CNB_GROUP_PATH`     | `<layers>/group.toml`                                  | Path to output group definition                                                                                                                              |
-| `<layers>`     | `CNB_LAYERS_DIR`     | `/layers`                                              | Path to layers directory                                                                                                                                     |
-| `<log-level>`  | `CNB_LOG_LEVEL`      | `info`                                                 | Log Level                                                                                                                                                    |
-| `<order>`      | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
-| `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
-| `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                                                                   |
+
+| Input           | Environment Variable | Default Value                                          | Description                                                                                                                                                  |
+|-----------------|----------------------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml`                               | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                                                                  |
+| `<app>`         | `CNB_APP_DIR`        | `/workspace`                                           | Path to application directory                                                                                                                                |
+| `<buildpacks>`  | `CNB_BUILDPACKS_DIR` | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
+| `<extensions>`^ | `CNB_EXTENSIONS_DIR` | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
+| `<generated>`^  | `CNB_GENERATED_DIR`  | `<layers>/generated`                                   | (**[experimental](#experimental-features)**) Path to output directory for generated Dockerfiles                                                              |
+| `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`                                  | Path to output group definition                                                                                                                              |
+| `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                                              | Path to layers directory                                                                                                                                     |
+| `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                                                 | Log Level                                                                                                                                                    |
+| `<order>`       | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
+| `<plan>`        | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
+| `<platform>`    | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                                                                   |
+> ^Only needed when using image extensions
 
 ##### Outputs
+
 | Output                                                   | Description                                                                                   |
 |----------------------------------------------------------|-----------------------------------------------------------------------------------------------|
 | [exit status]                                            | (see Exit Code table below for values)                                                        |
@@ -395,15 +411,25 @@ The lifecycle:
 - SHALL write the resolved build plan from the detected group to `<plan>`
 - SHALL provide `run-image.target` data in `<analyzed>` to buildpacks according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 
-When image extensions are present in the order (**[experimental](#experimental-features)**), the lifecycle:
+When image extensions are present in the order (optional and **[experimental](#experimental-features)**), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
+- SHALL filter the build plan with dependencies provided by image extensions.
 - SHALL copy any generated run.Dockerfiles to `<generated>/run/<image extension ID>/Dockerfile`.
 - SHALL copy any generated build.Dockerfiles to `<generated>/build/<image extension ID>/Dockerfile`.
 - SHALL copy any generated `<extend-config>` files to `<generated>/build/<image extension ID>/<extend-config>`.
-- SHALL replace the `run-image` reference in `<analyzed>` with the selected run image reference. The selected run image reference SHALL be the base image referenced in the Dockerfile output by the last image extension in the group.
-- SHALL filter the build plan with dependencies provided by image extensions.
+- SHALL replace `run-image` in `<analyzed>` with the selected run image. To select the run image, the lifecycle SHALL inspect each `run.Dockerfile` output by image extensions, in the order defined in `<group>`:
+  - **If** all `run.Dockerfile`s declare `FROM ${base_image}`, the selected run image SHALL be the original run image in `<analyzed>`, with `extend = true`
+  - **Else** the selected run image SHALL be the last image referenced in the `FROM` statement of the last `run.Dockerfile` not to declare `FROM ${base_image}`
+    - `run-image.image` SHALL be the name of the selected run image
+    - `run-image.reference` and `run-image.target` SHALL be cleared (as they may no longer be accurate)
+    - All preceding `run.Dockerfile`s SHALL be renamed `run.Dockerfile.ignore`
+    - **If** there are no `run.Dockerfile`s following the Dockerfile with the selected run image:
+      - `run-image.extend` SHALL be `false`
+    - **Else**
+      - `run-image.extend` SHALL be `true`
 
 #### `restorer`
+
 Usage:
 ```
 /cnb/lifecycle/restorer \
@@ -411,6 +437,7 @@ Usage:
   [-build-image <build-image>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
+  [-generated <generated>] \
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -420,21 +447,28 @@ Usage:
 ```
 
 ##### Inputs
-| Input           | Environment Variable | Default Value            | Description                                                                 |
-|-----------------|----------------------|--------------------------|-----------------------------------------------------------------------------|
-| `<analyzed>`    | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) |
-| `<build-image>` | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided)                     |
-| `<cache-dir>`   | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                   |
-| `<cache-image>` | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                               |
-| `<gid>`         | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                       |
-| `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))              |
-| `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                    |
-| `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                   |
-| `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                               |
-| `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                      |
-| `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                        |
+
+| Input            | Environment Variable | Default Value            | Description                                                                                       |
+|------------------|----------------------|--------------------------|---------------------------------------------------------------------------------------------------|
+| `<analyzed>`     | `CNB_ANALYZED_PATH`  | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<build-image>`* | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided) |
+| `<cache-dir>`    | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                                         |
+| `<cache-image>`  | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                                                     |
+| `<generated>`^   | `CNB_GENERATED_DIR`  | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles   |
+| `<gid>`          | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                                             |
+| `<group>`        | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
+| `<layers>`       | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
+| `<log-level>`    | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                                         |
+| `<uid>`          | `CNB_USER_ID`        |                          | UID of the build image `User`                                                                     |
+| `<skip-layers>`  | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
+| `<kaniko-dir>`^  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
+
+> ^ Only needed when using image extensions
+
+> \* Only needed when using image extensions to extend the build image
 
 ##### Outputs
+
 | Output                                      | Description                                                                                                                               |
 |---------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 | [exit status]                               | (see Exit Code table below for values)                                                                                                    |
@@ -444,7 +478,7 @@ Usage:
 | `<layers>/<buidpack-id>/<layer>.toml`       | Files containing the layer content metadata of each analyzed layer (see data format in [Buildpack Interface Specification](buildpack.md)) |
 | `<layers>/<buidpack-id>/<layer>.sbom.<ext>` | Files containing the Software Bill of Materials for each analyzed layer (see [Buildpack Interface Specification](buildpack.md))           |
 | `<layers>/<buidpack-id>/<layer>/*`.         | Restored layer contents                                                                                                                   |
-| `<kaniko-dir>/cache`                             | Kaniko cache contents                                                                                                                     |
+| `<kaniko-dir>/cache`                        | Kaniko cache contents                                                                                                                     |
 
 
 | Exit Code       | Result|
@@ -458,24 +492,35 @@ Usage:
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-- When the provided `<group>` contains image extensions (**[experimental](#experimental-features)**), the lifecycle:
+- When `<generated>/build` contains Dockerfiles (optional and **[experimental](#experimental-features)**), the lifecycle:
   - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
   - MUST copy the OCI manifest and config file for `<build-image>` to `<kaniko-dir>/cache`
+- When `<generated>/run` contains Dockerfiles, the lifecycle:
+  - MUST resolve `run-image.reference` to a digest in `<analyzed>` if not present
+  - MUST populate `run-image.target` data in `<analyzed>` if not present
+  - **If** `<analyzed>` has `run-image.extend = true`, the lifecycle:
+    - MUST download from the registry and save in OCI layout format the `run-image` in `<analyzed>` to `<kaniko-dir>/cache`
 
 ##### Layer Restoration
+
 lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
 
-#### `extender` (**[experimental](#experimental-features)**)
+#### `extender` (optional and **[experimental](#experimental-features)**)
+
+If using `extender`, the platform MUST execute `extender` in either or both of: the **build environment**, the **run environment**
+
 Usage:
 ```
 /cnb/lifecycle/extender \
   [-analyzed <analyzed>] \
   [-app <app>] \
   [-buildpacks <buildpacks>] \
+  [-extended <extended>] \
   [-generated <generated>] \
   [-gid <gid>] \
   [-group <group>] \
   [-kaniko-cache-ttl <kaniko-cache-ttl>] \
+  [-kind <kind>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-plan <plan>] \
@@ -484,30 +529,40 @@ Usage:
 ```
 
 ##### Inputs
+
 | Input                | Env                    | Default Value            | Description                                                                                     |
 |----------------------|------------------------|--------------------------|-------------------------------------------------------------------------------------------------|
 | `<analyzed>`         | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                            |
 | `<app>`              | `CNB_APP_DIR`          | `/workspace`             | Path to application directory                                                                   |
-| `<buildpacks>`       | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
+| `<buildpacks>`*      | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
+| `<extended>`**       | `CNB_EXTENDED_DIR`     | `<layers>/extended`      | Path to output directory for extended run image layers                                          |
 | `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
-| `<gid>`              | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
+| `<gid>`*             | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
 | `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
 | `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks                  | Kaniko cache TTL                                                                                |
+| `<kind>`             | `CNB_EXTEND_KIND`      | `build`                  | Type of image to extend (valid values: `build`, `run`)                                          |
 | `<layers>`           | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                        |
 | `<log-level>`        | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                       |
-| `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
+| `<plan>`*            | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
 | `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                      |
-| `<uid>`              | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
+| `<uid>`*             | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
+
+> \* Only needed when extending the build image
+
+> ** Only needed when extending the run image
 
 ##### Outputs
 
-In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image. When using the `extender` platforms MUST skip the `builder` and proceed to the `exporter`.
+When extending the build image:
 
-| Output          | Description                            |
-|-----------------|----------------------------------------|
-| [exit status]   | (see Exit Code table below for values) |
-| `/dev/stdout`   | Logs (info)                            |
-| `/dev/stderr`   | Logs (warnings, errors)                |
+- In addition to the outputs enumerated below, outputs produced by `extender` include those produced by `builder` - as the lifecycle will run the `build` phase after extending the build image.
+- Platforms MUST skip the `builder` and proceed to the `exporter`.
+
+| Output               | Description                            |
+|----------------------|----------------------------------------|
+| [exit status]        | (see Exit Code table below for values) |
+| `/dev/stdout`        | Logs (info)                            |
+| `/dev/stderr`        | Logs (warnings, errors)                |
 | `<kaniko-dir>/cache` | Kaniko cache contents                  |
 
 | Exit Code       | Result                              |
@@ -518,13 +573,20 @@ In addition to the outputs enumerated below, outputs produced by `extender` incl
 | `1-10`, `13-19` | Generic lifecycle errors            |
 | `100-109`       | Extension-specific lifecycle errors |
 
-- For each extension in `<group>`, if a Dockerfile exists in `<generated>/build/<buildpack-id>`, the lifecycle:
-  - MUST apply the Dockerfile to the build environment according to the process outlined in the [Image Extension Specification](image-extension.md).
-- The extended image MUST be an extension of the `build-image` in [`analyzed.toml`](#analyzedtoml-toml)
-- After all Dockerfiles are applied, the lifecycle:
-  - MUST proceed with the `build` phase using the provided `<gid>` and `<uid>`
+- For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<kind>/<buildpack-id>`, the lifecycle:
+  - SHALL apply the Dockerfile to the environment according to the process outlined in the [Image Extension Specification](image-extension.md).
+- The extended image MUST be an extension of:
+  - The `build-image` in `<analyzed>` when `<kind>` is `build`, or
+  - The `run-image` in `<analyzed>` when `<kind>` is `run`
+- When extending the build image, after all `build.Dockefile`s are applied, the lifecycle:
+  - SHALL proceed with the `build` phase using the provided `<gid>` and `<uid>`
+- When extending the run image, after all `run.Dockefile`s are applied, the lifecycle:
+  - **If** any `run.Dockerfile` set the label `io.buildpacks.rebasable` to `false` or left the label unset:
+    - SHALL set the label `io.buildpacks.rebasable` to `false` on the extended run image
+  - SHALL copy the manifest and config for the extended run image, along with any new layers, to `<extended>`
 
 #### `builder`
+
 The platform MUST execute `builder` in the **build environment**
 
 Usage:
@@ -540,6 +602,7 @@ Usage:
 ```
 
 ##### Inputs
+
 | Input          | Env                   | Default Value         | Description
 |----------------|-----------------------|-----------------------|----------------------
 | `<app>`        | `CNB_APP_DIR`         | `/workspace`          | Path to application directory
@@ -551,6 +614,7 @@ Usage:
 | `<platform>`   | `CNB_PLATFORM_DIR`    | `/platform`           | Path to platform directory
 
 ##### Outputs
+
 | Output                                     | Description
 |--------------------------------------------|----------------------------------------------
 | [exit status]                              | (see Exit Code table below for values)
@@ -576,6 +640,7 @@ Usage:
     - The lifecycle SHALL treat `web` processes defined by buildpacks implementing Buildpack API < 0.6 as `default = true`.
 
 #### `exporter`
+
 Usage:
 ```
 /cnb/lifecycle/exporter \
@@ -584,6 +649,7 @@ Usage:
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
   [-daemon] \ # sets <daemon>
+  [-extended <extended>] \
   [-gid <gid>] \
   [-group <group>] \
   [-launch-cache <launch-cache> ] \
@@ -599,27 +665,31 @@ Usage:
 ```
 
 ##### Inputs
-| Input               | Environment Variable       | Default Value       | Description
-|---------------------|----------------------------|---------------------|---------------------------------------
-| `<analyzed>`        | `CNB_ANALYZED_PATH`        | `<layers>/analyzed.toml`  | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<app>`             | `CNB_APP_DIR`              | `/workspace`        | Path to application directory
-| `<cache-dir>`       | `CNB_CACHE_DIR`            |                     | Path to a cache directory
-| `<cache-image>`     | `CNB_CACHE_IMAGE`          |                     | Reference to a cache image in an OCI registry
-| `<daemon>`          | `CNB_USE_DAEMON`           | `false`             | Export image to docker daemon
-| `<gid>`             | `CNB_GROUP_ID`             |                     | Primary GID of the build image `User`
-| `<group>`           | `CNB_GROUP_PATH`           | `<layers>/group.toml`     | Path to group file (see [`group.toml`](#grouptoml-toml))
-| `<image>`           |                            |                     | Tag reference to which the app image will be written
-| `<launch-cache>`    | `CNB_LAUNCH_CACHE_DIR`     |                     | Path to a cache directory containing launch layers
-| `<launcher>`        |                            | `/cnb/lifecycle/launcher` | Path to the `launcher` executable
-| `<layers>`          | `CNB_LAYERS_DIR`           | `/layers`           | Path to layer directory
-| `<log-level>`       | `CNB_LOG_LEVEL`            | `info`              | Log Level
-| `<process-type>`    | `CNB_PROCESS_TYPE`         |                     | Default process type to set in the exported image
-| `<project-metadata>`| `CNB_PROJECT_METADATA_PATH`| `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)
-| `<report>`          | `CNB_REPORT_PATH`          | `<layers>/report.toml`    | Path to report (see [`report.toml`](#reporttoml-toml)
-| `<stack>`           | `CNB_STACK_PATH`           | `/cnb/stack.toml`   | Path to stack file (see [`stack.toml`](#stacktoml-toml)
-| `<uid>`             | `CNB_USER_ID`              |                     | UID of the build image `User`
-| `<layers>/config/metadata.toml` | | | Build metadata (see [`metadata.toml`](#metadatatoml-toml)
-|                     | `SOURCE_DATE_EPOCH`        |                     | Timestamp for `created` time in app image config                                           |
+
+| Input                           | Environment Variable        | Default Value                    | Description                                                                                |
+|---------------------------------|-----------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| `<analyzed>`                    | `CNB_ANALYZED_PATH`         | `<layers>/analyzed.toml`         | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                       |
+| `<app>`                         | `CNB_APP_DIR`               | `/workspace`                     | Path to application directory                                                              |
+| `<cache-dir>`                   | `CNB_CACHE_DIR`             |                                  | Path to a cache directory                                                                  |
+| `<cache-image>`                 | `CNB_CACHE_IMAGE`           |                                  | Reference to a cache image in an OCI registry                                              |
+| `<daemon>`                      | `CNB_USE_DAEMON`            | `false`                          | Export image to docker daemon                                                              |
+| `<extended>`**                  | `CNB_EXTENDED_DIR`          | `<layers>/extended`              | Path to directory containing extended run image layers                                     |
+| `<gid>`                         | `CNB_GROUP_ID`              |                                  | Primary GID of the build image `User`                                                      |
+| `<group>`                       | `CNB_GROUP_PATH`            | `<layers>/group.toml`            | Path to group file (see [`group.toml`](#grouptoml-toml))                                   |
+| `<image>`                       |                             |                                  | Tag reference to which the app image will be written                                       |
+| `<launch-cache>`                | `CNB_LAUNCH_CACHE_DIR`      |                                  | Path to a cache directory containing launch layers                                         |
+| `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
+| `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
+| `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
+| `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
+| `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
+| `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                      |
+| `<stack>`                       | `CNB_STACK_PATH`            | `/cnb/stack.toml`                | Path to stack file (see [`stack.toml`](#stacktoml-toml)                                    |
+| `<uid>`                         | `CNB_USER_ID`               |                                  | UID of the build image `User`                                                              |
+| `<layers>/config/metadata.toml` |                             |                                  | Build metadata (see [`metadata.toml`](#metadatatoml-toml)                                  |
+|                                 | `SOURCE_DATE_EPOCH`         |                                  | Timestamp for `created` time in app image config                                           |
+
+> ** Only needed when extending the run image
 
 - At least one `<image>` must be provided
 - Each `<image>` MUST be a valid tag reference
@@ -627,6 +697,7 @@ Usage:
 - The `<run-image>` will be read from [`analyzed.toml`](#analyzedtoml-toml)
 
 ##### Outputs
+
 | Output             | Description
 |--------------------|----------------------------------------------
 | `[exit status]`    | Success (0), or error (1+)
@@ -644,9 +715,12 @@ Usage:
 
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
-    - MUST be an extension of the `run-image` in [`analyzed.toml`](#analyzedtoml-toml)
-      - All run-image layers SHALL be preserved
-      - All run-image config values SHALL be preserved unless this conflicts with another requirement
+    - **If** image extensions were used to extend the `run-image` in [`analyzed.toml`](#analyzedtoml-toml):
+      - MUST be based on the image in `<extended>`
+    - **Else**:
+      - MUST be based on the `run-image` in [`analyzed.toml`](#analyzedtoml-toml)
+    - All base image layers and any extension layers SHALL be preserved
+    - All base image config values SHALL be preserved unless this conflicts with another requirement
     - MUST contain all buildpack-provided launch layers as determined by the [Buildpack Interface Specfication](buildpack.md)
     - MUST contain a layer containing all buildpack-provided Software Bill of Materials (SBOM) files for `launch` as determined by the [Buildpack Interface Specfication](buildpack.md) if they are present
       - `<layers>/sbom/launch/<buildpack-id>/sbom.<ext>` MUST contain the buildpack-provided `launch` SBOM
@@ -672,8 +746,15 @@ Usage:
     - MUST have the working directory set to the value of `<app>`.
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
+          - **If** `run-image.image` in `<analyzed>` does not match `run-image.image` in `<stack>`:
+            - `stack.runImage.image` SHALL be the value from `<analyzed>`
+            - `stack.runImage.mirrors` SHALL be omitted
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
         - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
+        - **If** image extensions were used to extend the run image and `<extended>/<image config>` has the label `io.buildpacks.rebasable` set to `true`:
+          - `io.buildpacks.rebasable` SHALL be `true`
+        - **Else**
+          - `io.buildpacks.rebasable` SHALL be `false`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the modification time of all files in newly created layers to a constant value
     - SHOULD set the `created` time in image config to `SOURCE_DATE_EPOCH`, or to a constant value if not defined
@@ -690,6 +771,7 @@ Usage:
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
 #### `creator`
+
 The platform MUST execute `creator` in the **build environment**
 
 Usage:
@@ -720,6 +802,7 @@ Usage:
 ```
 
 ##### Inputs
+
 Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restorer`, `builder` and `exporter` in order with identical inputs where they are accepted, with the following exceptions.
 
 | Input             | Environment Variable| Default Value| Description
@@ -732,6 +815,7 @@ Running `creator` SHALL be equivalent to running `detector`, `analyzer`, `restor
 - **If** the platform provides one or more `<tag>` inputs they SHALL be treated as additional `<image>` inputs to the `exporter`
 
 ##### Outputs
+
 Outputs produced by `creator` are identical to those produced by `exporter`, with the following additional expanded set of error codes.
 
 | Exit Code | Result|
@@ -747,6 +831,7 @@ Outputs produced by `creator` are identical to those produced by `exporter`, wit
 | `60-69`|  Export-specific lifecycle errors
 
 #### `rebaser`
+
 Usage:
 ```
 /cnb/lifecycle/rebaser \
@@ -761,22 +846,24 @@ Usage:
 ```
 
 ##### Inputs
-| Input         | Environment Variable | Default Value          | Description                                              |
-|---------------|----------------------|------------------------|----------------------------------------------------------|
-| `<daemon>`    | `CNB_USE_DAEMON`     | `false`                | Export image to docker daemon                            |
-| `<force>`     | `CNB_FORCE_REBASE`   | `false`                | Allow mismatched metadata between new and old run images |
-| `<gid>`       | `CNB_GROUP_ID`       |                        | Primary GID of the build image `User`                    |
-| `<image>`     |                      |                        | App image to rebase                                      |
-| `<log-level>` | `CNB_LOG_LEVEL`      | `info`                 | Log Level                                                |
-| `<report>`    | `CNB_REPORT_PATH`    | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml)    |
-| `<run-image>` | `CNB_RUN_IMAGE`      | derived from `<image>` | Run image reference                                      |
-| `<uid>`       | `CNB_USER_ID`        |                        | UID of the build image `User`                            |
+
+| Input         | Environment Variable | Default Value          | Description                                           |
+|---------------|----------------------|------------------------|-------------------------------------------------------|
+| `<daemon>`    | `CNB_USE_DAEMON`     | `false`                | Export image to docker daemon                         |
+| `<force>`     | `CNB_FORCE_REBASE`   | `false`                | Allow unsafe rebase                                   |
+| `<gid>`       | `CNB_GROUP_ID`       |                        | Primary GID of the build image `User`                 |
+| `<image>`     |                      |                        | App image to rebase                                   |
+| `<log-level>` | `CNB_LOG_LEVEL`      | `info`                 | Log Level                                             |
+| `<report>`    | `CNB_REPORT_PATH`    | `<layers>/report.toml` | Path to report (see [`report.toml`](#reporttoml-toml) |
+| `<run-image>` | `CNB_RUN_IMAGE`      | derived from `<image>` | Run image reference                                   |
+| `<uid>`       | `CNB_USER_ID`        |                        | UID of the build image `User`                         |
 
 - At least one `<image>` must be provided
+- **If** `<image>` has `io.buildpacks.rebasable` set to `false`, the lifecycle SHALL fail unless `<force>` is `true`
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, the images MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
-- **If** `<force>` is true the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is false:
+- **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
   - `os`
   - `architecture`
   - `variant` (if specified)
@@ -784,6 +871,7 @@ Usage:
   - `io.buildpacks.distribution.version` (if specified)
 
 ##### Outputs
+
 | Output             | Description
 |--------------------|----------------------------------------------
 | [exit status]      | (see Exit Code table below for values)
@@ -809,10 +897,10 @@ Usage:
     - The value of `io.buildpacks.base.*` labels SHALL be modified to that of the new `run-image`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
-
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
 
 #### `launcher`
+
 Usage:
 ```
 /cnb/process/<process-type> [<arg>...]
@@ -820,6 +908,7 @@ Usage:
 /cnb/lifecycle/launcher [--] [<cmd> <arg>...]
 ```
 ##### Inputs
+
 | Input                              | Environment Variable | Default Value | Description                                               |
 |------------------------------------|----------------------|---------------|-----------------------------------------------------------|
 | `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
@@ -897,6 +986,7 @@ Given the start command and execution strategy,
 [‡](README.md#windows-only)When executing a process with Command Prompt, the launcher SHOULD start a new process with the same security context, terminal, working directory, STDIN/STDOUT/STDERR handles and environment variables as the Command Prompt process.
 
 ##### Outputs
+
 If the launcher errors before executing the process it will have one of the following error codes:
 
 | Exit Code | Result                              |
@@ -968,7 +1058,9 @@ A more thorough explanation is provided in the [Buildpack Interface Specificatio
 ## Additional Guidance
 
 ### Environment
+
 #### Buildpack Environment
+
 ##### Base Image-Provided Variables
 
 The following variables SHOULD be set in the lifecycle execution environment and SHALL be directly inherited by the
@@ -991,6 +1083,7 @@ The following variables SHOULD be set in the lifecycle execution environment and
 The platform SHOULD NOT assume any other base-image-provided environment variables are inherited by the buildpack.
 
 ##### User-Provided Variables
+
 User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
@@ -999,6 +1092,7 @@ User-provided environment variables MAY be modified by prior buildpacks before t
 The platform SHOULD NOT set user-provided environment variables directly in the lifecycle execution environment.
 
 #### Launch Environment
+
 User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
 
 The process SHALL inherit both base-image-provided and user-provided variables from the lifecycle execution environment with the following exceptions:
@@ -1013,6 +1107,7 @@ Whenever possible, the platform SHOULD provide the same cache to each rebuild of
 Cache locality and availability MAY vary between platforms.
 
 ### Build Reproducibility
+
 When given identical inputs all build and rebase operations:
    - SHOULD produce app images with identical imageIDs
    - **If** exporting directly to a registry
@@ -1045,7 +1140,9 @@ For more information on build reproducibility see [https://reproducible-builds.o
 # layer metadata
 
 [run-image]
+  image = "<image>"
   reference = "<image reference>"
+  extend = false
   target-id = "<target identifer>"
   [target]
   os = "<OS name>"
@@ -1143,6 +1240,7 @@ Where:
 - The value of `optional` MUST default to `false` if not specified.
 
 #### `plan.toml` (TOML)
+
 ```toml
 [[entries]]
 
@@ -1160,7 +1258,7 @@ Where:
 - `entries` MAY be empty
 - Each entry:
     - MUST contain at least one buildpack or image extension in `providers`
-      - If the provider is an image extension (**[experimental](#experimental-features)**), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
+      - If the provider is an image extension (optional and **[experimental](#experimental-features)**), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
     - MUST contain at least one dependency requirement in `requires`
     - MUST exclusively contain dependency requirements with the same `<dependency name>`
 
@@ -1184,6 +1282,7 @@ Where:
 - `metadata` MAY contain additional arbitrary data about the provided source
 
 #### `report.toml` (TOML)
+
 ```toml
 [image]
 tags = ["<tag reference>"]
@@ -1204,7 +1303,7 @@ Where:
 ```toml
 [run-image]
  image = "<image>"
- mirrors = ["<mirror>", "<mirror>"]
+ mirrors = ["<mirror1>", "<mirror2>"]
 ```
 
 Where:
@@ -1301,11 +1400,13 @@ Where:
   },
   "stack": {
     "runImage": {
-      "image": "cnbs/sample-stack-run:bionic"
+      "image": "cnbs/sample-stack-run:bionic",
+      "mirrors": = ["<mirror1>", "<mirror2>"]
     }
   }
 }
 ```
+
 Where:
 - `app` MUST contain one entry per app slice layer where
   - `sha` MUST contain the digest of the uncompressed layer
@@ -1341,4 +1442,5 @@ Where:
   }
 }
 ```
+
 This label MUST contain the JSON representation of [`project-metadata.toml`](#project-metadatatoml-toml)
