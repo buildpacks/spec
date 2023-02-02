@@ -806,7 +806,7 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
-    - The value of `io.buildpacks.base.*` labels SHALL be modified to that of the new `run-image`
+    - The value of `io.buildpacks.base.*` labels (and any `io.buildpacks.stack.*` labels, if present) SHALL be modified to that of the new `run-image`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 
@@ -1046,8 +1046,8 @@ For more information on build reproducibility see [https://reproducible-builds.o
 
 [run-image]
   reference = "<image reference>"
-  target-id = "<target identifer>"
   [target]
+  id = "<target identifer>"
   os = "<OS name>"
   arch = "<architecture>"
   variant = "<architecture variant>"
@@ -1063,7 +1063,7 @@ Where:
 - `image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-- `run-image.target-id` is optional and MUST be the value of the label `io.buildpacks.id`
+- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.id`
 - `run-image.target` contains the [target data](#target-data) for the image
   - If target data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
