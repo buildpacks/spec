@@ -84,7 +84,7 @@ Examples of a platform might include:
       - [`plan.toml` (TOML)](#plantoml-toml)
       - [`project-metadata.toml` (TOML)](#project-metadatatoml-toml)
       - [`report.toml` (TOML)](#reporttoml-toml)
-      - [`stack.toml` (TOML)](#stacktoml-toml)
+      - [`run.toml` (TOML)](#runtoml-toml)
     - [Labels](#labels)
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
       - [`io.buildpacks.lifecycle.metadata` (JSON)](#iobuildpackslifecyclemetadata-json)
@@ -285,9 +285,9 @@ Usage:
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
+  [-run <run> ] \
   [-run-image <run-image> ] \
   [-skip-layers <skip-layers> ] \
-  [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
   <image>
@@ -295,22 +295,22 @@ Usage:
 
 ##### Inputs
 
-| Input             | Environment Variable  | Default Value            | Description
-|-------------------|-----------------------|--------------------------|----------------------
-| `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI registry
-| `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
-| `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
-| `<image>`         |                       |                          | Tag reference to which the app image will be written
-| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
-| `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
-| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
-| `<skip-layers>`   | `CNB_SKIP_LAYERS`     | `false`                  | Do not restore SBOM layer from previous image
-| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
-| `<tag>...`        |                       |                          | Additional tag to apply to exported image
-| `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
+| Input              | Environment Variable   | Default Value            | Description                                                                 |
+|--------------------|------------------------|--------------------------|-----------------------------------------------------------------------------|
+| `<analyzed>`       | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) |
+| `<cache-image>`    | `CNB_CACHE_IMAGE`      |                          | Reference to a cache image in an OCI registry                               |
+| `<daemon>`         | `CNB_USE_DAEMON`       | `false`                  | Analyze image from docker daemon                                            |
+| `<gid>`            | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                       |
+| `<layers>`         | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                    |
+| `<image>`          |                        |                          | Tag reference to which the app image will be written                        |
+| `<launch-cache>`   | `CNB_LAUNCH_CACHE_DIR` |                          | Path to a cache directory containing launch layers                          |
+| `<log-level>`      | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                   |
+| `<previous-image>` | `CNB_PREVIOUS_IMAGE`   | `<image>`                | Image reference to be analyzed (usually the result of the previous build)   |
+| `<run>`            | `CNB_RUN_PATH`         | `/cnb/run.toml`          | Path to run file (see [`run.toml`](#runtoml-toml))                          |
+| `<run-image>`      | `CNB_RUN_IMAGE`        | resolved from `<run>`    | Run image reference                                                         |
+| `<skip-layers>`    | `CNB_SKIP_LAYERS`      | `false`                  | Do not restore SBOM layer from previous image                               |
+| `<tag>...`         |                        |                          | Additional tag to apply to exported image                                   |
+| `<uid>`            | `CNB_USER_ID`          |                          | UID of the build image `User`                                               |
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
@@ -318,7 +318,7 @@ Usage:
 - **If** `<daemon>` is `false`, `<previous-image>`, if provided,  MUST be a valid image reference.
 - **If** `<daemon>` is `true`, `<previous-image>`, if provided, MUST be either a valid image reference or an imageID.
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT restore the SBOM layer (if any) from the previous image.
-- **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `stack` or fail if `stack` does not contain a valid run image.
+- **If** `<run-image>` is not provided by the platform the lifecycle MUST [resolve](#run-image-resolution) the run image from the contents of `run` or fail if `run` does not contain a valid run image.
 - The lifecycle MUST accept valid references to non-existent `<previous-image>`, `<cache-image>`, and `<image>` without error.
 - The lifecycle MUST ensure registry write access to `<image>`, `<cache-image>` and any provided `<tag>`s.
 - The lifecycle MUST ensure registry read access to `<previous-image>`, `<cache-image>`, and `<run-image>`.
@@ -360,7 +360,8 @@ Usage:
   [-log-level <log-level>] \
   [-order <order>] \
   [-plan <plan>] \
-  [-platform <platform>]
+  [-platform <platform>] \
+  [-run <run> ]
 ```
 
 ##### Inputs
@@ -378,6 +379,7 @@ Usage:
 | `<order>`       | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
 | `<plan>`        | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`    | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                                                                   |
+| `<run>`^        | `CNB_RUN_PATH`       | `/cnb/run.toml`                                        | Path to run file (see [`run.toml`](#runtoml-toml))                                                                                                           |
 > ^Only needed when using image extensions
 
 ##### Outputs
@@ -427,6 +429,7 @@ When image extensions are present in the order (optional and **[experimental](#e
       - `run-image.extend` SHALL be `false`
     - **Else**
       - `run-image.extend` SHALL be `true`
+- SHALL fail if the selected run image is not found in `<run>`
 
 #### `restorer`
 
@@ -659,7 +662,7 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
-  [-stack <stack>] \
+  [-run <run>] \
   [-uid <uid> ] \
   <image> [<image>...]
 ```
@@ -684,7 +687,7 @@ Usage:
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
 | `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                      |
-| `<stack>`                       | `CNB_STACK_PATH`            | `/cnb/stack.toml`                | Path to stack file (see [`stack.toml`](#stacktoml-toml)                                    |
+| `<run>`                         | `CNB_RUN_PATH`              | `/cnb/run.toml`                  | Path to run file (see [`run.toml`](#runtoml-toml)                                          |
 | `<uid>`                         | `CNB_USER_ID`               |                                  | UID of the build image `User`                                                              |
 | `<layers>/config/metadata.toml` |                             |                                  | Build metadata (see [`metadata.toml`](#metadatatoml-toml)                                  |
 |                                 | `SOURCE_DATE_EPOCH`         |                                  | Timestamp for `created` time in app image config                                           |
@@ -746,10 +749,7 @@ Usage:
     - MUST have the working directory set to the value of `<app>`.
     - MUST contain the following labels
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
-          - **If** `run-image.image` in `<analyzed>` does not match `run-image.image` in `<stack>`:
-            - `stack.runImage.image` SHALL be the value from `<analyzed>`
-            - `stack.runImage.mirrors` SHALL be omitted
-        - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation `<project-metadata>`
+        - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation of `<project-metadata>`
         - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
         - **If** image extensions were used to extend the run image and `<extended>/<image config>` has the label `io.buildpacks.rebasable` set to `true`:
           - `io.buildpacks.rebasable` SHALL be `true`
@@ -793,9 +793,9 @@ Usage:
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
+  [-run <run>] \
   [-run-image <run-image>] \
   [-skip-restore <skip-restore>] \
-  [-stack <stack>] \
   [-tag <tag>...] \
   [-uid <uid> ] \
    <image>
@@ -862,7 +862,7 @@ Usage:
 - **If** `<image>` has `io.buildpacks.rebasable` set to `false`, the lifecycle SHALL fail unless `<force>` is `true`
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, the images MUST refer to the same registry
-- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `stack` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
+- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
 - **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
   - `os`
   - `architecture`
@@ -1004,9 +1004,12 @@ The launcher:
 
 ### Run Image Resolution
 
-Given [stack](#stacktoml-toml) metadata containing `run-image.image` and a set of `run-image.mirrors`. The `<run-image>` for a given `<image>` shall be resolved as follows:
-- **If** any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
-- **If** none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+Given [run](#runtoml-toml) metadata, the `<run-image>` for a given `<image>` shall be resolved as follows:
+- From the matching `[[image]]`:
+  - **If** the tag reference for the run image is known (e.g., from a `-run-image` argument), the `[[image]]` with matching `image`
+  - **Else** the first `[[image]]`
+- **If** any of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, this value will become the `<run-image>`
+- **If** none of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, `[image.image]` will become the `<run-image>`
 
 ### Registry Authentication
 
@@ -1298,21 +1301,21 @@ Where:
 - **If** the app image was exported to a docker daemon
   - `imageID` MUST contain the imageID
 
-#### `stack.toml` (TOML)
+#### `run.toml` (TOML)
 
 ```toml
-[run-image]
+[[image]]
  image = "<image>"
  mirrors = ["<mirror1>", "<mirror2>"]
 ```
 
 Where:
-- `run-image.image` MAY be a reference to a run image in an OCI registry
-- `run-image.mirrors` MUST NOT be present if `run-image.image` is not present
-- `run-image.mirrors` MAY contain one or more tag references to run images in OCI registries
-- All `run-image.mirrors`:
-  - SHOULD reference an image with ID identical to that of `run-image.image`
-- `run-image.image` and `run-image.mirrors.[]` SHOULD each refer to a unique registry
+- `image.image` MAY be a tag reference to a run image in an OCI registry
+- `image.mirrors` MUST NOT be present if `image.image` is not present
+- `image.mirrors` MAY contain one or more tag references to run images in OCI registries
+- All `image.mirrors`:
+  - SHOULD reference an image with ID identical to that of `image.image`
+- `image.image` and `image.mirrors.[]` SHOULD each refer to a unique registry
 
 ### Labels
 
@@ -1395,14 +1398,10 @@ Where:
     }
   ],
   "runImage": {
+    "image": "cnbs/sample-stack-run:bionic",
+    "mirrors": = ["<mirror1>", "<mirror2>"],
     "topLayer": "<run-image-top-layer-diffID>",
     "reference": "<run-image-reference>"
-  },
-  "stack": {
-    "runImage": {
-      "image": "cnbs/sample-stack-run:bionic",
-      "mirrors": = ["<mirror1>", "<mirror2>"]
-    }
   }
 }
 ```
@@ -1421,11 +1420,12 @@ Where:
     - The key  MUST be the name of the layer
     - The value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
     - The value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
-- `run-image.topLayer` must contain the uncompressed digest of the top layer of the run-image
-- `run-image.reference` MUST uniquely identify the run image. It MAY contain one of the following
+- `runImage.image` MUST be a tag reference to the run-image
+- `runImage.mirrors` MUST be selected from `run.toml`
+- `runImage.topLayer` MUST contain the uncompressed digest of the top layer of the run-image
+- `runImage.reference` MUST uniquely identify the run image. It MAY contain one of the following
   - An image ID (the digest of the uncompressed config blob)
   - A digest reference to a manifest stored in an OCI registry
-- `stack` MUST contain the json representation of `stack.toml`
 
 #### `io.buildpacks.project.metadata` (JSON)
 
