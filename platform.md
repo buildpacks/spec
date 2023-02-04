@@ -1020,6 +1020,19 @@ User-provided environment variables MAY be modified by prior buildpacks before t
 
 The platform SHOULD NOT set user-provided environment variables directly in the lifecycle execution environment.
 
+The `<platform>/env/` directory follows the same convention as [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules).
+
+##### Operator-Defined Variables
+Operator-provided environment varaiables MUST be supplied by the platform as files in the `CNB_BUILD_CONFIG_DIR` directory.
+
+Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
+
+Operator-defined environment variables MAY be modified by subsequent buildpacks before they are provided to a given buildpack.
+
+The platform MUST set operator-provided environment variables directly in the lifecycle execution environment.
+
+The `CNB_BUILD_CONFIG_DIR` directory follows the same convention as [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules).
+
 #### Launch Environment
 User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
 
