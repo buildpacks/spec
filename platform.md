@@ -367,7 +367,7 @@ Usage:
   [-app <app>] \
   [-analyzed <analyzed>] \
   [-buildpacks <buildpacks>] \
-  [-build-config <buildConfig>]
+  [-build-config <build-config>] \
   [-extensions <extensions>] \
   [-generated <generated>] \
   [-group <group>] \
@@ -562,7 +562,7 @@ Usage:
 /cnb/lifecycle/builder \
   [-app <app>] \
   [-buildpacks <buildpacks>] \
-  [-build-config <buildConfig>]
+  [-build-config <build-config>] \
   [-group <group>] \
   [-layers <layers>] \
   [-log-level <log-level>] \
