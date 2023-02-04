@@ -164,14 +164,14 @@ The lifecycle MAY return an error to the platform if two or more buildpacks with
 
 Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
-| Input                    | Attributes | Description                                   |
-|--------------------------|------------|-----------------------------------------------|
-| `$0`                     |            | Absolute path of `/bin/detect` executable     |
-| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan               |
-| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory |
-| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory       |
-| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build |
-| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                  |
+| Input                    | Attributes | Description                                       |
+|--------------------------|------------|---------------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/detect` executable         |
+| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
 
 | Output                 | Description                                 |
 |------------------------|---------------------------------------------|
@@ -372,10 +372,13 @@ For each image extension ("extension") or component buildpack ("buildpack") in e
 The selected group MUST be filtered to only include extensions and buildpacks with exit status zero.
 The order of the extensions and buildpacks in the group MUST otherwise be preserved.
 
+For each `/bin/detect` executable in each extension or buildpack, the lifecycle:
+
+- MUST configure the environment as described in the [Environment](#environment) section.
+
 The `/bin/detect` executable in each extension or buildpack, when executed:
 
 - MAY read the app directory.
-- MAY read the detect environment as described in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY augment the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
@@ -782,19 +785,19 @@ In either case,
 | `CPATH`                                    | `/include`   | header files     | [x]   |        |
 | `PKG_CONFIG_PATH`                          | `/pkgconfig` | pc files         | [x]   |        |
 
-
 ### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                                    | Detect | Build | Launch
-|-----------------|------------------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
-| `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
+| Env Variable           | Description                                       | Detect | Build | Launch |
+|------------------------|---------------------------------------------------|--------|-------|--------|
+| `CNB_STACK_ID`         | Chosen stack ID                                   | [x]    | [x]   |        |
+| `BP_*`                 | User-provided variable for buildpack              | [x]    | [x]   |        |
+| `BPL_*`                | User-provided variable for exec.d                 |        |       | [x]    |
+| `HOME`                 | Current user's home directory                     | [x]    | [x]   | [x]    |
 
-During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
+During the detection and build phases, the lifecycle MUST provide as environment variables any user-provided files in `<platform>/env/` with environment variable names and contents matching the file names and contents.
+During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `<build-config>/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
 
 When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`.
 
