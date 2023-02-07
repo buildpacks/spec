@@ -392,7 +392,7 @@ Usage:
 | `<order>`        | `CNB_ORDER_PATH`       | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`                                            | Path to platform directory                                                                                                                                   |
-| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to operator-defined environment variables                                                                                                               |
+| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to build config directory                                                                                                               |
 
 
 ##### Outputs
@@ -527,7 +527,7 @@ Usage:
 | `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
 | `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                      |
 | `<uid>`              | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
-| `<build-config>`     | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to operator-defined environment variables                                                  |
+| `<build-config>`     | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                  |
 
 ##### Outputs
 
@@ -580,7 +580,7 @@ Usage:
 | `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                      |
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`           | Path to platform directory                                                                     |
-| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`   | Path to operator-defined environment variables                                                 |
+| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`   | Path to build config directory                                                 |
 
 ##### Outputs
 | Output                                     | Description
@@ -1023,15 +1023,15 @@ The platform SHOULD NOT set user-provided environment variables directly in the 
 The `<platform>/env/` directory follows the same convention as [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules).
 
 ##### Operator-Defined Variables
-Operator-provided environment varaiables MUST be supplied by the platform as files in the `CNB_BUILD_CONFIG_DIR` directory.
+Operator-provided environment varaiables MUST be supplied by the platform as files in the `<build-config>/env/` directory.
 
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
 Operator-defined environment variables MAY be modified by subsequent buildpacks before they are provided to a given buildpack.
 
-The platform MUST set operator-provided environment variables directly in the lifecycle execution environment.
+The platform SHOULD NOT set operator-provided environment variables directly in the lifecycle execution environment.
 
-The `CNB_BUILD_CONFIG_DIR` directory follows the same convention as [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules).
+The `<build-config>/env/` directory follows the [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules) outlined in the [Buildpack Interface Specification](buildpack.md), except for the modification behavior when no period-delimited suffix is provided; when no suffix is provided, the behavior is `default`.
 
 #### Launch Environment
 User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
