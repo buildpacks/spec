@@ -234,7 +234,7 @@ A platform MUST execute these phases either by invoking the following phase-spec
 1. `/cnb/lifecycle/analyzer`
 2. `/cnb/lifecycle/detector`
 3. `/cnb/lifecycle/restorer`
-4. (Optional and Experimental) `/cnb/lifecycle/extender`
+4. `/cnb/lifecycle/extender` (Optional and [Experimental](#experimental-features)) 
 5. `/cnb/lifecycle/builder`
 6. `/cnb/lifecycle/exporter`
 
@@ -859,7 +859,7 @@ Usage:
 | `<uid>`       | `CNB_USER_ID`        |                        | UID of the build image `User`                         |
 
 - At least one `<image>` must be provided
-- **If** `<image>` has `io.buildpacks.rebasable` set to `false`, the lifecycle SHALL fail unless `<force>` is `true`
+- **If** `<image>` has the label `io.buildpacks.rebasable` set to `false`, the lifecycle SHALL fail unless `<force>` is `true`
 - Each `<image>` MUST be a valid tag reference
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, the images MUST refer to the same registry
 - **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
