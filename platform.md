@@ -383,6 +383,7 @@ Usage:
 |------------------|------------------------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `<analyzed>`     | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml`                               | (**[experimental](#experimental-features)**) Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                                     |
 | `<app>`          | `CNB_APP_DIR`          | `/workspace`                                           | Path to application directory                                                                                                                                |
+| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to build config directory                                                                                                                               |
 | `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
 | `<extensions>`   | `CNB_EXTENSIONS_DIR`   | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
 | `<generated>`    | `CNB_GENERATED_DIR`    | `<layers>/generated`                                   | (**[experimental](#experimental-features)**) Path to output directory for generated Dockerfiles                                                              |
@@ -392,7 +393,6 @@ Usage:
 | `<order>`        | `CNB_ORDER_PATH`       | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`                                            | Path to platform directory                                                                                                                                   |
-| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to build config directory                                                                                                               |
 
 
 ##### Outputs
@@ -517,6 +517,7 @@ Usage:
 |----------------------|------------------------|--------------------------|-------------------------------------------------------------------------------------------------|
 | `<analyzed>`         | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                            |
 | `<app>`              | `CNB_APP_DIR`          | `/workspace`             | Path to application directory                                                                   |
+| `<build-config>`     | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                                  |
 | `<buildpacks>`       | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
 | `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
 | `<gid>`              | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
@@ -528,7 +529,6 @@ Usage:
 | `<plan>`             | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
 | `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                      |
 | `<uid>`              | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
-| `<build-config>`     | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                  |
 
 ##### Outputs
 
@@ -575,13 +575,13 @@ Usage:
 | Input            | Env                    | Default Value         | Description                                                                                    |
 |------------------|------------------------|-----------------------|------------------------------------------------------------------------------------------------|
 | `<app>`          | `CNB_APP_DIR`          | `/workspace`          | Path to application directory                                                                  |
+| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`   | Path to build config directory                                                                 |
 | `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout)) |
 | `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                 |
 | `<layers>`       | `CNB_LAYERS_DIR`       | `/layers`             | Path to layers directory                                                                       |
 | `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                      |
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`           | Path to platform directory                                                                     |
-| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`   | Path to build config directory                                                 |
 
 ##### Outputs
 | Output                                     | Description
