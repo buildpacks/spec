@@ -304,6 +304,8 @@ Usage:
   [-gid <gid>] \
   [-launch-cache <launch-cache>] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
@@ -311,28 +313,28 @@ Usage:
   [-stack <stack> ] \
   [-tag <tag>...] \
   [-uid <uid>] \
-  [-layout] \ # sets <layout>
   <image>
 ```
 
 ##### Inputs
-| Input             | Environment Variable  | Default Value            | Description
-|-------------------|-----------------------|--------------------------|----------------------
-| `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
-| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI registry
-| `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
-| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
-| `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
-| `<image>`         |                       |                          | Tag reference to which the app image will be written
-| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
-| `<layout>`        | `CNB_USE_LAYOUT`  | false                   | Analyze image from OCI layout directory |
-| `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
-| `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
-| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
-| `<skip-layers>`   | `CNB_SKIP_LAYERS`     | `false`                  | Do not restore SBOM layer from previous image
-| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
-| `<tag>...`        |                       |                          | Additional tag to apply to exported image
-| `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
+| Input             | Environment Variable   | Default Value            | Description                                                                 
+|-------------------|------------------------|--------------------------|-----------------------------------------------------------------------------
+| `<analyzed>`      | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) 
+| `<cache-image>`   | `CNB_CACHE_IMAGE`      |                          | Reference to a cache image in an OCI registry                               
+| `<daemon>`        | `CNB_USE_DAEMON`       | `false`                  | Analyze image from docker daemon                                            
+| `<gid>`           | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                       
+| `<layers>`        | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                    
+| `<image>`         |                        |                          | Tag reference to which the app image will be written                        
+| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR` |                          | Path to a cache directory containing launch layers                          
+| `<layout>` (**experimental**)       | `CNB_USE_LAYOUT`       | false                    | Analyze image from OCI layout directory                                     
+| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format         
+| `<log-level>`     | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                   
+| `<previous-image>`| `CNB_PREVIOUS_IMAGE`   | `<image>`                | Image reference to be analyzed (usually the result of the previous build)   
+| `<run-image>`     | `CNB_RUN_IMAGE`        | resolved from `<stack>`  | Run image reference                                                         
+| `<skip-layers>`   | `CNB_SKIP_LAYERS`      | `false`                  | Do not restore SBOM layer from previous image                               
+| `<stack>`         | `CNB_STACK_PATH`       | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))                    
+| `<tag>...`        |                        |                          | Additional tag to apply to exported image                                   
+| `<uid>`           | `CNB_USER_ID`          |                          | UID of the build image `User`                                               
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
@@ -450,6 +452,8 @@ Usage:
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
   [-uid <uid>]
@@ -466,7 +470,8 @@ Usage:
 | `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
 | `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
 | `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
-| `<layout>`      | `CNB_USE_LAYOUT`  | false                   Analyze image from OCI layout directory |
+| `<layout>` (**experimental**)     | `CNB_USE_LAYOUT`  | false                   Analyze image from OCI layout directory |
+| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format |
 | `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                                         |
 | `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                                                     |
 | `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
@@ -631,6 +636,8 @@ Usage:
   [-launcher <launcher> ] \
   [-launcher-sbom <launcher-sbom> ] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
@@ -655,7 +662,8 @@ Usage:
 | `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
 | `<launcher-sbom>`               |                             | `/cnb/lifecycle`                 | Path to directory containing SBOM files describing the `launcher` executable               |
 | `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
-| `<layout>`                      | `CNB_USE_LAYOUT`       | false               | Analyze image from OCI layout directory |
+| `<layout>`  (**experimental**)  | `CNB_USE_LAYOUT`       | false               | Analyze image from OCI layout directory |
+| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format |
 | `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
@@ -750,6 +758,8 @@ Usage:
   [-launch-cache <launch-cache> ] \
   [-launcher <launcher> ] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-order <order>] \
   [-platform <platform>] \
@@ -1117,12 +1127,14 @@ The image reference will be mapped to a path in the layout directory following t
 ```
 
 Where:
-- `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-  - In case an image in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format is being used, it will also include the path of the image in OCI layout format following the rules describe [previously](#how-to-map-an-image-reference-into-a-path-in-the-layout-repository) 
-  - The format MUST be as follows: `[path]@[digest]`  
-- `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-  - In case an image in [OCI Image Layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) format is being used, it will also include the path of the image in OCI layout format following the rules describe [previously](#how-to-map-an-image-reference-into-a-path-in-the-layout-repository) 
-  - The format MUST be as follows: `[path]@[digest]`  
+- `previous-image.reference` MUST be either: 
+  - A digest reference to an image in an OCI registry 
+  - The ID of an image in a docker daemon
+  - The path to an image in OCI layout format
+- `run-image.reference` MUST be either:
+  - A digest reference to an image in an OCI registry
+  - The ID of an image in a docker daemon
+  - The path to an image in OCI layout format
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
