@@ -317,24 +317,24 @@ Usage:
 ```
 
 ##### Inputs
-| Input             | Environment Variable   | Default Value            | Description                                                                 
-|-------------------|------------------------|--------------------------|-----------------------------------------------------------------------------
-| `<analyzed>`      | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml) 
-| `<cache-image>`   | `CNB_CACHE_IMAGE`      |                          | Reference to a cache image in an OCI registry                               
-| `<daemon>`        | `CNB_USE_DAEMON`       | `false`                  | Analyze image from docker daemon                                            
-| `<gid>`           | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                       
-| `<layers>`        | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                    
-| `<image>`         |                        |                          | Tag reference to which the app image will be written                        
-| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR` |                          | Path to a cache directory containing launch layers                          
+| Input             | Environment Variable  | Default Value            | Description
+|-------------------|-----------------------|--------------------------|----------------------
+| `<analyzed>`      | `CNB_ANALYZED_PATH`   | `<layers>/analyzed.toml` | Path to output analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)
+| `<cache-image>`   | `CNB_CACHE_IMAGE`     |                          | Reference to a cache image in an OCI registry
+| `<daemon>`        | `CNB_USE_DAEMON`      | `false`                  | Analyze image from docker daemon
+| `<gid>`           | `CNB_GROUP_ID`        |                          | Primary GID of the build image `User`
+| `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
+| `<image>`         |                       |                          | Tag reference to which the app image will be written
+| `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
 | `<layout>` (**experimental**)       | `CNB_USE_LAYOUT`       | false                    | Analyze image from OCI layout directory                                     
-| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format         
-| `<log-level>`     | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                   
-| `<previous-image>`| `CNB_PREVIOUS_IMAGE`   | `<image>`                | Image reference to be analyzed (usually the result of the previous build)   
-| `<run-image>`     | `CNB_RUN_IMAGE`        | resolved from `<stack>`  | Run image reference                                                         
-| `<skip-layers>`   | `CNB_SKIP_LAYERS`      | `false`                  | Do not restore SBOM layer from previous image                               
-| `<stack>`         | `CNB_STACK_PATH`       | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))                    
-| `<tag>...`        |                        |                          | Additional tag to apply to exported image                                   
-| `<uid>`           | `CNB_USER_ID`          |                          | UID of the build image `User`                                               
+| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format
+| `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
+| `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
+| `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
+| `<skip-layers>`   | `CNB_SKIP_LAYERS`     | `false`                  | Do not restore SBOM layer from previous image
+| `<stack>`         | `CNB_STACK_PATH`      | `/cnb/stack.toml`        | Path to stack file (see [`stack.toml`](#stacktoml-toml))
+| `<tag>...`        |                       |                          | Additional tag to apply to exported image
+| `<uid>`           | `CNB_USER_ID`         |                          | UID of the build image `User`
 
 -`<image>` MUST be a valid image reference
 - **If** the platform provides one or more `<tag>` inputs, each `<tag>` MUST be a valid image reference.
