@@ -348,7 +348,6 @@ Usage:
   [-order <order>] \
   [-plan <plan>] \
   [-platform <platform>] \
-  [-run <run> ]
 ```
 
 ##### Inputs
@@ -365,7 +364,6 @@ Usage:
 | `<order>`      | `CNB_ORDER_PATH`     | `<layers>/order.toml` if present, or `/cnb/order.toml` | Path resolution for order definition (see [`order.toml`](#ordertoml-toml))                                                                                   |
 | `<plan>`       | `CNB_PLAN_PATH`      | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`   | `CNB_PLATFORM_DIR`   | `/platform`                                            | Path to platform directory                                                                                                                                   |
-| `<run>`        | `CNB_RUN_PATH`       | `/cnb/run.toml`                                        | Path to run file (see [`run.toml`](#runtoml-toml))                                                                                                           |
 
 ##### Outputs
 | Output                                                   | Description                                                                                   |
