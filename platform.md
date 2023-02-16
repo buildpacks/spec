@@ -296,7 +296,7 @@ Usage:
 | `<log-level>`      | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                   |
 | `<previous-image>` | `CNB_PREVIOUS_IMAGE`   | `<image>`                | Image reference to be analyzed (usually the result of the previous build)   |
 | `<run>`            | `CNB_RUN_PATH`         | `/cnb/run.toml`          | Path to run file (see [`run.toml`](#runtoml-toml))                          |
-| `<run-image>`      | `CNB_RUN_IMAGE`        | resolved from `<stack>`  | Run image reference                                                         |
+| `<run-image>`      | `CNB_RUN_IMAGE`        | resolved from `<run>`    | Run image reference                                                         |
 | `<skip-layers>`    | `CNB_SKIP_LAYERS`      | `false`                  | Do not restore SBOM layer from previous image                               |
 | `<tag>...`         |                        |                          | Additional tag to apply to exported image                                   |
 | `<uid>`            | `CNB_USER_ID`          |                          | UID of the build image `User`                                               |
