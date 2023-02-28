@@ -948,8 +948,9 @@ The launcher:
 ### Run Image Resolution
 
 Given stack metadata containing `run-image.image` and a set of `run-image.mirrors`. The `<run-image>` for a given `<image>` shall be resolved as follows:
-- **If** any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, this value will become the `<run-image>`
-- **If** none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, `<run-image.image>` will become the `<run-image>`
+- **If** any of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>` with read permissions, this value will become the `<run-image>`
+- **If** any of `run-image.image` or `run-image.mirrors` is accessible with read permissions and has a registry matching that of `<image>`, this value will become the `<run-image>`
+- **If** none of `run-image.image` or `run-image.mirrors` has a registry matching that of `<image>`, the first value of `<run-image.image>` or `run-image.mirrors` that is accessible with read permissions will become the `<run-image>`
 
 ### Registry Authentication
 
