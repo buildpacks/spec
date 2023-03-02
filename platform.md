@@ -915,9 +915,9 @@ The launcher:
 ### Run Image Resolution
 
 Given [run](#runtoml-toml) metadata, the `<run-image>` for a given `<image>` shall be resolved as follows:
-- From the matching `[[image]]`:
-  - **If** the tag reference for the run image is known (e.g., from a `-run-image` argument), the `[[image]]` with matching `image`
-  - **Else** the first `[[image]]`
+- From the matching `[[images]]`:
+  - **If** the tag reference for the run image is known (e.g., from a `-run-image` argument), the `[[images]]` with matching `image`
+  - **Else** the first `[[images]]`
 - **If** any of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, this value will become the `<run-image>`
 - **If** none of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, `[image.image]` will become the `<run-image>`
 
@@ -1205,7 +1205,7 @@ Where:
 #### `run.toml` (TOML)
 
 ```toml
-[[image]]
+[[images]]
  image = "<image>"
  mirrors = ["<mirror>", "<mirror>"]
 ```
