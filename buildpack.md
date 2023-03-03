@@ -1059,7 +1059,7 @@ arch = "<architecture>"
 variant = "<architecture variant>"
 [[targets.distributions]]
 name = "<OS distribution name>"
-versions = ["<OS distribution version>"]
+version = "<OS distribution version>"
 
 [metadata]
 # buildpack-specific data
@@ -1171,7 +1171,7 @@ os = "linux"
 arch = "amd64"
 [[targets.distributions]]
 name = "ubuntu"
-versions = ["18.04"]
+version = "18.04"
 ```
 
 ### Positional Arguments to `detect` and `build` Executables
