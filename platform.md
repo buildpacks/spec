@@ -40,7 +40,7 @@ Examples of a platform might include:
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
         - [Layer Restoration](#layer-restoration)
-      - [`extender` (**experimental**)](#extender-experimental)
+      - [`extender` (optional and **experimental**)](#extender-optional-and-experimental)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
       - [`builder`](#builder)
@@ -103,6 +103,8 @@ Platform API versions:
 #### CNB Terminology
 
 A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
+
+A **base image** is an OCI image containing the base, or initial set of layers, for other images.
 
 A **build image** is an OCI image that provides the base of the **build environment**.
 
@@ -203,7 +205,7 @@ The platform SHOULD ensure that:
 
 ### Compatibility Guarantees
 
-- Base image authors SHOULD ensure that build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
+- Base image authors SHOULD ensure that new build image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions, although violating this requirement will not change the behavior of previously built images containing app and launch layers.
 - Base image authors MUST ensure that new run image versions maintain [ABI-compatibility](https://en.wikipedia.org/wiki/Application_binary_interface) with previous versions.
 - Base image authors MUST ensure that app and launch layers do not change behavior when the run image layers are upgraded to newer versions, unless those behavior changes are intended to fix security vulnerabilities.
 
