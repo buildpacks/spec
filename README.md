@@ -52,4 +52,4 @@ These documents currently specify:
 
 - Buildpack API: `0.9`
 - Distribution API: `0.3`
-- Platform API: `0.11`
+- Platform API: `0.12`
