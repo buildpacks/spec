@@ -1166,7 +1166,7 @@ Each stack in `stacks` either:
 
 If an `order` is specified, then `stacks` MUST NOT be specified.
 
-Tools reading `buildpack.toml` will translate any section that sets `stacks.id = "io.buildpacks.stacks.bionic` to:
+Tools reading `buildpack.toml` will translate any section that sets `stacks.id = "io.buildpacks.stacks.bionic"` to:
 
 ```toml
 [[targets]]
