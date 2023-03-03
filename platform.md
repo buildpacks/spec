@@ -1070,7 +1070,7 @@ Where:
 - `run-image.target` contains the [target data](#target-data) for the image
   - If target data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
-    - `run-image.target.arch = "x86_64"`
+    - `run-image.target.arch = "arm64"`
     - `run-image.target.distribution.name = "ubuntu"`
     - `run-image.target.distribution.version = "18.04"`
 
