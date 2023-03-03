@@ -103,6 +103,8 @@ Platform API versions:
 #### CNB Terminology
 A **buildpack** refers to software compliant with the [Buildpack Interface Specification](buildpack.md).
 
+A **base image** is an OCI image containing the base, or initial set of layers, for other images.
+
 A **build image** is an OCI image that provides the base of the **build environment**.
 
 A **run image** is an OCI image that provides the base from which **app images** are built.
