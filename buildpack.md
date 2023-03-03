@@ -1164,7 +1164,7 @@ Tools reading `buildpack.toml` will translate any section that sets `stacks.id =
 ```toml
 [[targets]]
 os = "linux"
-arch = "x86_64"
+arch = "amd64"
 [[targets.distributions]]
 name = "ubuntu"
 versions = ["18.04"]
