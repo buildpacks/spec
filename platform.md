@@ -792,7 +792,7 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, they MUST refer to the same registry
 - **If** `<previous-image>` is provided by the platform, the value will be used as the app image to rebase. `<previous-image>` must NOT be modified unless specified again in `<image>`.
 - **Else** `<previous-image>` value will be derived from the first `<image>`.
-- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`
+- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`.
 - **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
   - `os`
   - `architecture`
