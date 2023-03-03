@@ -398,7 +398,7 @@ For each trial,
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
 The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using a common build environment.
-If any buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, the lifecycle MUST fail detection for the group.
+If any buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, the lifecycle MUST fail detection for the group. For matching criteria, see [buildpack.toml](#buildpacktoml-toml).
 
 #### Order Resolution
 
@@ -746,7 +746,7 @@ The purpose of launch is to modify the running app environment using app-provide
 
 #### Targets
 
-The following environment variables MUST be set by the lifecycle during `detect` and `build` phases to describe the target runtime image.
+The following environment variables MUST be set by the lifecycle during the `detect` and `build` phases to describe the target runtime image, if inputs are provided.
 
 | Env Variable                | Description                                |
 |-----------------------------|--------------------------------------------|
@@ -1113,6 +1113,10 @@ Each target in `targets`:
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "linux"` and `arch = "amd64"` if `./bin/build` is present
   - `os = "windows"` and `arch = "amd64"` if `./bin/build.bat` or `./bin/build.exe` are present
+
+Two `[[targets]]` are considered to match when:
+* `os` and `arch` match, and
+* Optional fields either match exactly, or are left blank by at least one target (blank values are wildcard matches)
 
 Metadata specified in `targets` is validated against the runtime and build-time base images.
    
