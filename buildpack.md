@@ -1177,6 +1177,8 @@ name = "ubuntu"
 version = "18.04"
 ```
 
+Furthermore, any buildpack that contains `[[stacks]]` with `id = "*"` will match any target.
+
 ### Positional Arguments to `detect` and `build` Executables
 
 _Deprecated in Buildpack API 0.8._
