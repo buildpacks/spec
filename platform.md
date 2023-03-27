@@ -326,8 +326,8 @@ Usage:
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
-| `<layout>` (**experimental**)       | `CNB_USE_LAYOUT`       | false                    | Analyze image from OCI layout directory                                     
-| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format
+| `<layout>`        | `CNB_USE_LAYOUT`      | false                    | (**[experimental](#experimental-features)**) Analyze image from disk in OCI layout format                                     
+| `<layout-dir>`    | `CNB_LAYOUT_DIR`      |                          | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
@@ -349,7 +349,7 @@ Usage:
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
   - `image` MUST describe the `<previous-image>`, if accessible
   - `run-image` MUST describe the `<run-image>`
-- **If** `<layout>` is `true` the lifecycle MUST [resolve](#map-an-image-reference-into-a-path-in-the-layout-repository) `<run-image>` and `<previous-image>` following the rules to convert the reference to a path
+- **If** `<layout>` is `true`, `<layout-dir>` MUST be provided and the lifecycle MUST [resolve](#map-an-image-reference-to-a-path-in-the-layout-directory) `<run-image>` and `<previous-image>` following the rules to convert the reference to a path
 
 ##### Outputs
 | Output             | Description
@@ -452,8 +452,6 @@ Usage:
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
-  [-layout] \ # sets <layout>
-  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
   [-uid <uid>]
@@ -470,8 +468,6 @@ Usage:
 | `<group>`       | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
 | `<kaniko-dir>`  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
 | `<layers>`      | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
-| `<layout>` (**experimental**)     | `CNB_USE_LAYOUT`  | false                   Analyze image from OCI layout directory |
-| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format |
 | `<log-level>`   | `CNB_LOG_LEVEL`      | `info`                   | Log Level                                                                                         |
 | `<uid>`         | `CNB_USER_ID`        |                          | UID of the build image `User`                                                                     |
 | `<skip-layers>` | `CNB_SKIP_LAYERS`    | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
@@ -662,8 +658,8 @@ Usage:
 | `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
 | `<launcher-sbom>`               |                             | `/cnb/lifecycle`                 | Path to directory containing SBOM files describing the `launcher` executable               |
 | `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
-| `<layout>`  (**experimental**)  | `CNB_USE_LAYOUT`       | false               | Analyze image from OCI layout directory |
-| `<layout-dir>` (**experimental**)   | `CNB_LAYOUT_DIR`       |                          | Path to a directory where the images are saved in OCI layout format |
+| `<layout>`                      | `CNB_USE_LAYOUT`            | false                            | (**[experimental](#experimental-features)**) Export image to disk in OCI layout format     |
+| `<layout-dir>`                  | `CNB_LAYOUT_DIR`            |                                  | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format |
 | `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
@@ -742,6 +738,9 @@ Usage:
 - *If* a cache is provided the lifecycle:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
+
+- **If** `<layout>` is `true` the lifecycle:
+   - SHALL write the app image on disk following the [rules](#map-an-image-reference-to-a-path-in-the-layout-directory) to convert the reference to a path
 
 #### `creator`
 The platform MUST execute `creator` in the **build environment**
