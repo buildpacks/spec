@@ -128,7 +128,7 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
-An **image extension** refers to software compliant with the [Image Extension Interface Specification](image-extension.md). Image extensions participate in detection and execute before the buildpack build process.
+An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
