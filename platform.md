@@ -840,8 +840,9 @@ Usage:
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
     - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
-      - `stack.run-image.image` SHALL uniquely identify `<run-image>`
-      - `stack.run-image.mirrors` SHALL be EMPTY
+- **If** the provided `<run-image>` is not found in `stack.run-image.image` or `stack.run-image.mirrors`:
+      - `stack.run-image.image` SHALL be the provided `<run-image>`
+      - `stack.run-image.mirrors` SHALL be omitted
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 
