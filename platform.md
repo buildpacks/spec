@@ -123,7 +123,7 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
-An **image extension** refers to software compliant with the [Image Extension Interface Specification](image-extension.md). Image extensions participate in detection and execute before the buildpack build process.
+An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
@@ -806,7 +806,7 @@ Usage:
 | [exit status]      | (see Exit Code table below for values)
 | `/dev/stdout`      | Logs (info)
 | `/dev/stderr`      | Logs (warnings, errors)
-| `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md)
+| `<image>`          | Rebased app image (see [Buildpack Interface Specfication](buildpack.md))
 
 | Exit Code | Result|
 |-----------|-------|
@@ -823,7 +823,10 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
-    - The value of `io.buildpacks.base.*` labels (and any `io.buildpacks.stack.*` labels, if present) SHALL be modified to that of the new `run-image`
+    - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
+- **If** the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
+      - `run-image.image` SHALL be the provided `<run-image>`
+      - `run-image.mirrors` SHALL be omitted
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 
