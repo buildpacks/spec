@@ -824,7 +824,7 @@ Usage:
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
     - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
-- **If** the provided `<run-image>` is not found in `stack.run-image.image` or `stack.run-image.mirrors`:
+- **If** the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
       - `run-image.image` SHALL be the provided `<run-image>`
       - `run-image.mirrors` SHALL be omitted
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
