@@ -1391,6 +1391,16 @@ This label MUST contain the JSON representation of [`project-metadata.toml`](#pr
 ## Deprecations
 This section describes all the features that are deprecated.
 
+### `io.buildpacks.stack.*` Labels
+
+For compatibility with older platforms and older buildpacks, base image authors SHOULD ensure for build images and run images:
+
+- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+
+To upgrade, the platform SHOULD upgrade all buildpacks to use Buildpack API `0.10` or greater.
+
 ### `io.buildpacks.lifecycle.metadata` (JSON) `stack` Key
 
 _Deprecated in Platform API 0.12._
@@ -1401,9 +1411,9 @@ The `stack` key is deprecated.
   "stack": {
     "runImage": {
       "image": "cnbs/sample-stack-run:bionic",
-      "mirrors": = ["<mirror1>", "<mirror2>"]
+      "mirrors": ["<mirror1>", "<mirror2>"]
     }
   }
 ```
 
-To upgrade, platform operators SHOULD read the same information from the `runImage` key.
+To upgrade, the platform SHOULD read the same information from the `runImage` key.
