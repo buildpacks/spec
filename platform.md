@@ -938,11 +938,15 @@ The launcher:
 ### Run Image Resolution
 
 Given [run](#runtoml-toml) metadata, the `<run-image>` for a given `<image>` shall be resolved as follows:
-- From the matching `[[images]]`:
-  - **If** the tag reference for the run image is known (e.g., from a `-run-image` argument), the `[[images]]` with matching `image`
-  - **Else** the first `[[images]]`
-- **If** any of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, this value will become the `<run-image>`
-- **If** none of `[image.image]` or `[image.mirrors]` has a registry matching that of `<image>`, `[image.image]` will become the `<run-image>`
+- By choosing an image from `[[images]]`
+  - **If** the tag reference for the desired run image is known (e.g., from a `-run-image` flag or `analyzed.toml`):
+    - The first image in `[[images]]` where `image.image` or one of `image.mirrors` has a matching tag reference
+  - **Else** the first image in `[[images]]`
+- By choosing the best mirror for an image
+  - **If** any of `image.image` or `image.mirrors` has a registry matching that of `<image>` and is accessible with read permissions:
+    - This value will become the `<run-image>`
+  - **If** none of `image.image` or `image.mirrors` has a registry matching that of `<image>`:
+    - The first value of `image.image` or `image.mirrors` that is accessible with read permissions will become the `<run-image>`
 
 ### Registry Authentication
 
