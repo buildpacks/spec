@@ -1393,6 +1393,8 @@ This section describes all the features that are deprecated.
 
 ### `io.buildpacks.stack.*` Labels
 
+_Deprecated in Platform API 0.12._
+
 For compatibility with older platforms and older buildpacks, base image authors SHOULD ensure for build images and run images:
 
 - The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
