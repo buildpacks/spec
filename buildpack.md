@@ -1114,8 +1114,8 @@ Each target in `targets`:
      - For Windows-based images, `distributions.name` should be empty; `distributions.versions` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
-  - `os = "linux"` and `arch = "amd64"` if `./bin/build` is present
-  - `os = "windows"` and `arch = "amd64"` if `./bin/build.bat` or `./bin/build.exe` are present
+  - `os = "linux"` and `arch = <matches any>` if `./bin/build` is present
+  - `os = "windows"` and `arch = <matches any>` if `./bin/build.bat` or `./bin/build.exe` are present
 
 Two `[[targets]]` are considered to match when:
 * `os` and `arch` match, and
