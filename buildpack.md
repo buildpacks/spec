@@ -1116,10 +1116,11 @@ Each target in `targets`:
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "linux"` and `arch = <matches any>` if `./bin/build` is present
   - `os = "windows"` and `arch = <matches any>` if `./bin/build.bat` or `./bin/build.exe` are present
+  - `os = <matches any>` and `arch = <matches any>` for extensions
 
 Two `[[targets]]` are considered to match when:
 * `os` and `arch` match, and
-* Optional fields either match exactly, or are left blank by at least one target (blank values are wildcard matches)
+* Optional fields either match exactly, or are left blank by at least one target (blank values match any other value)
 
 Metadata specified in `targets` is validated against the runtime and build-time base images.
    

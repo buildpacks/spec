@@ -166,11 +166,21 @@ keywords = [ "<string>" ]
 [[extension.licenses]]
 type = "<string>"
 uri = "<uri>"
+
+[[targets]]
+os = "<OS name>"
+arch = "<architecture>"
+variant = "<architecture variant>"
+[[targets.distributions]]
+name = "<OS distribution name>"
+version = "<OS distribution version>"
 ```
 
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
 
 The image extension `id`, `version`, `api`, and `licenses` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+
+An extension descriptor MAY specify `targets` following the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
 ### extend-config.toml (TOML)
 
