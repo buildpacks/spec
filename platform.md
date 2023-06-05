@@ -1386,3 +1386,24 @@ Where:
 }
 ```
 This label MUST contain the JSON representation of [`project-metadata.toml`](#project-metadatatoml-toml)
+
+
+## Deprecations
+This section describes all the features that are deprecated.
+
+### `io.buildpacks.lifecycle.metadata` (JSON) `stack` Key
+
+_Deprecated in Platform API 0.12._
+
+The `stack` key is deprecated.
+
+```json
+  "stack": {
+    "runImage": {
+      "image": "cnbs/sample-stack-run:bionic",
+      "mirrors": = ["<mirror1>", "<mirror2>"]
+    }
+  }
+```
+
+To upgrade, platform operators SHOULD read the same information from the `runImage` key.
