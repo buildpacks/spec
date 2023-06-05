@@ -350,7 +350,7 @@ Usage:
   [-log-level <log-level>] \
   [-order <order>] \
   [-plan <plan>] \
-  [-platform <platform>] \
+  [-platform <platform>]
 ```
 
 ##### Inputs
