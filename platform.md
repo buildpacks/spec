@@ -536,6 +536,7 @@ The platform MUST execute `builder` in the **build environment**
 Usage:
 ```
 /cnb/lifecycle/builder \
+  [-analyzed <analyzed>] \
   [-app <app>] \
   [-buildpacks <buildpacks>] \
   [-build-config <build-config>] \
@@ -547,16 +548,17 @@ Usage:
 ```
 
 ##### Inputs
-| Input            | Env                    | Default Value         | Description                                                                                    |
-|------------------|------------------------|-----------------------|------------------------------------------------------------------------------------------------|
-| `<app>`          | `CNB_APP_DIR`          | `/workspace`          | Path to application directory                                                                  |
-| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`   | Path to build config directory                                                                 |
-| `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`     | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout)) |
-| `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml` | Path to group definition (see [`group.toml`](#grouptoml-toml))                                 |
-| `<layers>`       | `CNB_LAYERS_DIR`       | `/layers`             | Path to layers directory                                                                       |
-| `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                | Log Level                                                                                      |
-| `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`  | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                |
-| `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`           | Path to platform directory                                                                     |
+| Input            | Env                    | Default Value            | Description                                                                                    |
+|------------------|------------------------|--------------------------|------------------------------------------------------------------------------------------------|
+| `<analyzed>`     | `CNB_ANALYZED_PATH`    | `<layers>/analyzed.toml` | Path to analysis metadata (see [`analyzed.toml`](#analyzedtoml-toml)                           |
+| `<app>`          | `CNB_APP_DIR`          | `/workspace`             | Path to application directory                                                                  |
+| `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                                 |
+| `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout)) |
+| `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                 |
+| `<layers>`       | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                       |
+| `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                      |
+| `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                |
+| `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                     |
 
 ##### Outputs
 | Output                                     | Description
@@ -578,6 +580,7 @@ Usage:
 | `50`, `52-59`|  Build-specific lifecycle errors
 
 - The lifecycle SHALL execute all buildpacks in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
+- SHALL provide `run-image.target` data in `<analyzed>` to buildpacks according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - The lifecycle SHALL add all invoked buildpacks to`<layers>/config/metadata.toml`.
 - The lifecycle SHALL aggregate all `processes` and `slices` returned by buildpacks in `<layers>/config/metadata.toml`.
 - The lifecycle SHALL record the buildpack-provided default process type in `<layers>/config/metadata.toml`.
