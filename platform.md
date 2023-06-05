@@ -1101,7 +1101,7 @@ Where:
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.id`
 - `run-image.target` contains the [target data](#target-data) for the image
-  - If target data is missing but the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
+  - If target distribution data is missing, it will be inferred from `/etc/os-release` for Linux images; furthermore, if the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
     - `run-image.target.arch = "arm64"`
     - `run-image.target.distribution.name = "ubuntu"`
