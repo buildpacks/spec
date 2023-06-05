@@ -426,12 +426,12 @@ When image extensions are present in the order (optional and **[experimental](#e
   - **Else** the selected run image SHALL be the last image referenced in the `FROM` statement of the last `run.Dockerfile` not to declare `FROM ${base_image}`
     - `run-image.image` SHALL be the name of the selected run image
     - `run-image.reference` and `run-image.target` SHALL be cleared (as they may no longer be accurate)
-    - All preceding `run.Dockerfile`s SHALL be renamed `run.Dockerfile.ignore`
+    - All preceding `run.Dockerfile`s SHALL be copied to `<generated>` with suffix `.ignore`
     - **If** there are no `run.Dockerfile`s following the Dockerfile with the selected run image:
       - `run-image.extend` SHALL be `false`
     - **Else**
       - `run-image.extend` SHALL be `true`
-- SHALL fail if the selected run image is not found in `<run>`
+- SHALL warn if the selected run image is not found in `<run>`
 
 #### `restorer`
 
@@ -442,7 +442,6 @@ Usage:
   [-build-image <build-image>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
-  [-generated <generated>] \
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -459,7 +458,6 @@ Usage:
 | `<build-image>`* | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided) |
 | `<cache-dir>`    | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                                         |
 | `<cache-image>`  | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                                                     |
-| `<generated>`^   | `CNB_GENERATED_DIR`  | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles   |
 | `<gid>`          | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                                             |
 | `<group>`        | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
 | `<layers>`       | `CNB_LAYERS_DIR`     | `/layers`                | Path to layers directory                                                                          |
@@ -497,11 +495,11 @@ Usage:
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-- When `<generated>/build` contains Dockerfiles (optional and **[experimental](#experimental-features)**), the lifecycle:
+- When `<build-image>` is provided (optional and **[experimental](#experimental-features)**), the lifecycle:
   - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
   - MUST copy the OCI manifest and config file for `<build-image>` to `<kaniko-dir>/cache`
-- When `<generated>/run` contains Dockerfiles, the lifecycle:
-  - MUST resolve `run-image.reference` to a digest in `<analyzed>` if not present
+- The lifecycle:
+  - MUST resolve `run-image.reference` to a digest reference in `<analyzed>` if not present
   - MUST populate `run-image.target` data in `<analyzed>` if not present
   - **If** `<analyzed>` has `run-image.extend = true`, the lifecycle:
     - MUST download from the registry and save in OCI layout format the `run-image` in `<analyzed>` to `<kaniko-dir>/cache`
@@ -588,7 +586,7 @@ When extending the build image:
 - When extending the run image, after all `run.Dockefile`s are applied, the lifecycle:
   - **If** any `run.Dockerfile` set the label `io.buildpacks.rebasable` to `false` or left the label unset:
     - SHALL set the label `io.buildpacks.rebasable` to `false` on the extended run image
-  - SHALL copy the manifest and config for the extended run image, along with any new layers, to `<extended>`
+  - SHALL copy the manifest and config for the extended run image, along with any new layers, to `<extended>`/run
 
 #### `builder`
 
@@ -721,7 +719,7 @@ Usage:
 - The lifecycle SHALL write the same app image to each `<image>` tag
 - The app image:
     - **If** image extensions were used to extend the `run-image` in [`analyzed.toml`](#analyzedtoml-toml):
-      - MUST be based on the image in `<extended>`
+      - MUST be based on the image in `<extended>`/run
     - **Else**:
       - MUST be based on the `run-image` in [`analyzed.toml`](#analyzedtoml-toml)
     - All base image layers and any extension layers SHALL be preserved
@@ -753,7 +751,7 @@ Usage:
         - `io.buildpacks.lifecycle.metadata`: see [lifecycle metadata label](#iobuildpackslifecyclemetadata-json)
         - `io.buildpacks.project.metadata`: the value of which SHALL be the json representation of `<project-metadata>`
         - `io.buildpacks.build.metadata`: see [build metadata](#iobuildpacksbuildmetadata-json)
-        - **If** image extensions were used to extend the run image and `<extended>/<image config>` has the label `io.buildpacks.rebasable` set to `true`:
+        - **If** image extensions were used to extend the run image and `<extended>/run/<image config>` has the label `io.buildpacks.rebasable` set to `true`:
           - `io.buildpacks.rebasable` SHALL be `true`
         - **Else**
           - `io.buildpacks.rebasable` SHALL be `false`
