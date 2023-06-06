@@ -1428,4 +1428,4 @@ The `stack` key is deprecated.
 
 Where `stack` MUST contain the same data as the top-level `runImage` key.
 
-To upgrade, the platform SHOULD read the same information from the top-level `runImage` key.
+To upgrade, the platform SHOULD read the top-level `runImage` key instead.
