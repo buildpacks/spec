@@ -1103,7 +1103,7 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 
 #### Targets
 
-A buildpack descriptor MAY specify `targets`.
+A buildpack descriptor SHOULD specify `targets`.
 
 Each target in `targets`:
 - MUST identify a compatible runtime environment:
