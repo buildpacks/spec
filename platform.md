@@ -72,6 +72,7 @@ Examples of a platform might include:
       - [Buildpack Environment](#buildpack-environment)
         - [Base Image-Provided Variables](#base-image-provided-variables)
         - [User-Provided Variables](#user-provided-variables)
+        - [Operator-Defined Variables](#operator-defined-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
@@ -89,6 +90,9 @@ Examples of a platform might include:
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
       - [`io.buildpacks.lifecycle.metadata` (JSON)](#iobuildpackslifecyclemetadata-json)
       - [`io.buildpacks.project.metadata` (JSON)](#iobuildpacksprojectmetadata-json)
+  - [Deprecations](#deprecations)
+    - [`io.buildpacks.stack.*` Labels](#iobuildpacksstack-labels)
+    - [`io.buildpacks.lifecycle.metadata` (JSON) `stack` Key](#iobuildpackslifecyclemetadata-json-stack-key)
 
 ## Platform API Version
 
@@ -125,6 +129,8 @@ The **launcher** refers to a lifecycle executable packaged in the **app image** 
 
 An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
+A **stack** (deprecated, see [deprecations](#deprecations)) is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**.
+
 #### Additional Terminology
 An **image reference** refers to either a **tag reference** or **digest reference**.
 
@@ -143,7 +149,7 @@ The following is a non-exhaustive list of terms defined in the [OCI Distribution
 
 ### Build Image
 
-A typical build image might specify:
+A typical build image might determine:
 * The OS distro in the build environment.
 * OS packages installed in the build environment.
 * Trusted CA certificates in the build environment.
@@ -166,7 +172,7 @@ The platform SHOULD ensure that:
 
 ### Run Image
 
-A typical run image might specify:
+A typical run image might determine:
 * The OS distro or distroless OS in the launch environment.
 * OS packages installed in the launch environment.
 * Trusted CA certificates in the launch environment.
@@ -795,7 +801,7 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, they MUST refer to the same registry
 - **If** `<previous-image>` is provided by the platform, the value will be used as the app image to rebase. `<previous-image>` must NOT be modified unless specified again in `<image>`.
 - **Else** `<previous-image>` value will be derived from the first `<image>`.
-- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`, or `stack.runImage` if not found (for compatibility with older platforms).
+- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`, or `stack.runImage` if not found (for compatibility with older platforms; see [deprecations](#deprecations)).
 - **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
   - `os`
   - `architecture`
@@ -1401,6 +1407,8 @@ For compatibility with older platforms and older buildpacks, base image authors 
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
 
+Where `CNB_STACK_ID` SHALL be directly inherited by buildpacks without modification.
+
 To upgrade, the platform SHOULD upgrade all buildpacks to use Buildpack API `0.10` or greater.
 
 ### `io.buildpacks.lifecycle.metadata` (JSON) `stack` Key
@@ -1418,4 +1426,6 @@ The `stack` key is deprecated.
   }
 ```
 
-To upgrade, the platform SHOULD read the same information from the `runImage` key.
+Where `stack` MUST contain the same data as the top-level `runImage` key.
+
+To upgrade, the platform SHOULD read the same information from the top-level `runImage` key.
