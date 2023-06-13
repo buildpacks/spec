@@ -185,7 +185,7 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the image.
+- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the run image.
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
