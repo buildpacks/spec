@@ -832,7 +832,7 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
-    - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
+    - The value of `io.buildpacks.base.*` labels and `io.buildpacks.stack.*` labels (if present) SHALL be modified to that of the new `run-image`
 - **If** the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
       - `run-image.image` SHALL be the provided `<run-image>`
       - `run-image.mirrors` SHALL be omitted
