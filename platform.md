@@ -591,6 +591,8 @@ When extending the build image:
 - When extending the run image, after all `run.Dockefile`s are applied, the lifecycle:
   - **If** any `run.Dockerfile` set the label `io.buildpacks.rebasable` to `false` or left the label unset:
     - SHALL set the label `io.buildpacks.rebasable` to `false` on the extended run image
+  - **If** after the final `run.Dockerfile` the run image user is `root`,
+    - SHALL fail
   - SHALL copy the manifest and config for the extended run image, along with any new layers, to `<extended>`/run
 
 #### `builder`
