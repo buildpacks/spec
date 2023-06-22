@@ -984,6 +984,32 @@ The buildpacks directory MUST contain unarchived buildpacks such that:
 - Each top-level directory is a buildpack ID.
 - Each second-level directory is a buildpack version.
 
+## Builder
+
+### Definition
+
+A Builder is an OCI artifact that MUST have a lifecycle and SHOULD have one or more buildpacks: It is a self-contained single image for building applications.
+
+### Labels
+
+There's a bunch of labels that the builder needs to have, but I'm not going to paste all that stuff in yet because I'm probably lazy.
+
+### Directories
+
+See above, but think about directory layout.
+
+### Environment Variables
+
+_yawn_
+
+### Lifecycle Executable
+
+It's an .exe! It's an OCI! It's super-lifecycle!!!!! 
+
+### Configuration file
+
+builder.toml
+
 ## Image Extensions
 
 ### Image Extensions Directory Layout
@@ -1099,6 +1125,31 @@ Where:
 - `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
+
+#### `builder.toml` (TOML)
+
+```toml
+description = "string"
+
+[build]
+image = "ghcr.io/foo/bar"
+
+[run]
+[run.images]
+image = "ghcr.io/foo/bar"
+
+[[buildpacks]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+api = "<buildpack API version>"
+optional = false
+
+[[order]]
+[[order.group]]
+id = "<buildpack ID>"
+version = "<buildpack version>"
+optional = false
+```
 
 #### `group.toml` (TOML)
 
