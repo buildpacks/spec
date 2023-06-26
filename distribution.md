@@ -204,6 +204,10 @@ image = "build image"
 image = "run image"
 mirrors = "mirrors"
 
+[lifecycle]
+uri = "uri"
+version = "ve.rs.ion"
+
 ```
 
 Where:
@@ -228,6 +232,9 @@ Where:
   - each `run.images` MUST include an image
   - each `run.images` MAY include a list of mirrors (in the format `["mirror url", "mirror, url", ...]`)
 - either stack or build and run images MUST be provided.
+- lifecyle MAY be provided to specify a custom lifecycle - either uri or version (but not both) MUST be provided
+  - uri MUST be a locator for a valid lifecycle image (mutually exclusive with version)
+  - version MUST be a valid semver string (mutually exclusive with uri)
 
 
 #### `package.toml` (TOML)
