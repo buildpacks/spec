@@ -802,12 +802,6 @@ Usage:
 - **If** `<previous-image>` is provided by the platform, the value will be used as the app image to rebase. `<previous-image>` must NOT be modified unless specified again in `<image>`.
 - **Else** `<previous-image>` value will be derived from the first `<image>`.
 - **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`, or `stack.runImage` if not found (for compatibility with older platforms; see [deprecations](#deprecations)).
-- **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
-  - `os`
-  - `architecture`
-  - `variant` (if specified)
-  - `io.buildpacks.distribution.name` (if specified)
-  - `io.buildpacks.distribution.version` (if specified)
 
 ##### Outputs
 | Output             | Description
@@ -833,9 +827,17 @@ Usage:
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
     - The value of `io.buildpacks.base.*` labels and `io.buildpacks.stack.*` labels (if present) SHALL be modified to that of the new `run-image`
-- **If** the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
-      - `run-image.image` SHALL be the provided `<run-image>`
-      - `run-image.mirrors` SHALL be omitted
+- **If** `<force>` is `true`, the following [target data](#target-data) values in the output `<image>` config MUST be derived from the new `<run-image>`:
+  - `os`
+  - `architecture`
+  - `variant` (if specified)
+  - `io.buildpacks.distribution.name` (if specified)
+  - `io.buildpacks.distribution.version` (if specified)
+- **Else** they MUST match the old run image if `<force>` is `false`
+- **If** `<force>` is `true` and the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
+  - `run-image.image` SHALL be the provided `<run-image>`
+  - `run-image.mirrors` SHALL be omitted
+- **Else** the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors` if `<force>` is `false`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 
