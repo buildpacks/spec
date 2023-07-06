@@ -945,16 +945,15 @@ The launcher:
 
 ### Run Image Resolution
 
-Given [run](#runtoml-toml) metadata, the `<run-image>` for a given `<image>` shall be resolved as follows:
-- By choosing an image from `[[images]]`
-  - **If** the tag reference for the desired run image is known (e.g., from a `-run-image` flag or `analyzed.toml`):
-    - The first image in `[[images]]` where `image.image` or one of `image.mirrors` has a matching tag reference
-  - **Else** the first image in `[[images]]`
-- By choosing the best mirror for an image
-  - **If** any of `image.image` or `image.mirrors` has a registry matching that of `<image>` and is accessible with read permissions:
+Given [run](#runtoml-toml) metadata shall be resolved as follows:
+- By choosing the `<run-image>` for a given `<app-image>`:
+  - **If** any of `image.image` or `image.mirrors` has a registry matching that of `<app-image>` and is accessible with read permissions:
     - This value will become the `<run-image>`
-  - **If** none of `image.image` or `image.mirrors` has a registry matching that of `<image>`:
+  - **If** none of `image.image` or `image.mirrors` has a registry matching that of `<app-image>`:
     - The first value of `image.image` or `image.mirrors` that is accessible with read permissions will become the `<run-image>`
+- By choosing mirrors information for a given `<run-image>`:
+  - The first image in `[[images]]` where `image.image` or one of `image.mirrors` matches `<run-image>`
+  - **Else** the first image in `[[images]]`
 
 ### Registry Authentication
 
@@ -1371,8 +1370,7 @@ Where:
     - The key  MUST be the name of the layer
     - The value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
     - The value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
-- `runImage.image` MUST be a tag reference to the run-image
-- `runImage.mirrors` MUST be selected from `run.toml`
+- `runImage.image` and `runImage.mirrors` MUST be [resolved](#run-image-resolution) from `run.toml` from the given `<run-image>`
 - `runImage.topLayer` MUST contain the uncompressed digest of the top layer of the run-image
 - `runImage.reference` MUST uniquely identify the run image. It MAY contain one of the following
   - An image ID (the digest of the uncompressed config blob)
