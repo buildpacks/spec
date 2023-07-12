@@ -1110,8 +1110,8 @@ Each target in `targets`:
    - `os` and `arch` are required and MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
    - `variant` is optional and MUST be a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
    - `distributions` are optional and MUST describe the OS distributions supported by the buildpack
-     - For Linux-based images, `distributions.name` and `distributions.versions` should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
-     - For Windows-based images, `distributions.name` should be empty; `distributions.versions` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+     - For Linux-based images, `distributions.name` and `distributions.versions` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distributions.name` SHOULD be empty; `distributions.versions` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "linux"` and `arch = <matches any>` if `./bin/build` is present
