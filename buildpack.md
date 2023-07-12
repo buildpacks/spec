@@ -401,7 +401,7 @@ For each trial,
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
 The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using a common build environment.
-If any buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, the lifecycle MUST fail detection for the group. For matching criteria, see [buildpack.toml](#buildpacktoml-toml).
+If any non-optional buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, and in the case that no targets are declared and the [inferred target](#targets-1) does not match, the lifecycle MUST fail detection for the group. For matching criteria, see [buildpack.toml](#buildpacktoml-toml).
 
 #### Order Resolution
 
