@@ -20,7 +20,7 @@ This document specifies Distribution API version `0.4`.
 Distribution API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
  - When `<major>` is greater than `0` increments to `<minor>` SHALL exclusively indicate additive changes
- - Each Distributable artifact MUST contain the label io.buildpacks.distribution.api denoting the distribution API
+ - Each Distributable artifact MUST contain the label `io.buildpacks.distribution.api` denoting the distribution API
 
 ## Artifact Format
 
