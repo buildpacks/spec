@@ -122,7 +122,7 @@ A platform supporting builders SHOULD allow users to configure the build environ
 
 #### General Requirements
 
-The builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to ease the build process.
+The builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to encapsulate the build process.
 
 #### Filesystem
 
