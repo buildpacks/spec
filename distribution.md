@@ -143,7 +143,7 @@ A builder image MUST contain an implementation of the [lifecycle](#lifecycle), a
 A builder image MAY contain buildpacks, and MAY retain all the specified Labels set on the original buildpackage, as specified in the [buildpackage](#buildpackage) specification with the following exceptions:
 
 - `io.buildpacks.buildpack.metadata` MUST not be set.
-- `io.buildpacks.buildpack.layers`  on the builder SHOULD be a merged version based on all buildpackages combined and thereby have of all packaged buildpacks represented.
+- `io.buildpacks.buildpack.layers`  on the builder MUST be a merged version based on all buildpackages combined and thereby have of all packaged buildpacks represented.
 
 In addition to all inherited labels above, the following labels MUST be set in the builder environment (through the image config's `Labels` field):
 
