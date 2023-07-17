@@ -155,6 +155,9 @@ keywords = [ "<string>" ]
 [[extension.licenses]]
 type = "<string>"
 uri = "<uri>"
+
+[metadata]
+# extension-specific data
 ```
 
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
