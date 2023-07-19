@@ -190,12 +190,6 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
 
-[stack]
-id = "<stack id>"
-build-image = "build image"
-run-image = "run image"
-run-image-mirrors = "mirrors"
-
 [build]
 image = "build image"
 
@@ -226,6 +220,14 @@ Where:
   - build-image MUST be included in a stack
   - run-image MUST be included
   - run-image-mirrors MAY be included
+  - Deprecated stack example:
+```
+[stack]
+id = "<stack id>"
+build-image = "build image"
+run-image = "run image"
+run-image-mirrors = "mirrors"
+```
 - build SHOULD be provided to platforms >= 0.12, and MUST include an image
 - run SHOULD be provided to platforms >= 0.12
   - run MUST have at least one `images` entry
