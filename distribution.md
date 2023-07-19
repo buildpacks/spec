@@ -122,7 +122,7 @@ A platform supporting builders SHOULD allow users to configure the build environ
 
 #### General Requirements
 
-The builder image MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to encapsulate the build process.
+The builder MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to encapsulate the build process.
 
 #### Filesystem
 
@@ -140,7 +140,7 @@ A builder MUST be an extension of a Build Image, and MUST retain all the specifi
 
 A builder MUST contain an implementation of the [lifecycle](#lifecycle), and MUST retain all the specified Labels set on the original Lifecycle image, as specified in the lifecycle distribution specifications.
 
-A builder image MAY contain buildpacks, and MAY retain all the specified Labels set on the original buildpackage, as specified in the [buildpackage](#buildpackage) specification with the following exceptions:
+A builder MAY contain buildpacks, and MAY retain all the specified Labels set on the original buildpackage, as specified in the [buildpackage](#buildpackage) specification with the following exceptions:
 
 - `io.buildpacks.buildpack.metadata` MUST not be set.
 - `io.buildpacks.buildpack.layers`  on the builder MUST be a merged version based on all buildpackages combined and thereby have of all packaged buildpacks represented.
