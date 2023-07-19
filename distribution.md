@@ -120,7 +120,7 @@ A builder is an OCI Image that provides a distributable build environment.
 
 A platform supporting builders SHOULD allow users to configure the build environment for a provided builder.
 
-A platform supporting builder creation MUST be able to create a valid builder from a valid [builder.toml](#builder.toml) file. (NOTE: much like (roses by any other name)[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC543212], the platform MUST parse the contents of a builder-specifying toml file regardless of how it's called.)
+A platform supporting builder creation MUST be able to create a valid builder from a valid [builder.toml](#files) file. (NOTE: much like [roses by any other name](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC543212), the platform MUST parse the contents of a builder-specifying toml file regardless of how it's called.)
 
 #### General Requirements
 
