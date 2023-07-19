@@ -120,6 +120,8 @@ A builder is an OCI Image that provides a distributable build environment.
 
 A platform supporting builders SHOULD allow users to configure the build environment for a provided builder.
 
+A platform supporting builder creation MUST be able to create a valid builder from a valid builder.toml file.
+
 #### General Requirements
 
 The builder MUST contain an implementation of the [lifecycle](#lifecycle), and a [build-time](#build-image) environment, and MAY contain [buildpacks](#buildpackage). Platforms SHOULD use builders to encapsulate the build process.
