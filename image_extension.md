@@ -21,7 +21,7 @@ This document specifies the interface between a lifecycle program and one or mor
 
 ## Image Extension API Version
 
-This document accompanies Buildpack API version `0.9`.
+This document accompanies Buildpack API version `0.10`.
 
 ## Image Extension Interface
 
@@ -97,7 +97,14 @@ Correspondingly, each `/bin/generate` executable:
 A `run.Dockerfile`
 
 - MAY contain a single `FROM` instruction
-- MUST NOT contain any other instructions
+- MUST NOT contain any other `FROM` instructions
+- MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
+- SHOULD NOT contain any other instructions
+- SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change); the `build_id` build arg SHOULD be defaulted to 0 if used (this ensures portability)
+- SHOULD NOT edit `<app>`, `<layers>`, or `<platform>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
+- SHOULD use the `user_id` and `group_id` build args to reset the image config's `User` field to its original value if any `USER` instructions are employed
+- SHOULD set the label `io.buildpacks.rebasable` to `true` to indicate that any new run image layers are safe to rebase on top of new runtime base images
+  - For the final image to be rebasable, all applied Dockerfiles must set this label to `true`
 
 A `build.Dockerfile`
 
@@ -110,7 +117,8 @@ FROM ${base_image}
 - MAY contain `ADD`, `ARG`, `COPY`, `ENV`, `LABEL`, `RUN`, `SHELL`, `USER`, and `WORKDIR` instructions
 - SHOULD NOT contain any other instructions
 - SHOULD use the `build_id` build arg to invalidate the cache after a certain layer. When the `$build_id` build arg is referenced in a `RUN` instruction, all subsequent layers will be rebuilt on the next build (as the value will change); the `build_id` build arg SHOULD be defaulted to 0 if used (this ensures portability)
-- SHOULD NOT edit `<app>`, `<layers>`, or `<workspace>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
+- SHOULD NOT edit `<app>`, `<layers>`, or `<platform>` directories (see the [Platform Interface Specification](platform.md)) as changes will not be persisted
+- SHOULD use the `user_id` and `group_id` build args to reset the image config's `User` field to its original value if any `USER` instructions are employed
 
 ## Phase: Extension
 
@@ -132,6 +140,9 @@ For each Dockerfile in the group in order, the lifecycle MUST apply the Dockerfi
     - When there are multiple Dockerfiles, the value MUST be the intermediate image generated from the application of the previous Dockerfile.
 - A `build_id` build arg
     - The value MUST be a UUID
+- `user_id` and `group_id` build args
+    - For the first Dockerfile, the values MUST be the original `uid` and `gid` from the `User` field of the config for the original base image.
+    - When there are multiple Dockerfiles, the values MUST be the `uid` and `gid` from the `User` field of the config for the intermediate image generated from the application of the previous Dockerfile.
 
 ## Data Format
 
@@ -156,6 +167,14 @@ keywords = [ "<string>" ]
 type = "<string>"
 uri = "<uri>"
 
+[[targets]]
+os = "<OS name>"
+arch = "<architecture>"
+variant = "<architecture variant>"
+[[targets.distributions]]
+name = "<OS distribution name>"
+version = "<OS distribution version>"
+
 [metadata]
 # extension-specific data
 ```
@@ -164,18 +183,28 @@ Image extension authors MUST choose a globally unique ID, for example: "io.build
 
 The image extension `id`, `version`, `api`, and `licenses` entries MUST follow the requirements defined in the [Buildpack Interface Specification](buildpack.md).
 
+An extension descriptor MAY specify `targets` following the requirements defined in the [Buildpack Interface Specification](buildpack.md).
+
 ### extend-config.toml (TOML)
 
 ```toml
 [[build.args]]
 name = "<build arg name>"
 value = "<build arg value>"
+
+[[run.args]]
+name = "<build arg name>"
+value = "<build arg value>"
 ```
 
 The image extension MAY specify any number of args.
 
-For each arg, the image extension:
-- MUST specify a `name` to be the name of a build argument that will be provided to any output build.Dockerfile when extending the build base image.
+For each `[[build.args]]`, the image extension:
+- MUST specify a `name` to be the name of a build argument that will be provided to any output `build.Dockerfile` when extending the build base image.
+- MUST specify a `value` to be the value of the build argument that is provided.
+
+For each `[[run.args]]`, the image extension:
+- MUST specify a `name` to be the name of a build argument that will be provided to any output `run.Dockerfile` when extending the runtime base image.
 - MUST specify a `value` to be the value of the build argument that is provided.
 
 ### Build Plan (TOML)
