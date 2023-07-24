@@ -72,6 +72,7 @@ Examples of a platform might include:
       - [Buildpack Environment](#buildpack-environment)
         - [Base Image-Provided Variables](#base-image-provided-variables)
         - [User-Provided Variables](#user-provided-variables)
+        - [Operator-Defined Variables](#operator-defined-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
@@ -89,6 +90,9 @@ Examples of a platform might include:
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
       - [`io.buildpacks.lifecycle.metadata` (JSON)](#iobuildpackslifecyclemetadata-json)
       - [`io.buildpacks.project.metadata` (JSON)](#iobuildpacksprojectmetadata-json)
+  - [Deprecations](#deprecations)
+    - [`io.buildpacks.stack.*` Labels](#iobuildpacksstack-labels)
+    - [`io.buildpacks.lifecycle.metadata` (JSON) `stack` Key](#iobuildpackslifecyclemetadata-json-stack-key)
 
 ## Platform API Version
 
@@ -126,6 +130,8 @@ The **launcher** refers to a lifecycle executable packaged in the **app image** 
 
 An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
+A **stack** (deprecated, see [deprecations](#deprecations)) is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**.
+
 #### Additional Terminology
 
 An **image reference** refers to either a **tag reference** or **digest reference**.
@@ -145,7 +151,7 @@ The following is a non-exhaustive list of terms defined in the [OCI Distribution
 
 ### Build Image
 
-A typical build image might specify:
+A typical build image might determine:
 * The OS distro in the build environment.
 * OS packages installed in the build environment.
 * Trusted CA certificates in the build environment.
@@ -168,7 +174,7 @@ The platform SHOULD ensure that:
 
 ### Run Image
 
-A typical run image might specify:
+A typical run image might determine:
 * The OS distro or distroless OS in the launch environment.
 * OS packages installed in the launch environment.
 * Trusted CA certificates in the launch environment.
@@ -181,7 +187,7 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the image.
+- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the run image.
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
@@ -882,13 +888,7 @@ Usage:
 - **If** `<daemon>` is `false` and more than one `<image>` is provided, the images MUST refer to the same registry.
 - **If** `<previous-image>` is provided by the platform, the value will be used as the app image to rebase. `<previous-image>` must NOT be modified unless specified again in `<image>`.
 - **Else** `<previous-image>` value will be derived from the first `<image>`.
-- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`, or `stack.runImage` if not found (for compatibility with older platforms).
-- **If** `<force>` is `true` the following values in the output `<image>` config MUST be derived from the new `<run-image>`, or else they MUST match the old run image if `<force>` is `false`:
-  - `os`
-  - `architecture`
-  - `variant` (if specified)
-  - `io.buildpacks.distribution.name` (if specified)
-  - `io.buildpacks.distribution.version` (if specified)
+- **If** `<run-image>` is not provided by the platform, the value will be [resolved](#run-image-resolution) from the contents of the `runImage` key in the `io.buildpacks.lifecycle.metdata` label on `<image>`, or `stack.runImage` if not found (for compatibility with older platforms; see [deprecations](#deprecations)).
 
 ##### Outputs
 
@@ -914,10 +914,18 @@ Usage:
     - The value of `io.buildpacks.lifecycle.metadata` SHALL be modified as follows
       - `run-image.reference` SHALL uniquely identify `<run-image>`
       - `run-image.top-layer` SHALL be set to the uncompressed digest of the top layer in `<run-image>`
-    - The value of `io.buildpacks.stack.*` labels SHALL be modified to that of the new `run-image`
-- **If** the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
-      - `run-image.image` SHALL be the provided `<run-image>`
-      - `run-image.mirrors` SHALL be omitted
+    - The value of `io.buildpacks.base.*` labels and `io.buildpacks.stack.*` labels (if present) SHALL be modified to that of the new `run-image`
+- **If** `<force>` is `true`, the following [target data](#target-data) values in the output `<image>` config MUST be derived from the new `<run-image>`:
+  - `os`
+  - `architecture`
+  - `variant` (if specified)
+  - `io.buildpacks.distribution.name` (if specified)
+  - `io.buildpacks.distribution.version` (if specified)
+- **Else** they MUST match the old run image if `<force>` is `false`
+- **If** `<force>` is `true` and the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
+  - `run-image.image` SHALL be the provided `<run-image>`
+  - `run-image.mirrors` SHALL be omitted
+- **Else** the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors` if `<force>` is `false`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
@@ -1027,16 +1035,15 @@ The launcher:
 
 ### Run Image Resolution
 
-Given [run](#runtoml-toml) metadata, the `<run-image>` for a given `<image>` shall be resolved as follows:
-- By choosing an image from `[[images]]`
-  - **If** the tag reference for the desired run image is known (e.g., from a `-run-image` flag or `analyzed.toml`):
-    - The first image in `[[images]]` where `image.image` or one of `image.mirrors` has a matching tag reference
-  - **Else** the first image in `[[images]]`
-- By choosing the best mirror for an image
-  - **If** any of `image.image` or `image.mirrors` has a registry matching that of `<image>` and is accessible with read permissions:
+Given [run](#runtoml-toml) metadata shall be resolved as follows:
+- By choosing the `<run-image>` for a given `<app-image>`:
+  - **If** any of `image.image` or `image.mirrors` has a registry matching that of `<app-image>` and is accessible with read permissions:
     - This value will become the `<run-image>`
-  - **If** none of `image.image` or `image.mirrors` has a registry matching that of `<image>`:
+  - **If** none of `image.image` or `image.mirrors` has a registry matching that of `<app-image>`:
     - The first value of `image.image` or `image.mirrors` that is accessible with read permissions will become the `<run-image>`
+- By choosing mirrors information for a given `<run-image>`:
+  - The first image in `[[images]]` where `image.image` or one of `image.mirrors` matches `<run-image>`
+  - **Else** the first image in `[[images]]`
 
 ### Registry Authentication
 
@@ -1464,8 +1471,7 @@ Where:
     - The key  MUST be the name of the layer
     - The value MUST contain JSON representation of the `layer.toml` with an additional `sha` key, containing the digest of the uncompressed layer
     - The value MUST contain an additional `sha` key, containing the digest of the uncompressed layer
-- `runImage.image` MUST be a tag reference to the run-image
-- `runImage.mirrors` MUST be selected from `run.toml`
+- `runImage.image` and `runImage.mirrors` MUST be [resolved](#run-image-resolution) from `run.toml` from the given `<run-image>`
 - `runImage.topLayer` MUST contain the uncompressed digest of the top layer of the run-image
 - `runImage.reference` MUST uniquely identify the run image. It MAY contain one of the following
   - An image ID (the digest of the uncompressed config blob)
@@ -1488,3 +1494,40 @@ Where:
 ```
 
 This label MUST contain the JSON representation of [`project-metadata.toml`](#project-metadatatoml-toml)
+
+
+## Deprecations
+This section describes all the features that are deprecated.
+
+### `io.buildpacks.stack.*` Labels
+
+_Deprecated in Platform API 0.12._
+
+For compatibility with older platforms and older buildpacks, base image authors SHOULD ensure for build images and run images:
+
+- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
+- The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+
+Where `CNB_STACK_ID` SHALL be directly inherited by buildpacks without modification.
+
+To upgrade, the platform SHOULD upgrade all buildpacks to use Buildpack API `0.10` or greater.
+
+### `io.buildpacks.lifecycle.metadata` (JSON) `stack` Key
+
+_Deprecated in Platform API 0.12._
+
+The `stack` key is deprecated.
+
+```json
+  "stack": {
+    "runImage": {
+      "image": "cnbs/sample-stack-run:bionic",
+      "mirrors": ["<mirror1>", "<mirror2>"]
+    }
+  }
+```
+
+Where `stack` MUST contain the same data as the top-level `runImage` key.
+
+To upgrade, the platform SHOULD read the top-level `runImage` key instead.
