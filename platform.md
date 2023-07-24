@@ -1027,7 +1027,7 @@ The platform SHOULD NOT assume any other stack-provided environment variables ar
 User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
-User-provided environment variables MAY be modified by prior buildpacks before they are provided to a given buildpack.
+User-provided environment variables MAY NOT be modified by prior buildpacks before they are provided to a given buildpack.
 
 The platform SHOULD NOT set user-provided environment variables directly in the lifecycle execution environment.
 
@@ -1038,7 +1038,7 @@ Operator-provided environment varaiables MUST be supplied by the platform as fil
 
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
-Operator-defined environment variables MAY be modified by subsequent buildpacks before they are provided to a given buildpack.
+Operator-defined environment variables MAY NOT be modified by prior buildpacks before they are provided to a given buildpack.
 
 The platform SHOULD NOT set operator-provided environment variables directly in the lifecycle execution environment.
 
