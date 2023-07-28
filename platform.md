@@ -109,9 +109,9 @@ A **buildpack** refers to software compliant with the [Buildpack Interface Speci
 
 A **base image** is an OCI image containing the base, or initial set of layers, for other images.
 
-A **build image** is an OCI image that provides the base of the **build environment**.
+A **build image** is an OCI image that serves as the base image for the **build environment**.
 
-A **run image** is an OCI image that provides the base from which **app images** are built.
+A **run image** is an OCI image that serves as the base image for the **app image**.
 
 The **build environment** refers to the containerized environment in which the lifecycle executes buildpacks.
 
