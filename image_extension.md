@@ -171,7 +171,7 @@ uri = "<uri>"
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
-[[targets.distributions]]
+[[targets.distros]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
 

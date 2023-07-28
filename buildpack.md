@@ -1060,7 +1060,7 @@ optional = false
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
-[[targets.distributions]]
+[[targets.distros]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
 
@@ -1108,9 +1108,9 @@ A buildpack descriptor SHOULD specify `targets`.
 Each target in `targets`:
 - MUST identify a compatible runtime environment:
    - `os`, `arch`, and `variant` if provided MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
-   - `distributions` if provided MUST describe the OS distributions supported by the buildpack
-     - For Linux-based images, `distributions.name` and `distributions.versions` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
-     - For Windows-based images, `distributions.name` SHOULD be empty; `distributions.versions` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+   - `distros` if provided MUST describe the OS distributions supported by the buildpack
+     - For Linux-based images, `distros.name` and `distros.versions` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distros.name` SHOULD be empty; `distros.versions` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
    - Any field not provided will be interpreted as `<matches any>`
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
@@ -1118,7 +1118,7 @@ If the `targets` list is empty, tools reading `buildpack.toml` will assume:
   - `os = "windows"` and `arch = <matches any>` if `./bin/build.bat` or `./bin/build.exe` are present
 
 Metadata specified in `[[targets]]` is validated against the runtime and build-time base images.
-* A buildpack target satisfies a base image target when `os`, `arch`, and `variant` match and at least one distribution in `distributions` (if provided) matches
+* A buildpack target satisfies a base image target when `os`, `arch`, and `variant` match and at least one distribution in `distros` (if provided) matches
    
 #### Order
 
@@ -1169,7 +1169,7 @@ Tools reading `buildpack.toml` will translate any section that sets `stacks.id =
 [[targets]]
 os = "linux"
 arch = "amd64"
-[[targets.distributions]]
+[[targets.distros]]
 name = "ubuntu"
 version = "18.04"
 ```
