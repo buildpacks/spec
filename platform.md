@@ -185,7 +185,7 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the run image.
+- The image config's `Label` field has the label `io.buildpacks.base.id` set to the target ID (e.g., "minimal") of the run image.
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
@@ -197,14 +197,14 @@ The platform SHOULD ensure that:
 For both build images and run images, the platform MUST ensure that:
 
 - The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The build image config and the run image config both specify the same `os`, `architecture`, `variant` (if specified), `io.buildpacks.distribution.name` (if specified), and `io.buildpacks.distribution.version` (if specified).
+- The build image config and the run image config both specify the same `os`, `architecture`, `variant` (if specified), `io.buildpacks.base.distro.name` (if specified), and `io.buildpacks.base.distro.version` (if specified).
 
 The platform SHOULD ensure that:
 
 - The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
+- The image config's `Label` field has the label `io.buildpacks.base.distro.name` set to the OS distribution and the label `io.buildpacks.base.distro.version` set to the OS distribution version.
   - For Linux-based images, each label should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
-  - For Windows-based images, `io.buildpacks.distribution.name` should be empty; `io.buildpacks.distribution.version` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
+  - For Windows-based images, `io.buildpacks.base.distro.name` should be empty; `io.buildpacks.base.distro.version` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 
 ### Compatibility Guarantees
 
