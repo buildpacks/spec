@@ -831,8 +831,8 @@ Usage:
   - `os`
   - `architecture`
   - `variant` (if specified)
-  - `io.buildpacks.distribution.name` (if specified)
-  - `io.buildpacks.distribution.version` (if specified)
+  - `io.buildpacks.base.distro.name` (if specified)
+  - `io.buildpacks.base.distro.version` (if specified)
 - **Else** the target data above MUST match the old run image if `<force>` is `false`
 - **If** `<force>` is `true` and the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
   - `run-image.image` SHALL be the provided `<run-image>`
@@ -1113,7 +1113,7 @@ Where:
 - `image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.id`
+- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.base.id`
 - `run-image.target` contains the [target data](#target-data) for the image
   - If target distribution data is missing, it will be inferred from `/etc/os-release` for Linux images; furthermore, if the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
