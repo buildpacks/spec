@@ -174,6 +174,9 @@ variant = "<architecture variant>"
 [[targets.distributions]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
+
+[metadata]
+# extension-specific data
 ```
 
 Image extension authors MUST choose a globally unique ID, for example: "io.buildpacks.apt".
