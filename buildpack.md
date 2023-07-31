@@ -24,7 +24,6 @@ This document specifies the interface between a lifecycle program and one or mor
   - [Phase #1: Detection](#phase-1-detection)
     - [Purpose](#purpose)
     - [Process](#process)
-      - [Mixin Satisfaction](#mixin-satisfaction)
       - [Order Resolution](#order-resolution)
   - [Phase #2: Analysis](#phase-2-analysis)
     - [Purpose](#purpose-1)
@@ -51,6 +50,7 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Process](#process-5)
   - [Environment](#environment)
     - [Provided by the Lifecycle](#provided-by-the-lifecycle)
+      - [Targets](#targets)
       - [Layer Paths](#layer-paths)
     - [Provided by the Platform](#provided-by-the-platform)
     - [Provided by the Buildpacks](#provided-by-the-buildpacks)
@@ -71,17 +71,18 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Buildpack Plan (TOML)](#buildpack-plan-toml)
     - [Layer Content Metadata (TOML)](#layer-content-metadata-toml)
     - [buildpack.toml (TOML)](#buildpacktoml-toml)
-      - [Stacks](#stacks)
+      - [Targets](#targets-1)
       - [Order](#order)
     - [Exec.d Output (TOML)](#execd-output-toml)
   - [Deprecations](#deprecations)
+    - [buildpack.toml (TOML) `stacks` Array](#buildpacktoml-toml-stacks-array)
     - [Positional Arguments to `detect` and `build` Executables](#positional-arguments-to-detect-and-build-executables)
     - [launch.toml (TOML) `bom` Array](#launchtoml-toml-bom-array)
     - [build.toml (TOML) `bom` Array](#buildtoml-toml-bom-array)
     - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.9`
+This document specifies Buildpack API version `0.10`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -132,10 +133,6 @@ A **layer directory** is a directory created by a component buildpack that conta
   * a **build layer** contains child directories with paths that are added to the environment (e.g., `PATH`, `LD_LIBRARY_PATH`, etc.) for subsequent buildpacks in the same build
 Any combination of the three layer types are valid for a particular layer directory.
 
-A **stack** is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**. The provided stack is communicated to component buildpacks through the `CNB_STACK_ID` environment variable, enabling each component buildpack to modify its behavior when executed on different stacks.
-
-A **mixin** is a named set of additions to a stack that can be used to make additive changes to the contract. Buildpacks can express their required mixins in `buildpack.toml`.
-
 ## Buildpack Interface
 
 The following specifies the interface implemented by component buildpacks.
@@ -164,14 +161,14 @@ The lifecycle MAY return an error to the platform if two or more buildpacks with
 
 Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 
-| Input                    | Attributes | Description                                   |
-|--------------------------|------------|-----------------------------------------------|
-| `$0`                     |            | Absolute path of `/bin/detect` executable     |
-| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan               |
-| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory |
-| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory       |
-| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build |
-| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                  |
+| Input                    | Attributes | Description                                       |
+|--------------------------|------------|---------------------------------------------------|
+| `$0`                     |            | Absolute path of `/bin/detect` executable         |
+| `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
+| `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
+| `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
+| `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
+| `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
 
 | Output                 | Description                                 |
 |------------------------|---------------------------------------------|
@@ -372,10 +369,13 @@ For each image extension ("extension") or component buildpack ("buildpack") in e
 The selected group MUST be filtered to only include extensions and buildpacks with exit status zero.
 The order of the extensions and buildpacks in the group MUST otherwise be preserved.
 
+For each `/bin/detect` executable in each extension or buildpack, the lifecycle:
+
+- MUST configure the environment as described in the [Environment](#environment) section.
+
 The `/bin/detect` executable in each extension or buildpack, when executed:
 
 - MAY read the app directory.
-- MAY read the detect environment as described in the [Environment](#environment) section.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY augment the Build Plan by writing TOML to `<plan>`.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
@@ -400,21 +400,8 @@ For each trial,
 
 The lifecycle MAY execute each `/bin/detect` within a group in parallel.
 
-The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using common stack with a common set of mixins.
-The lifecycle MUST fail detection if any of the buildpacks does not list that stack in `buildpack.toml`.
-The lifecycle MUST fail detection if any of the buildpacks specifies a mixin associated with that stack in `buildpack.toml` that is not satisfied, see [Mixin Satisfaction](#mixin-satisfaction) below.
-
-#### Mixin Satisfaction
-
-A buildpack's mixin requirements must be satisfied by the stack in one of the following scenarios.
-
-1) the stack provides the mixin `run:<mixin>` and the buildpack requires `run:<mixin>`
-2) the stack provides the mixin `build:<mixin>` and the buildpack requires `build:<mixin>`
-3) the stack provides the mixin `<mixin>` and the buildpack requires `<mixin>`
-4) the stack provides the mixin `<mixin>` and the buildpack requires `build:<mixin>`
-5) the stack provides the mixin `<mixin>` and the buildpack requires `run:<mixin>`
-6) the stack provides the mixin `<mixin>` and the buildpack requires both `run:<mixin>` and `build:<mixin>`
-7) the stack provides the mixins `build:<mixin>` and `run:<mixin>` the buildpack requires `<mixin>`
+The lifecycle MUST run `/bin/detect` for all extensions and buildpacks in a group in a container using a common build environment.
+If any non-optional buildpack in a group fails to declare a target in `buildpack.toml` matching the build-time and runtime base images, and in the case that no targets are declared and the [inferred target](#targets-1) does not match, the lifecycle MUST fail detection for the group. For matching criteria, see [buildpack.toml](#buildpacktoml-toml).
 
 #### Order Resolution
 
@@ -687,7 +674,7 @@ The purpose of export is to create a new OCI image using a combination of remote
 - The `<layers>` directories provided to each buildpack during the build phase,
 - The `<app>` directory processed by the buildpacks during the build phase,
 - The buildpack IDs associated with the buildpacks used during the build phase, in order of execution,
-- A reference to the most recent version of the run image associated with the stack and mixins,
+- A reference to the most recent version of the run image,
 - A reference to the old OCI image processed during the analysis phase, if available, and
 - A tag for a new OCI image,
 
@@ -760,9 +747,22 @@ The purpose of launch is to modify the running app environment using app-provide
 
 ### Provided by the Lifecycle
 
+#### Targets
+
+The following environment variables MUST be set by the lifecycle during the `detect` and `build` phases to describe the target runtime image, if inputs are provided.
+
+| Env Variable                | Description                                |
+|-----------------------------|--------------------------------------------|
+| `CNB_TARGET_ID`             | Identifier for the target image (optional) |
+| `CNB_TARGET_OS`             | Target OS                                  |
+| `CNB_TARGET_ARCH`           | Target architecture                        |
+| `CNB_TARGET_ARCH_VARIANT`   | Target architecture variant (optional)     |
+| `CNB_TARGET_DISTRO_NAME`    | Target OS distribution name (optional)     |
+| `CNB_TARGET_DISTRO_VERISON` | Target OS distribution version (optional)  |
+
 #### Layer Paths
 
-The following layer path environment variables MUST be set by the lifecycle during the build and launch phases in order to make buildpack dependencies accessible.
+The following layer path environment variables MUST be set by the lifecycle during the `build` and `launch` phases in order to make buildpack dependencies accessible.
 
 During the build phase, each variable designated for build MUST contain absolute paths of all previous buildpacks’ `<layers>/<layer>/` directories that are designated for build.
 
@@ -782,27 +782,24 @@ In either case,
 | `CPATH`                                    | `/include`   | header files     | [x]   |        |
 | `PKG_CONFIG_PATH`                          | `/pkgconfig` | pc files         | [x]   |        |
 
-
 ### Provided by the Platform
 
 The following additional environment variables MUST NOT be overridden by the lifecycle.
 
-| Env Variable    | Description                                    | Detect | Build | Launch
-|-----------------|------------------------------------------------|--------|-------|--------
-| `CNB_STACK_ID`  | Chosen stack ID                                | [x]    | [x]   |
-| `BP_*`          | User-provided variable for buildpack           | [x]    | [x]   |
-| `BPL_*`         | User-provided variable for exec.d              |        |       | [x]
-| `HOME`          | Current user's home directory                  | [x]    | [x]   | [x]
+| Env Variable           | Description                                       | Detect | Build | Launch |
+|------------------------|---------------------------------------------------|--------|-------|--------|
+| `BP_*`                 | User-provided variable for buildpack              | [x]    | [x]   |        |
+| `BPL_*`                | User-provided variable for exec.d                 |        |       | [x]    |
+| `HOME`                 | Current user's home directory                     | [x]    | [x]   | [x]    |
 
-During the detection and build phases, the lifecycle MUST provide any user-provided environment variables as files in `<platform>/env/` with file names and contents matching the environment variable names and contents.
+During the detection and build phases, the lifecycle MUST provide as environment variables any user-provided files in `<platform>/env/` with environment variable names and contents matching the file names and contents.
+During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `<build-config>/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
 
 When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`.
 
 When `clear-env` in `buildpack.toml` is not set to `true` for a given buildpack, the lifecycle MUST set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` such that:
 1. For layer path environment variables, user-provided values are prepended before any existing values and are delimited by the OS path list separator.
 2. For all other environment variables, user-provided values override any existing values.
-
-Buildpacks MAY use the value of `CNB_STACK_ID` to modify their behavior when executed on different stacks.
 
 The environment variable prefix `CNB_` is reserved.
 It MUST NOT be used for environment variables that are not defined in this specification or approved extensions.
@@ -1059,9 +1056,13 @@ id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
 
-[[stacks]]
-id = "<stack ID>"
-mixins = ["<mixin name>"]
+[[targets]]
+os = "<OS name>"
+arch = "<architecture>"
+variant = "<architecture variant>"
+[[targets.distros]]
+name = "<OS distribution name>"
+version = "<OS distribution version>"
 
 [metadata]
 # buildpack-specific data
@@ -1080,8 +1081,6 @@ Buildpack authors MUST choose a globally unique ID, for example: "io.buildpacks.
 - MUST be in the form `<X>.<Y>.<Z>` where `X`, `Y`, and `Z` are non-negative integers and must not contain leading zeros.
    - Each element MUST increase numerically.
    - Buildpack authors will define what changes will increment `X`, `Y`, and `Z`.
-
-If an `order` is specified, then `stacks` MUST NOT be specified.
 
 **The buildpack API:**
 
@@ -1102,17 +1101,24 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 *Key: `sbom-formats = [ "<string>" ]`*
  - MUST be supported SBOM media types as described in [Software-Bill-of-Materials](#software-bill-of-materials).
 
-#### Stacks
+#### Targets
 
-A buildpack descriptor may specify `stacks`.
+A buildpack descriptor SHOULD specify `targets`.
 
-Each stack in `stacks` either:
-- MUST identify a compatible stack:
-   - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
-   - `mixins` MAY contain one or more mixin names.
-- Or MUST indicate compatibility with any stack:
-   - `id` MUST be set to the special value `"*"`.
-   - `mixins` MUST be empty.
+Each target in `targets`:
+- MUST identify a compatible runtime environment:
+   - `os`, `arch`, and `variant` if provided MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
+   - `distros` if provided MUST describe the OS distributions supported by the buildpack
+     - For Linux-based images, `distros.name` and `distros.versions` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distros.name` SHOULD be empty; `distros.versions` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+   - Any field not provided will be interpreted as `<matches any>`
+
+If the `targets` list is empty, tools reading `buildpack.toml` will assume:
+  - `os = "linux"` and `arch = <matches any>` if `./bin/build` is present
+  - `os = "windows"` and `arch = <matches any>` if `./bin/build.bat` or `./bin/build.exe` are present
+
+Metadata specified in `[[targets]]` is validated against the runtime and build-time base images.
+* A buildpack target satisfies a base image target when `os`, `arch`, and `variant` match and at least one distribution in `distros` (if provided) matches
    
 #### Order
 
@@ -1134,6 +1140,41 @@ Each `key`:
 
 ## Deprecations
 This section describes all the features that are deprecated.
+
+### buildpack.toml (TOML) `stacks` Array
+
+_Deprecated in Buildpack API 0.10._
+
+The `stacks` array is deprecated.
+
+```toml
+[[stacks]]
+id = "<stack ID>"
+mixins = ["<mixin name>"]
+```
+
+Each stack in `stacks` either:
+- MUST identify a compatible stack:
+    - `id` MUST be set to a [valid stack ID](https://github.com/buildpacks/spec/blob/main/platform.md#stack-id).
+    - `mixins` MAY contain one or more mixin names.
+- Or MUST indicate compatibility with any stack:
+    - `id` MUST be set to the special value `"*"`.
+    - `mixins` MUST be empty.
+
+If an `order` is specified, then `stacks` MUST NOT be specified.
+
+Tools reading `buildpack.toml` will translate any section that sets `stacks.id = "io.buildpacks.stacks.bionic"` to:
+
+```toml
+[[targets]]
+os = "linux"
+arch = "amd64"
+[[targets.distros]]
+name = "ubuntu"
+version = "18.04"
+```
+
+Furthermore, any buildpack that contains `[[stacks]]` with `id = "*"` will match any target.
 
 ### Positional Arguments to `detect` and `build` Executables
 
@@ -1202,7 +1243,6 @@ If the `bom` array is used, the buildpack:
 When the build is complete, a legacy build BOM describing the build container MAY be generated for auditing purposes.
 
 If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
-
 
 ### Build Plan (TOML) `requires.version` Key
 
