@@ -185,7 +185,6 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.base.id` set to the target ID (e.g., "minimal") of the run image.
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
@@ -193,6 +192,15 @@ The platform SHOULD ensure that:
 - The image config's `Label` field has the label `io.buildpacks.base.metadata` set to additional metadata related to the image.
 
 ### Target Data
+
+For run images, the platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.base.id` set to the target ID of the run image.
+
+**The target ID:**
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
+- MUST NOT be identical to any other target ID when using a case-insensitive comparison.
+- SHOULD use reverse domain notation to avoid name collisions - i.e. buildpacks.io will be `io.buildpacks`.
 
 For both build images and run images, the platform MUST ensure that:
 
