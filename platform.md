@@ -110,9 +110,9 @@ A **buildpack** refers to software compliant with the [Buildpack Interface Speci
 
 A **base image** is an OCI image containing the base, or initial set of layers, for other images.
 
-A **build image** is an OCI image that provides the base of the **build environment**.
+A **build image** is an OCI image that serves as the base image for the **build environment**.
 
-A **run image** is an OCI image that provides the base from which **app images** are built.
+A **run image** is an OCI image that serves as the base image for the **app image**.
 
 The **build environment** refers to the containerized environment in which the lifecycle executes buildpacks.
 
@@ -187,7 +187,6 @@ The platform MUST ensure that:
 The platform SHOULD ensure that:
 
 - The image config's `User` field is set to a user with a **DIFFERENT** user [†](README.md#operating-system-conventions)UID/[‡](README.md#operating-system-conventions)SID as the build image.
-- The image config's `Label` field has the label `io.buildpacks.id` set to the target ID (e.g., "minimal") of the run image.
 - The image config's `Label` field has the label `io.buildpacks.base.maintainer` set to the name of the image maintainer.
 - The image config's `Label` field has the label `io.buildpacks.base.homepage` set to the homepage of the image.
 - The image config's `Label` field has the label `io.buildpacks.base.released` set to the release date of the image.
@@ -197,17 +196,26 @@ The platform SHOULD ensure that:
 
 ### Target Data
 
+For run images, the platform SHOULD ensure that:
+
+- The image config's `Label` field has the label `io.buildpacks.base.id` set to the target ID of the run image.
+
+**The target ID:**
+- MUST only contain numbers, letters, and the characters `.`, `/`, and `-`.
+- MUST NOT be identical to any other target ID when using a case-insensitive comparison.
+- SHOULD use reverse domain notation to avoid name collisions - i.e. buildpacks.io will be `io.buildpacks`.
+
 For both build images and run images, the platform MUST ensure that:
 
 - The image config's `os` and `architecture` fields are set to valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The build image config and the run image config both specify the same `os`, `architecture`, `variant` (if specified), `io.buildpacks.distribution.name` (if specified), and `io.buildpacks.distribution.version` (if specified).
+- The build image config and the run image config both specify the same `os`, `architecture`, `variant` (if specified), `io.buildpacks.base.distro.name` (if specified), and `io.buildpacks.base.distro.version` (if specified).
 
 The platform SHOULD ensure that:
 
 - The image config's `variant` field is set to a valid identifier as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md).
-- The image config's `Label` field has the label `io.buildpacks.distribution.name` set to the OS distribution and the label `io.buildpacks.distribution.version` set to the OS distribution version.
+- The image config's `Label` field has the label `io.buildpacks.base.distro.name` set to the OS distribution and the label `io.buildpacks.base.distro.version` set to the OS distribution version.
   - For Linux-based images, each label should contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information.
-  - For Windows-based images, `io.buildpacks.distribution.name` should be empty; `io.buildpacks.distribution.version` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
+  - For Windows-based images, `io.buildpacks.base.distro.name` should be empty; `io.buildpacks.base.distro.version` should contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`).
 
 ### Compatibility Guarantees
 
@@ -921,13 +929,13 @@ Usage:
   - `os`
   - `architecture`
   - `variant` (if specified)
-  - `io.buildpacks.distribution.name` (if specified)
-  - `io.buildpacks.distribution.version` (if specified)
-- **Else** they MUST match the old run image if `<force>` is `false`
+  - `io.buildpacks.base.distro.name` (if specified)
+  - `io.buildpacks.base.distro.version` (if specified)
+- **Else** the target data above MUST match the old run image if `<force>` is `false`
 - **If** `<force>` is `true` and the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
   - `run-image.image` SHALL be the provided `<run-image>`
   - `run-image.mirrors` SHALL be omitted
-- **Else** the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors` if `<force>` is `false`
+- **Else if** `<force> is `false`, the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
@@ -1213,7 +1221,7 @@ Where:
 - `image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 - `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
 - `run-image.image` MUST be the platform- or extension-provided image name
-- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.id`
+- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.base.id`
 - `run-image.target` contains the [target data](#target-data) for the image
   - If target distribution data is missing, it will be inferred from `/etc/os-release` for Linux images; furthermore, if the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
