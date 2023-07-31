@@ -451,6 +451,7 @@ Usage:
   [-build-image <build-image>] \
   [-cache-dir <cache-dir>] \
   [-cache-image <cache-image>] \
+  [-daemon] \ # sets <daemon>
   [-gid <gid>] \
   [-group <group>] \
   [-layers <layers>] \
@@ -467,6 +468,7 @@ Usage:
 | `<build-image>`* | `CNB_BUILD_IMAGE`    |                          | Reference to the current build image in an OCI registry (if used `<kaniko-dir>` must be provided) |
 | `<cache-dir>`    | `CNB_CACHE_DIR`      |                          | Path to a cache directory                                                                         |
 | `<cache-image>`  | `CNB_CACHE_IMAGE`    |                          | Reference to a cache image in an OCI registry                                                     |
+| `<daemon>`^      | `CNB_USE_DAEMON`     | `false`                  | Read additional target data for run image from docker daemon                                      |
 | `<gid>`          | `CNB_GROUP_ID`       |                          | Primary GID of the build image `User`                                                             |
 | `<group>`        | `CNB_GROUP_PATH`     | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                    |
 | `<kaniko-dir>`^  |                      |                          | Kaniko directory (must be `/kaniko`)                                                              |
