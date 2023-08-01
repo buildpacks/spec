@@ -59,6 +59,7 @@ Examples of a platform might include:
         - [Outputs](#outputs-7)
       - [`launcher`](#launcher)
         - [Inputs](#inputs-8)
+        - [Execution](#execution)
         - [Outputs](#outputs-8)
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
@@ -72,7 +73,9 @@ Examples of a platform might include:
     - [Environment](#environment)
       - [Buildpack Environment](#buildpack-environment)
         - [Stack-Provided Variables](#stack-provided-variables)
+        - [POSIX Path Variables](#posix-path-variables)
         - [User-Provided Variables](#user-provided-variables)
+        - [Operator-Defined Variables](#operator-defined-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
@@ -1011,38 +1014,46 @@ The following variables SHOULD be set in the lifecycle execution environment and
 | `CNB_STACK_ID`  | Chosen stack ID
 | `HOME`          | Current user's home directory
 
+##### POSIX Path Variables
+
 The following variables SHOULD be set in the lifecycle execution environment and MAY be modified by prior buildpacks before they are provided to a given buildpack:
 
-| Env Variable      | Layer Path   | Contents
-|-------------------|--------------|------------------
-| `PATH`            | `/bin`       | binaries
-| `LD_LIBRARY_PATH` | `/lib`       | shared libraries
-| `LIBRARY_PATH`    | `/lib`       | static libraries
-| `CPATH`           | `/include`   | header files
-| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files
+| Env Variable      | Layer Path   | Contents         |
+|-------------------|--------------|------------------|
+| `PATH`            | `/bin`       | binaries         |
+| `LD_LIBRARY_PATH` | `/lib`       | shared libraries |
+| `LIBRARY_PATH`    | `/lib`       | static libraries |
+| `CPATH`           | `/include`   | header files     |
+| `PKG_CONFIG_PATH` | `/pkgconfig` | pc files         |
 
 The platform SHOULD NOT assume any other stack-provided environment variables are inherited by the buildpack.
 
 ##### User-Provided Variables
+
 User-provided environment variables MUST be supplied by the platform as files in the `<platform>/env/` directory.
+
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
-User-provided environment variables MAY NOT be modified by prior buildpacks before they are provided to a given buildpack.
+User-provided environment variables that are [POSIX path variables](#posix-path-variables) MAY be modified by prior buildpacks before they are provided to a given buildpack,
+however the user-provided value is always prepended to the buildpack-provided value.
+
+User-provided environment variables that are not POSIX path variables MAY NOT be modified by prior buildpacks before they are provided to a given buildpack.
 
 The platform SHOULD NOT set user-provided environment variables directly in the lifecycle execution environment.
 
-The `<platform>/env/` directory follows the same convention as [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules).
-
 ##### Operator-Defined Variables
-Operator-provided environment varaiables MUST be supplied by the platform as files in the `<build-config>/env/` directory.
+
+Operator-provided environment variables MUST be supplied by the platform as files in the `<build-config>/env/` directory.
 
 Each file SHALL define a single environment variable, where the file name defines the key and the file contents define the value.
 
-Operator-defined environment variables MAY NOT be modified by prior buildpacks before they are provided to a given buildpack.
+The `<build-config>/env/` directory follows the [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules)
+outlined in the [Buildpack Interface Specification](buildpack.md), except for the modification behavior when no period-delimited suffix is provided; when no suffix is provided, the behavior is `default`.
+
+Operator-defined environment variables MAY be modified by prior buildpacks before they are provided to a given buildpack,
+however the operator-defined value is always applied after the buildpack-provided value.
 
 The platform SHOULD NOT set operator-provided environment variables directly in the lifecycle execution environment.
-
-The `<build-config>/env/` directory follows the [Environment Variable Modification Rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#environment-variable-modification-rules) outlined in the [Buildpack Interface Specification](buildpack.md), except for the modification behavior when no period-delimited suffix is provided; when no suffix is provided, the behavior is `default`.
 
 #### Launch Environment
 User-provided modifications to the process execution environment SHOULD be set directly in the lifecycle execution environment.
