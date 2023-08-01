@@ -146,6 +146,10 @@ The following is a non-exhaustive list of terms defined in the [OCI Distribution
 
 * **registry** - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#definitions
 
+* **image manifest** provides a configuration and set of layers for a single container image for a specific architecture and operating system.
+
+* **OCI Image Layout** format is the [directory structure](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) for OCI content-addressable blobs and [location-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage#Content-addressed_vs._location-addressed) references.
+
 ## Stacks
 
 A typical stack might specify:
@@ -300,6 +304,8 @@ Usage:
   [-gid <gid>] \
   [-launch-cache <launch-cache>] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-previous-image <previous-image> ] \
   [-run-image <run-image> ] \
@@ -320,6 +326,8 @@ Usage:
 | `<layers>`        | `CNB_LAYERS_DIR`      | `/layers`                | Path to layers directory
 | `<image>`         |                       |                          | Tag reference to which the app image will be written
 | `<launch-cache>`  | `CNB_LAUNCH_CACHE_DIR`|                          | Path to a cache directory containing launch layers
+| `<layout>`        | `CNB_USE_LAYOUT`      | false                    | (**[experimental](#experimental-features)**) Analyze image from disk in OCI layout format                                     
+| `<layout-dir>`    | `CNB_LAYOUT_DIR`      |                          | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format
 | `<log-level>`     | `CNB_LOG_LEVEL`       | `info`                   | Log Level
 | `<previous-image>`| `CNB_PREVIOUS_IMAGE`  | `<image>`                | Image reference to be analyzed (usually the result of the previous build)
 | `<run-image>`     | `CNB_RUN_IMAGE`       | resolved from `<stack>`  | Run image reference
@@ -341,6 +349,7 @@ Usage:
 - The lifecycle MUST write [analysis metadata](#analyzedtoml-toml) to `<analyzed>`, where:
   - `image` MUST describe the `<previous-image>`, if accessible
   - `run-image` MUST describe the `<run-image>`
+- **If** `<layout>` is `true`, `<layout-dir>` MUST be provided and the lifecycle MUST [resolve](#map-an-image-reference-to-a-path-in-the-layout-directory) `<run-image>` and `<previous-image>` following the rules to convert the reference to a path
 
 ##### Outputs
 | Output             | Description
@@ -623,6 +632,8 @@ Usage:
   [-launcher <launcher> ] \
   [-launcher-sbom <launcher-sbom> ] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
@@ -647,6 +658,8 @@ Usage:
 | `<launcher>`                    |                             | `/cnb/lifecycle/launcher`        | Path to the `launcher` executable                                                          |
 | `<launcher-sbom>`               |                             | `/cnb/lifecycle`                 | Path to directory containing SBOM files describing the `launcher` executable               |
 | `<layers>`                      | `CNB_LAYERS_DIR`            | `/layers`                        | Path to layer directory                                                                    |
+| `<layout>`                      | `CNB_USE_LAYOUT`            | false                            | (**[experimental](#experimental-features)**) Export image to disk in OCI layout format     |
+| `<layout-dir>`                  | `CNB_LAYOUT_DIR`            |                                  | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format |
 | `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
@@ -726,6 +739,9 @@ Usage:
    - SHALL write the contents of all cached layers and any provided layer-associated SBOM files to the cache
    - SHALL record the diffID and layer content metadata of all cached layers in the cache
 
+- **If** `<layout>` is `true` the lifecycle:
+   - SHALL write the app image on disk following the [rules](#map-an-image-reference-to-a-path-in-the-layout-directory) to convert the reference to a path
+
 #### `creator`
 The platform MUST execute `creator` in the **build environment**
 
@@ -741,6 +757,8 @@ Usage:
   [-launch-cache <launch-cache> ] \
   [-launcher <launcher> ] \
   [-layers <layers>] \
+  [-layout] \ # sets <layout>
+  [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
   [-order <order>] \
   [-platform <platform>] \
@@ -1077,6 +1095,18 @@ All app image labels SHOULD contain only reproducible values.
 
 For more information on build reproducibility see [https://reproducible-builds.org/](https://reproducible-builds.org/)
 
+### Map an image reference to a path in the layout directory
+
+An **image reference** refers to either a **tag reference** or a **digest reference**:
+- A tag reference refers to an identifier of form `<registry>/<repo>/<image>:<tag>`
+- A digest reference refers to a content addressable identifier of form `<registry>/<repo>/<image>@<algorithm>:<digest>`
+
+The image reference will be mapped to a path in the layout directory following these rules:
+  - **If** the image points to a tag reference:
+    - The path MUST be `<layout-dir>/<registry>/<repo>/<image>/<tag>`
+  - **Else if** the image points to a digest reference:
+    - The path MUST be `<layout-dir>/<registry>/<repo>/<image>/<algorithm>/<digest>`
+
 ## Data Format
 
 ### Files
@@ -1098,8 +1128,14 @@ For more information on build reproducibility see [https://reproducible-builds.o
 ```
 
 Where:
-- `previous-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
-- `run-image.reference` MUST be either a digest reference to an image in an OCI registry or the ID of an image in a docker daemon
+- `previous-image.reference` MUST be either: 
+  - A digest reference to an image in an OCI registry 
+  - The ID of an image in a docker daemon
+  - The path to an image in OCI layout format
+- `run-image.reference` MUST be either:
+  - A digest reference to an image in an OCI registry
+  - The ID of an image in a docker daemon
+  - The path to an image in OCI layout format
 - `previous-image.metadata` MUST be the TOML representation of the layer [metadata label](#iobuildpackslifecyclemetadata-json)
 
 #### `group.toml` (TOML)
