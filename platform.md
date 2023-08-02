@@ -1244,7 +1244,7 @@ The image reference will be mapped to a path in the layout directory following t
   os = "<OS name>"
   arch = "<architecture>"
   variant = "<architecture variant>"
-  [target.distribution]
+  [target.distro]
   name = "<OS distribution name>"
   version = "<OS distribution version>"
 
@@ -1268,8 +1268,8 @@ Where:
   - If target distribution data is missing, it will be inferred from `/etc/os-release` for Linux images; furthermore, if the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
     - `run-image.target.arch = "arm64"`
-    - `run-image.target.distribution.name = "ubuntu"`
-    - `run-image.target.distribution.version = "18.04"`
+    - `run-image.target.distro.name = "ubuntu"`
+    - `run-image.target.distro.version = "18.04"`
 
 #### `group.toml` (TOML)
 
