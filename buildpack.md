@@ -753,12 +753,11 @@ The following environment variables MUST be set by the lifecycle during the `det
 
 | Env Variable                | Description                                |
 |-----------------------------|--------------------------------------------|
-| `CNB_TARGET_ID`             | Identifier for the target image (optional) |
 | `CNB_TARGET_OS`             | Target OS                                  |
 | `CNB_TARGET_ARCH`           | Target architecture                        |
 | `CNB_TARGET_ARCH_VARIANT`   | Target architecture variant (optional)     |
 | `CNB_TARGET_DISTRO_NAME`    | Target OS distribution name (optional)     |
-| `CNB_TARGET_DISTRO_VERISON` | Target OS distribution version (optional)  |
+| `CNB_TARGET_DISTRO_VERSION` | Target OS distribution version (optional)  |
 
 #### Layer Paths
 
