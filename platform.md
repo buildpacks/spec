@@ -1240,7 +1240,6 @@ The image reference will be mapped to a path in the layout directory following t
   reference = "<image reference>"
   extend = false
   [target]
-  id = "<target identifer>"
   os = "<OS name>"
   arch = "<architecture>"
   variant = "<architecture variant>"
@@ -1263,7 +1262,6 @@ Where:
   - The ID of an image in a docker daemon
   - The path to an image in OCI layout format
 - `run-image.image` MUST be the platform- or extension-provided image name
-- `run-image.target.id` is optional and MUST be the value of the label `io.buildpacks.base.id`
 - `run-image.target` contains the [target data](#target-data) for the image
   - If target distribution data is missing, it will be inferred from `/etc/os-release` for Linux images; furthermore, if the image contains the label `io.buildpacks.stack.id` with value `io.buildpacks.stacks.bionic`, the lifecycle SHALL assume the following values:
     - `run-image.target.os = "linux"`
