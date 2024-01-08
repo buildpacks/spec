@@ -605,14 +605,15 @@ When extending the build image:
 | `1-10`, `13-19` | Generic lifecycle errors            |
 | `100-109`       | Extension-specific lifecycle errors |
 
-- For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<kind>/<buildpack-id>`, the lifecycle:
+- For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<buildpack-id>/<kind>.Dockerfile`, the lifecycle:
   - SHALL apply the Dockerfile to the environment according to the process outlined in the [Image Extension Specification](image-extension.md).
+  - SHALL set the Kaniko build context to the folder according to the process outlined in the [Image Extension Specification](image-extension.md).
 - The extended image MUST be an extension of:
   - The `build-image` in `<analyzed>` when `<kind>` is `build`, or
   - The `run-image` in `<analyzed>` when `<kind>` is `run`
-- When extending the build image, after all `build.Dockefile`s are applied, the lifecycle:
+- When extending the build image, after all `build.Dockerfile`s are applied, the lifecycle:
   - SHALL proceed with the `build` phase using the provided `<gid>` and `<uid>`
-- When extending the run image, after all `run.Dockefile`s are applied, the lifecycle:
+- When extending the run image, after all `run.Dockerfile`s are applied, the lifecycle:
   - **If** any `run.Dockerfile` set the label `io.buildpacks.rebasable` to `false` or left the label unset:
     - SHALL set the label `io.buildpacks.rebasable` to `false` on the extended run image
   - **If** after the final `run.Dockerfile` the run image user is `root`,
