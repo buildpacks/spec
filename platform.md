@@ -77,6 +77,7 @@ Examples of a platform might include:
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
+    - [Map an image reference to a path in the layout directory](#map-an-image-reference-to-a-path-in-the-layout-directory)
   - [Data Format](#data-format)
     - [Files](#files)
       - [`analyzed.toml` (TOML)](#analyzedtoml-toml)
@@ -443,9 +444,6 @@ The lifecycle:
 When image extensions are present in the order (optional and **[experimental](#experimental-features)**), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - SHALL filter the build plan with dependencies provided by image extensions.
-- SHALL copy any generated run.Dockerfiles to `<generated>/run/<image extension ID>/Dockerfile`.
-- SHALL copy any generated build.Dockerfiles to `<generated>/build/<image extension ID>/Dockerfile`.
-- SHALL copy any generated `<extend-config>` files to `<generated>/build/<image extension ID>/<extend-config>`.
 - SHALL replace `run-image` in `<analyzed>` with the selected run image. To select the run image, the lifecycle SHALL inspect each `run.Dockerfile` output by image extensions, in the order defined in `<group>`:
   - **If** all `run.Dockerfile`s declare `FROM ${base_image}`, the selected run image SHALL be the original run image in `<analyzed>`, with `extend = true`
   - **Else** the selected run image SHALL be the last image referenced in the `FROM` statement of the last `run.Dockerfile` not to declare `FROM ${base_image}`
@@ -457,6 +455,11 @@ When image extensions are present in the order (optional and **[experimental](#e
     - **Else**
       - `run-image.extend` SHALL be `true`
 - SHALL warn if the selected run image is not found in `<run>`
+- SHALL record `build-image` in `<analyzed>`
+  - **If** there are no `build.Dockerfile`s:
+    - `build-image.extend` SHALL be `false`
+  - **Else**
+    - `build-image.extend` SHALL be `true`
 
 #### `restorer`
 
