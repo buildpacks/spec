@@ -607,7 +607,7 @@ When extending the build image:
 
 - For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<buildpack-id>/<kind>.Dockerfile`, the lifecycle:
   - SHALL apply the Dockerfile to the environment according to the process outlined in the [Image Extension Specification](image-extension.md).
-  - SHALL set the Kaniko build context to the folder according to the process outlined in the [Image Extension Specification](image-extension.md).
+  - SHALL set the build context to the folder according to the process outlined in the [Image Extension Specification](image-extension.md).
 - The extended image MUST be an extension of:
   - The `build-image` in `<analyzed>` when `<kind>` is `build`, or
   - The `run-image` in `<analyzed>` when `<kind>` is `run`
