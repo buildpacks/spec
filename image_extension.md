@@ -105,10 +105,10 @@ Correspondingly, each `/bin/generate` executable:
 #### Context Folders
 
 - The `<output>/context` folder MUST NOT be created together with any combination of the image-specific folders.
-- If the folder `<output>/context` is present it will be set as Kaniko build context during the `extend` phase of the build and run images.
-- If the folder `<output>/context.run` is present it will be set as Kaniko build context during the `extend` phase of the run image only.
-- If the folder `<output>/context.build` is present it will be set as Kaniko build context during the `extend` phase of the build image only.
-- If none of these folders is not present, Kaniko build context defaults to the `<app>` folder.
+- If the folder `<output>/context` is present it will be set as the build context during the `extend` phase of the build and run images.
+- If the folder `<output>/context.run` is present it will be set as the build context during the `extend` phase of the run image only.
+- If the folder `<output>/context.build` is present it will be set as the build context during the `extend` phase of the build image only.
+- If none of these folders is not present, the build context defaults to the `<app>` folder.
 
 #### Dockerfile Requirements
 
