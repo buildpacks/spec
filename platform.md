@@ -702,6 +702,7 @@ Usage:
   [-layout] \ # sets <layout>
   [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
+  [-parallel] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
@@ -731,6 +732,7 @@ Usage:
 | `<layout>`                      | `CNB_USE_LAYOUT`            | false                            | (**[experimental](#experimental-features)**) Export image to disk in OCI layout format     |
 | `<layout-dir>`                  | `CNB_LAYOUT_DIR`            |                                  | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format |
 | `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                  |
+| `<parallel>`                    | `CNB_PARALLEL_EXPORT`       | false                            | Export app image and cache in parallel                                               |
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                          |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml) |
 | `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                      |
