@@ -1,4 +1,4 @@
-# Image Extension Interface Specification (**experimental**)
+# Image Extension Interface Specification
 
 This document specifies the interface between a lifecycle program and one or more image extensions.
 
