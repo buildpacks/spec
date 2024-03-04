@@ -40,7 +40,7 @@ Examples of a platform might include:
         - [Inputs](#inputs-2)
         - [Outputs](#outputs-2)
         - [Layer Restoration](#layer-restoration)
-      - [`extender` (optional and **experimental**)](#extender-optional-and-experimental)
+      - [`extender` (optional)](#extender-optional)
         - [Inputs](#inputs-3)
         - [Outputs](#outputs-3)
       - [`builder`](#builder)
@@ -77,6 +77,7 @@ Examples of a platform might include:
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
+    - [Map an image reference to a path in the layout directory](#map-an-image-reference-to-a-path-in-the-layout-directory)
   - [Data Format](#data-format)
     - [Files](#files)
       - [`analyzed.toml` (TOML)](#analyzedtoml-toml)
@@ -245,7 +246,7 @@ A single app image build* consists of the following phases:
 1. Analysis
 2. Detection
 3. Cache Restoration
-4. (Optional and Experimental) Base Image Extension
+4. (Optional) Base Image Extension
 5. Build*
 6. Export
 
@@ -253,7 +254,7 @@ A platform MUST execute these phases either by invoking the following phase-spec
 1. `/cnb/lifecycle/analyzer`
 2. `/cnb/lifecycle/detector`
 3. `/cnb/lifecycle/restorer`
-4. `/cnb/lifecycle/extender` (Optional and [Experimental](#experimental-features)) 
+4. `/cnb/lifecycle/extender` (Optional) 
 5. `/cnb/lifecycle/builder`
 6. `/cnb/lifecycle/exporter`
 
@@ -399,8 +400,8 @@ Usage:
 | `<app>`          | `CNB_APP_DIR`          | `/workspace`                                           | Path to application directory                                                                                                                                |
 | `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to build config directory                                                                                                                               |
 | `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
-| `<extensions>`^  | `CNB_EXTENSIONS_DIR`   | `/cnb/extensions`                                      | (**[experimental](#experimental-features)**) Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
-| `<generated>`^   | `CNB_GENERATED_DIR`    | `<layers>/generated`                                   | (**[experimental](#experimental-features)**) Path to output directory for generated Dockerfiles                                                              |
+| `<extensions>`^  | `CNB_EXTENSIONS_DIR`   | `/cnb/extensions`                                      | Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
+| `<generated>`^   | `CNB_GENERATED_DIR`    | `<layers>/generated`                                   | Path to output directory for generated Dockerfiles                                                              |
 | `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml`                                  | Path to output group definition                                                                                                                              |
 | `<layers>`       | `CNB_LAYERS_DIR`       | `/layers`                                              | Path to layers directory                                                                                                                                     |
 | `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                                                 | Log Level                                                                                                                                                    |
@@ -442,12 +443,9 @@ The lifecycle:
 - SHALL write the resolved build plan from the detected group to `<plan>`
 - SHALL provide `run-image.target` data in `<analyzed>` to buildpacks according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 
-When image extensions are present in the order (optional and **[experimental](#experimental-features)**), the lifecycle:
+When image extensions are present in the order (optional), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
 - SHALL filter the build plan with dependencies provided by image extensions.
-- SHALL copy any generated run.Dockerfiles to `<generated>/run/<image extension ID>/Dockerfile`.
-- SHALL copy any generated build.Dockerfiles to `<generated>/build/<image extension ID>/Dockerfile`.
-- SHALL copy any generated `<extend-config>` files to `<generated>/build/<image extension ID>/<extend-config>`.
 - SHALL replace `run-image` in `<analyzed>` with the selected run image. To select the run image, the lifecycle SHALL inspect each `run.Dockerfile` output by image extensions, in the order defined in `<group>`:
   - **If** all `run.Dockerfile`s declare `FROM ${base_image}`, the selected run image SHALL be the original run image in `<analyzed>`, with `extend = true`
   - **Else** the selected run image SHALL be the last image referenced in the `FROM` statement of the last `run.Dockerfile` not to declare `FROM ${base_image}`
@@ -459,6 +457,11 @@ When image extensions are present in the order (optional and **[experimental](#e
     - **Else**
       - `run-image.extend` SHALL be `true`
 - SHALL warn if the selected run image is not found in `<run>`
+- SHALL record `build-image` in `<analyzed>`
+  - **If** there are no `build.Dockerfile`s:
+    - `build-image.extend` SHALL be `false`
+  - **Else**
+    - `build-image.extend` SHALL be `true`
 
 #### `restorer`
 
@@ -526,7 +529,7 @@ Usage:
 - For each buildpack in `<group>`, if persistent metadata for that buildpack exists in the analysis metadata, lifecycle MUST write a toml representation of the persistent metadata to `<layers>/<buildpack-id>/store.toml`
 - **If** `<skip-layers>` is `true` the lifecycle MUST NOT perform layer restoration.
 - **Else** the lifecycle MUST perform [layer restoration](#layer-restoration) for any app image layers or cached layers created by any buildpack present in the provided `<group>`.
-- When `<build-image>` is provided (optional and **[experimental](#experimental-features)**), the lifecycle:
+- When `<build-image>` is provided (optional), the lifecycle:
   - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
   - MUST copy the OCI manifest and config file for `<build-image>` to `<kaniko-dir>/cache`
 - The lifecycle:
@@ -539,7 +542,7 @@ Usage:
 
 lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
 
-#### `extender` (optional and **[experimental](#experimental-features)**)
+#### `extender` (optional)
 
 If using `extender`, the platform MUST execute `extender` in either or both of: the **build environment**, the **run environment**
 
@@ -571,7 +574,7 @@ Usage:
 | `<build-config>`     | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                                  |
 | `<buildpacks>`*      | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))  |
 | `<extended>`**       | `CNB_EXTENDED_DIR`     | `<layers>/extended`      | Path to output directory for extended run image layers                                          |
-| `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`     | (**[experimental](#experimental-features)**) Path to directory containing generated Dockerfiles |
+| `<generated>`        | `CNB_GENERATED_DIR`    | `<layers>/generated`     | Path to directory containing generated Dockerfiles |
 | `<gid>`*             | `CNB_GROUP_ID`         |                          | Primary GID of the build image `User`                                                           |
 | `<group>`            | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                  |
 | `<kaniko-cache-ttl>` | `CNB_KANIKO_CACHE_TTL` | 2 weeks                  | Kaniko cache TTL                                                                                |
@@ -609,14 +612,15 @@ When extending the build image:
 | `1-10`, `13-19` | Generic lifecycle errors            |
 | `100-109`       | Extension-specific lifecycle errors |
 
-- For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<kind>/<buildpack-id>`, the lifecycle:
+- For each extension in `<group>` in order, if a Dockerfile exists in `<generated>/<buildpack-id>/<kind>.Dockerfile`, the lifecycle:
   - SHALL apply the Dockerfile to the environment according to the process outlined in the [Image Extension Specification](image-extension.md).
+  - SHALL set the build context to the folder according to the process outlined in the [Image Extension Specification](image-extension.md).
 - The extended image MUST be an extension of:
   - The `build-image` in `<analyzed>` when `<kind>` is `build`, or
   - The `run-image` in `<analyzed>` when `<kind>` is `run`
-- When extending the build image, after all `build.Dockefile`s are applied, the lifecycle:
+- When extending the build image, after all `build.Dockerfile`s are applied, the lifecycle:
   - SHALL proceed with the `build` phase using the provided `<gid>` and `<uid>`
-- When extending the run image, after all `run.Dockefile`s are applied, the lifecycle:
+- When extending the run image, after all `run.Dockerfile`s are applied, the lifecycle:
   - **If** any `run.Dockerfile` set the label `io.buildpacks.rebasable` to `false` or left the label unset:
     - SHALL set the label `io.buildpacks.rebasable` to `false` on the extended run image
   - **If** after the final `run.Dockerfile` the run image user is `root`,
@@ -703,6 +707,7 @@ Usage:
   [-layout] \ # sets <layout>
   [-layout-dir] \ # sets <layout-dir>
   [-log-level <log-level>] \
+  [-parallel] \
   [-process-type <process-type> ] \
   [-project-metadata <project-metadata> ] \
   [-report <report> ] \
@@ -733,6 +738,7 @@ Usage:
 | `<layout>`                      | `CNB_USE_LAYOUT`            | false                            | (**[experimental](#experimental-features)**) Export image to disk in OCI layout format                                |
 | `<layout-dir>`                  | `CNB_LAYOUT_DIR`            |                                  | (**[experimental](#experimental-features)**) Path to a root directory where the images are saved in OCI layout format |
 | `<log-level>`                   | `CNB_LOG_LEVEL`             | `info`                           | Log Level                                                                                                             |
+| `<parallel>`                    | `CNB_PARALLEL_EXPORT`       | false                            | Export app image and cache in parallel                                                                                |
 | `<process-type>`                | `CNB_PROCESS_TYPE`          |                                  | Default process type to set in the exported image                                                                     |
 | `<project-metadata>`            | `CNB_PROJECT_METADATA_PATH` | `<layers>/project-metadata.toml` | Path to a project metadata file (see [`project-metadata.toml`](#project-metadatatoml-toml)                            |
 | `<report>`                      | `CNB_REPORT_PATH`           | `<layers>/report.toml`           | Path to report (see [`report.toml`](#reporttoml-toml)                                                                 |
@@ -1368,7 +1374,7 @@ Where:
 - `entries` MAY be empty
 - Each entry:
     - MUST contain at least one buildpack or image extension in `providers`
-      - If the provider is an image extension (optional and **[experimental](#experimental-features)**), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
+      - If the provider is an image extension (optional), `extension` MUST be `true`; the value of `extension` MUST default to `false` if not specified
     - MUST contain at least one dependency requirement in `requires`
     - MUST exclusively contain dependency requirements with the same `<dependency name>`
 
