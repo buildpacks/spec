@@ -103,7 +103,7 @@ A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/buil
 
 A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
 
-An **image extension** (**experimental**) is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image-extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
+An **image extension** is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image-extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
 
 **Resolving an order** is the process by which an order (which may contain image extensions, component buildpacks, or composite buildpacks) is evaluated together with application source code to produce an optional group of image extensions and a required group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each image extension (if present) and the `/bin/detect` executable for each component buildpack is invoked.
 
@@ -1242,47 +1242,3 @@ If the `bom` array is used, the buildpack:
 When the build is complete, a legacy build BOM describing the build container MAY be generated for auditing purposes.
 
 If generated, this legacy build BOM MUST contain all `bom` entries in each `build.toml` at the end of each `/bin/build` execution, in adherence with the process and data format outlined in the [Platform Interface Specification](platform.md) for legacy BOM formats.
-
-### Build Plan (TOML) `requires.version` Key
-
-_Deprecated in Buildpack API 0.3._
-
-The `requires.version` and `or.requires.version` keys are deprecated.
-
-```toml
-[[requires]]
-name = "<dependency name>"
-version = "<dependency version>"
-
-[[or.requires]]
-name = "<dependency name>"
-version = "dependency version>"
-```
-
-To upgrade, buildpack authors SHOULD set `requires.version` as `requires.metadata.version` and `or.requires.version` as `or.requires.metadata.version`.
-
-```toml
-[[requires]]
-name = "<dependency name>"
-
-[requires.metadata]
-version = "<dependency version>"
-
-[[or.requires]]
-name = "<dependency name>"
-
-[or.requires.metadata]
-version = "<dependency version>"
-```
-
-If `requires.version` and `requires.metadata.version` or `or.requires.version` and `or.requires.metadata.version` are both defined then lifecycle will fail.
-
-For backwards compatibility, the lifecycle will produce a Buildpack Plan (TOML) that puts `version` in `entries.metadata` as long as `version` does not exist in `requires.metadata`.
-
-```toml
-[[entries]]
-name = "<dependency name>"
-
-[entries.metadata]
-version = "<dependency version>"
-```

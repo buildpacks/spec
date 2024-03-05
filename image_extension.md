@@ -1,4 +1,4 @@
-# Image Extension Interface Specification (**experimental**)
+# Image Extension Interface Specification
 
 This document specifies the interface between a lifecycle program and one or more image extensions.
 
@@ -89,8 +89,26 @@ Correspondingly, each `/bin/generate` executable:
 - MAY log output from the build process to `stdout`.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY write either or both of `build.Dockerfile` and `run.Dockerfile` to the `<output>` directory. This file MUST adhere to the requirements listed below.
+- MAY create the following folders in the `<output>` directory with an arbitrary content:
+  
+  either:
+
+  - `context`
+
+  or the image-specific folders:
+
+  - `context.run`
+  - `context.build`
 - MAY write key-value pairs to `<output>/extend-config.toml` that are provided as build args to build.Dockerfile when extending the build image.
 - MUST NOT write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section.
+
+#### Context Folders
+
+- The `<output>/context` folder MUST NOT be created together with any combination of the image-specific folders.
+- If the folder `<output>/context` is present it will be set as the build context during the `extend` phase of the build and run images.
+- If the folder `<output>/context.run` is present it will be set as the build context during the `extend` phase of the run image only.
+- If the folder `<output>/context.build` is present it will be set as the build context during the `extend` phase of the build image only.
+- If none of these folders is not present, the build context defaults to the `<app>` folder.
 
 #### Dockerfile Requirements
 
