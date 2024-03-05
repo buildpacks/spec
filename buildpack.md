@@ -500,7 +500,7 @@ The purpose of the generation phase is to generate Dockerfiles that can be used 
 
 ### Process
 
-See the [Image Extension Specification](#image-extension.md).
+See the [Image Extension Specification](#image_extension.md).
 
 ## Phase #4: Extension (image extensions only)
 
