@@ -1570,9 +1570,12 @@ _Deprecated in Platform API 0.12._
 
 For compatibility with older platforms and older buildpacks, base image authors SHOULD ensure for build images and run images:
 
-- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.id` set to the stack ID.
 - The image config's `Label` field has the label `io.buildpacks.stack.mixins` set to a JSON array containing mixin names for each mixin applied to the image.
+
+And for build images:
+
+- The image config's `Env` field has the environment variable `CNB_STACK_ID` set to the stack ID.
 
 Where `CNB_STACK_ID` SHALL be directly inherited by buildpacks without modification.
 
