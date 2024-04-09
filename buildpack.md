@@ -1108,8 +1108,8 @@ Each target in `targets`:
 - MUST identify a compatible runtime environment:
    - `os`, `arch`, and `variant` if provided MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
    - `distros` if provided MUST describe the OS distributions supported by the buildpack
-     - For Linux-based images, `distros.name` and `distros.versions` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
-     - For Windows-based images, `distros.name` SHOULD be empty; `distros.versions` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
+     - For Linux-based images, `distros.name` and `distros.version` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
+     - For Windows-based images, `distros.name` SHOULD be empty; `distros.version` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
    - Any field not provided will be interpreted as `<matches any>`
 
 If the `targets` list is empty, tools reading `buildpack.toml` will assume:
