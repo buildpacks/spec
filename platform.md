@@ -967,7 +967,7 @@ Usage:
 - **If** `<force>` is `true` and the provided `<run-image>` is not found in `runImage.image` or `runImage.mirrors`:
   - `run-image.image` SHALL be the provided `<run-image>`
   - `run-image.mirrors` SHALL be omitted
-- **Else if** `<force> is `false`, the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors`
+- **Else if** `<force>` is `false`, the provided `<run-image>` MUST be found in `runImage.image` or `runImage.mirrors`
 - To ensure [build reproducibility](#build-reproducibility), the lifecycle:
     - SHOULD set the `created` time in image config to a constant
 - The lifecycle SHALL write a [report](#reporttoml-toml) to `<report>` describing the rebased app image
