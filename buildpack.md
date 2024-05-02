@@ -264,8 +264,6 @@ Note that the lifecycle only restores layers from the cache, never from the prev
 
 \** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
 
-\*** If the app image is not found or it is missing cached metadata for a layer, the metadata will be restored from the cache, if found.
-
 Examples:
 * `build = true, cache = true, launch = true`:
 A Ruby buildpack provides the Ruby interpreter to a subsequent buildpack and additionally installs Ruby in the app image to support the application. The Ruby is restored from the cache on rebuild, and the Ruby buildpack can use layer metadata to ensure the correct version is present.
