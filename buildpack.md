@@ -251,20 +251,22 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata and SBOM** Restored | Layer Restored
-----------|----------|----------|------------------------------|---------------------
-true      | true     | true     | Yes - from the app image     | Yes* - from the cache
-true      | true     | false    | Yes - from the cache         | Yes - from the cache
-true      | false    | true     | No                           | No
-true      | false    | false    | No                           | No
-false     | true     | true     | Yes - from the app image     | Yes* - from the cache
-false     | true     | false    | Yes - from the cache         | Yes - from the cache
-false     | false    | true     | Yes - from the app image     | No
-false     | false    | false    | No                           | No
+| `build` | `cache` | `launch` | Metadata and SBOM** Restored | Layer Restored        |
+| ------- | ------- | -------- | ---------------------------- | --------------------- |
+| true    | true    | true     | Yes - from the app image***  | Yes* - from the cache |
+| true    | true    | false    | Yes - from the cache         | Yes - from the cache  |
+| true    | false   | true     | No                           | No                    |
+| true    | false   | false    | No                           | No                    |
+| false   | true    | true     | Yes - from the app image***  | Yes* - from the cache |
+| false   | true    | false    | Yes - from the cache         | Yes - from the cache  |
+| false   | false   | true     | Yes - from the app image     | No                    |
+| false   | false   | false    | No                           | No                    |
 
-\* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
+\* If the previous image was found, the metadata and layer are restored only if the layer SHA recorded in the image matches the layer SHA recorded in the cache.
 
 \** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
+
+\*** If the app image is not found or it is missing cached metadata for a layer, the metadata will be restored from the cache, if found.
 
 Examples:
 * `build = true, cache = true, launch = true`:
