@@ -262,8 +262,6 @@ Note that the lifecycle only restores layers from the cache, never from the prev
 | false   | false   | true     | Yes - from the app image     | No                    |
 | false   | false   | false    | No                           | No                    |
 
-\* If the previous image was found, the metadata and layer are restored only if the layer SHA recorded in the image matches the layer SHA recorded in the cache.
-
 \** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
 
 \*** If the app image is not found or it is missing cached metadata for a layer, the metadata will be restored from the cache, if found.
