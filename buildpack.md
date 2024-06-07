@@ -224,10 +224,10 @@ OR
 Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
 
 | Input                                          | Description
-|------------------------------------------------|----------------------------------------------
+|------------------------------------------------|----------------------------------------------------------------------------------
 | `$0`                                           | Absolute path of the executable
-| [†](README.md#linux-only)FD 3                  | A third open file descriptor
-| [‡](README.md#windows-only) `<handle>`         | An additional open handle
+| [†](README.md#linux-only)FD 3                  | A third open file descriptor inherited by `<executable>` from the calling process
+| [‡](README.md#windows-only) `<handle>`         | An additional open handle inherited by `<executable>` from the calling process
 | [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Hexidecimal number for `<handle>`
 
 | Output             | Description
@@ -921,7 +921,7 @@ For each label, the buildpack:
 
 The lifecycle MUST add each label as an image label on the created image metadata.
 
-If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label definition ordered by buildpack execution for the image label.
 
 For each process, the buildpack:
 
