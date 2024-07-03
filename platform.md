@@ -479,7 +479,8 @@ Usage:
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
-  [-uid <uid>]
+  [-uid <uid>] \
+  [-run <run> ]
 ```
 
 ##### Inputs
@@ -499,10 +500,12 @@ Usage:
 | `<log-level>`            | `CNB_LOG_LEVEL`           | `info`                   | Log Level                                                                                         |
 | `<skip-layers>`          | `CNB_SKIP_LAYERS`         | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
 | `<uid>`                  | `CNB_USER_ID`             |                          | UID of the build image `User`                                                                     |
-
+| `<run>`**                | `CNB_RUN_PATH`            | `/cnb/run.toml`          | Path to run file (see [`run.toml`](#runtoml-toml))                                                |
 > ^ Only needed when using image extensions
 
 > \* Only needed when using image extensions to extend the build image
+
+> \** Only needed when using image extensions to extend the run image
 
 ##### Outputs
 
