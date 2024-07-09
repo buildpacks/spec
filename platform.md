@@ -479,7 +479,8 @@ Usage:
   [-layers <layers>] \
   [-log-level <log-level>] \
   [-skip-layers <skip-layers>] \
-  [-uid <uid>]
+  [-uid <uid>] \
+  [-run <run> ]
 ```
 
 ##### Inputs
@@ -499,10 +500,12 @@ Usage:
 | `<log-level>`            | `CNB_LOG_LEVEL`           | `info`                   | Log Level                                                                                         |
 | `<skip-layers>`          | `CNB_SKIP_LAYERS`         | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
 | `<uid>`                  | `CNB_USER_ID`             |                          | UID of the build image `User`                                                                     |
-
+| `<run>`**                | `CNB_RUN_PATH`            | `/cnb/run.toml`          | Path to run file (see [`run.toml`](#runtoml-toml))                                                |
 > ^ Only needed when using image extensions
 
 > \* Only needed when using image extensions to extend the build image
+
+> \** Only needed when using image extensions to extend the run image
 
 ##### Outputs
 
@@ -533,7 +536,7 @@ Usage:
   - MUST record the digest reference to the provided `<build-image>` in `<analyzed>`
   - MUST copy the OCI manifest and config file for `<build-image>` to `<kaniko-dir>/cache`
 - The lifecycle:
-  - MUST resolve `run-image.reference` to a digest reference in `<analyzed>` if not present
+  - MUST [resolve mirrors](#run-image-resolution) for the `run-image.reference` in `<analyzed>` and resolve it to a digest reference
   - MUST populate `run-image.target` data in `<analyzed>` if not present
   - **If** `<analyzed>` has `run-image.extend = true`, the lifecycle:
     - MUST download from the registry and save in OCI layout format the `run-image` in `<analyzed>` to `<kaniko-dir>/cache`
