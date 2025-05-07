@@ -1337,7 +1337,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
-exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
+exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1459,7 +1459,7 @@ Where:
       "direct": false,
       "working-dir": "<working-dir>",
       "buildpackID": "<buildpack ID>",
-      "exec-env": ["<execution environment>", ...] // Optional. If not specified, applies to all execution environments
+      "exec-env": ["<execution environment>"] // Optional. If not specified, applies to all execution environments
     }
   ],
   "buildpacks": [
