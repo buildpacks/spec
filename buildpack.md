@@ -927,7 +927,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 default = false
 working-dir = "<working directory>"
-exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
+exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1042,7 +1042,7 @@ name = "<dependency name>"
   cache = false
 
 [metadata]
-  exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
+  exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
   # other buildpack-specific data
 ```
 
@@ -1081,7 +1081,7 @@ optional = false
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
-exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
+exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
 [[targets.distros]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
