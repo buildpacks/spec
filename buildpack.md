@@ -138,6 +138,26 @@ Any combination of the three layer types are valid for a particular layer direct
 The following specifies the interface implemented by component buildpacks.
 The lifecycle MUST invoke executables in component buildpacks as described in the Phase sections.
 
+### Execution Environments
+
+Execution environments define the context in which a buildpack-created application is intended to run. Standard values include:
+- `production`: The default environment, optimized for running applications in production.
+- `test`: Environment optimized for testing applications.
+- `development`: Environment optimized for development workflows.
+
+Buildpacks SHOULD adapt their behavior based on the `CNB_EXEC_ENV` environment variable during detection and build phases. This may include:
+- Installing different dependencies
+- Configuring different build options
+- Creating different launch processes
+- Providing environment-specific layers
+
+Buildpacks MAY optimize their output based on the execution environment:
+- A buildpack MAY mark processes as applicable only to specific execution environments
+- A buildpack MAY create layers that are specific to certain execution environments
+- A buildpack MAY use different build strategies depending on the execution environment
+
+When the `CNB_EXEC_ENV` environment variable is not set, buildpacks MUST assume the default value of `production`.
+
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
@@ -166,6 +186,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | `$0`                     |            | Absolute path of `/bin/detect` executable         |
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
+| `$CNB_EXEC_ENV`          |            | Target execution environment ("production", "test", "development") |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
@@ -187,6 +208,7 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
+| `$CNB_EXEC_ENV`          |            | Target execution environment ("production", "test", "development")            |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
@@ -905,6 +927,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 default = false
 working-dir = "<working directory>"
+exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1019,7 +1042,8 @@ name = "<dependency name>"
   cache = false
 
 [metadata]
-# buildpack-specific data
+  exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
+  # other buildpack-specific data
 ```
 
 For a given layer, the buildpack MAY specify:
@@ -1057,6 +1081,7 @@ optional = false
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
+exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
 [[targets.distros]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
@@ -1105,6 +1130,7 @@ A buildpack descriptor SHOULD specify `targets`.
 Each target in `targets`:
 - MUST identify a compatible runtime environment:
    - `os`, `arch`, and `variant` if provided MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
+   - `exec-env` if provided MUST specify one or more execution environments for which the buildpack is compatible (e.g., "production", "test", "development")
    - `distros` if provided MUST describe the OS distributions supported by the buildpack
      - For Linux-based images, `distros.name` and `distros.version` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
      - For Windows-based images, `distros.name` SHOULD be empty; `distros.version` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
