@@ -130,6 +130,8 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
+An **execution environment** refers to the context in which an application is intended to run. Standard values include "production", "test", and "development". Production is the default if not specified.
+
 An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
 A **stack** (deprecated, see [deprecations](#deprecations)) is a contract, implemented by a **build image** and **run image**, that guarantees properties of the **build environment** and **app image**.
@@ -400,6 +402,7 @@ Usage:
 | `<app>`          | `CNB_APP_DIR`          | `/workspace`                                           | Path to application directory                                                                                                                                |
 | `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`                                    | Path to build config directory                                                                                                                               |
 | `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`                                      | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout))                                                               |
+| `<exec-env>`     | `CNB_EXEC_ENV`         | `production`                                           | Target execution environment. Standard values: "production", "test", "development".                                                                           |
 | `<extensions>`^  | `CNB_EXTENSIONS_DIR`   | `/cnb/extensions`                                      | Path to image extensions directory (see [Image Extensions Directory Layout](#image-extensions-directory-layout) |
 | `<generated>`^   | `CNB_GENERATED_DIR`    | `<layers>/generated`                                   | Path to output directory for generated Dockerfiles                                                              |
 | `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml`                                  | Path to output group definition                                                                                                                              |
@@ -656,6 +659,7 @@ Usage:
 | `<app>`          | `CNB_APP_DIR`          | `/workspace`             | Path to application directory                                                                  |
 | `<build-config>` | `CNB_BUILD_CONFIG_DIR` | `/cnb/build-config`      | Path to build config directory                                                                 |
 | `<buildpacks>`   | `CNB_BUILDPACKS_DIR`   | `/cnb/buildpacks`        | Path to buildpacks directory (see [Buildpacks Directory Layout](#buildpacks-directory-layout)) |
+| `<exec-env>`     | `CNB_EXEC_ENV`         | `production`             | Target execution environment. Standard values: "production", "test", "development".            |
 | `<group>`        | `CNB_GROUP_PATH`       | `<layers>/group.toml`    | Path to group definition (see [`group.toml`](#grouptoml-toml))                                 |
 | `<layers>`       | `CNB_LAYERS_DIR`       | `/layers`                | Path to layers directory                                                                       |
 | `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                      |
@@ -988,6 +992,7 @@ Usage:
 | Input                              | Environment Variable | Default Value | Description                                               |
 |------------------------------------|----------------------|---------------|-----------------------------------------------------------|
 | `<app>`                            | `CNB_APP_DIR`        | `/workspace`  | Path to application directory                             |
+| `<exec-env>`                       | `CNB_EXEC_ENV`       | `production`  | Target execution environment. Standard values: "production", "test", "development". |
 | `<layers>`                         | `CNB_LAYERS_DIR`     | `/layers`     | Path to layer directory                                   |
 | `<process-type>`                   |                      |               | `type` of process to launch                               |
 | `<direct>`                         |                      |               | Process execution strategy                                |
@@ -1004,7 +1009,11 @@ The launcher:
 - **If** the final path element in `$0`, matches the type of any buildpack-provided process type
     - `<process-type>` SHALL be the final path element in `$0`
     - The lifecycle:
-        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml`
+        - MUST select the process with type equal to `<process-type>` from `<layers>/config/metadata.toml` that is eligible for the current execution environment
+        - **If** no process with the requested type is eligible for the current execution environment, the lifecycle MUST fail
+        - A process is considered eligible for the current execution environment if:
+          - It has no execution environment specified in `exec-env`, OR
+          - Its `exec-env` includes the value of `<exec-env>`
         - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
         - **If** the buildpack that provided the process supports default process args
           - `<direct>` SHALL be `true`
@@ -1328,6 +1337,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
+exec-env = ["<execution environment>", ...] # Optional. If not specified, applies to all execution environments
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1448,7 +1458,8 @@ Where:
       ],
       "direct": false,
       "working-dir": "<working-dir>",
-      "buildpackID": "<buildpack ID>"
+      "buildpackID": "<buildpack ID>",
+      "exec-env": ["<execution environment>", ...] // Optional. If not specified, applies to all execution environments
     }
   ],
   "buildpacks": [
@@ -1498,6 +1509,7 @@ Where:
   "config": {
     "sha": "<config-layer-diffID>"
   },
+  "exec-env": "<execution environment>",
   "launcher": {
     "sha": "<launcher-layer-diffID>"
   },
