@@ -158,6 +158,10 @@ Buildpacks MAY optimize their output based on the execution environment:
 
 When the `CNB_EXEC_ENV` environment variable is not set, buildpacks MUST assume the default value of `production`.
 
+The value of `CNB_EXEC_ENV` MUST NOT contain the character `/` as it is reserved for future use.
+
+When a platform builds an application with a different execution environment than was used in a previous build, the platform SHOULD NOT restore layers from the previous build's image. The lifecycle MAY ignore layer metadata from previous builds with different execution environments to ensure proper environment-specific behaviors are maintained.
+
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
