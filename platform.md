@@ -130,7 +130,7 @@ A **launcher layer** refers to a layer in the app OCI image containing the **lau
 
 The **launcher** refers to a lifecycle executable packaged in the **app image** for the purpose of executing processes at runtime.
 
-An **execution environment** refers to the context in which an application is intended to run. Standard values include "production", "test", and "development". Production is the default if not specified.
+An **execution environment** refers to the context in which an application is intended to run. Standard values include "production", "test", and "development". Production is the default if not specified. The value MUST NOT contain the character `/` as it is reserved for future use.
 
 An **image extension** refers to software compliant with the [Image Extension Interface Specification](image_extension.md). Image extensions participate in detection and execute before the buildpack build process.
 
@@ -546,7 +546,9 @@ Usage:
 
 ##### Layer Restoration
 
-lifeycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
+The lifecycle MUST use the provided `cache-dir` or `cache-image` to retrieve cache contents. The [rules](https://github.com/buildpacks/spec/blob/main/buildpack.md#layer-types) for restoration MUST be followed when determining how and when to store cache layers.
+
+When a platform builds an application with a different execution environment than was used in a previous build (different value of `CNB_EXEC_ENV`), the platform SHOULD NOT restore layers from the previous build's image. The lifecycle MAY ignore layer metadata from previous builds with different execution environments to ensure proper environment-specific behaviors are maintained.
 
 #### `extender` (optional)
 
@@ -1013,7 +1015,8 @@ The launcher:
         - **If** no process with the requested type is eligible for the current execution environment, the lifecycle MUST fail
         - A process is considered eligible for the current execution environment if:
           - It has no execution environment specified in `exec-env`, OR
-          - Its `exec-env` includes the value of `<exec-env>`
+          - Its `exec-env` includes the value of `<exec-env>`, OR
+          - Its `exec-env` includes the special value `"*"` which indicates compatibility with all execution environments
         - MUST set `<working-dir>` to the value defined for the process in `<layers>/config/metadata.toml`, or to `<app>` if not defined
         - **If** the buildpack that provided the process supports default process args
           - `<direct>` SHALL be `true`
@@ -1337,7 +1340,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
-exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
+exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments. The special value "*" indicates compatibility with all execution environments. If exec-env is ["*"] or not specified, the process is eligible for all execution environments.
 
 [[slices]]
 paths = ["<app sub-path glob>"]
