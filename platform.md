@@ -409,7 +409,6 @@ Usage:
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`                                            | Path to platform directory                                                                                                                                   |
 | `<run>`^         | `CNB_RUN_PATH`         | `/cnb/run.toml`                                        | Path to run file (see [`run.toml`](#runtoml-toml))                                                                                                           |
-|                  | `CNB_EXEC_ENV`         | `production`                                           | Target execution environment ("production", "test", "development")                                                                                            |
 
 > ^Only needed when using image extensions
 
@@ -443,10 +442,6 @@ The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
 - SHALL write the resolved build plan from the detected group to `<plan>`
 - SHALL provide `run-image.target` data in `<analyzed>` to buildpacks according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
-- When `CNB_EXEC_ENV` is set and differs from a previous build's execution environment:
-  - The lifecycle SHALL skip buildpacks that do not support the current execution environment
-  - If all buildpacks in a group are skipped due to execution environment mismatch, the lifecycle SHALL continue to the next group in the order
-  - The lifecycle SHOULD NOT restore layers from previous builds with different execution environments
 
 When image extensions are present in the order (optional), the lifecycle:
 - SHALL execute all image extensions in the order defined in `<group>` according to the process outlined in the [Buildpack Interface Specification](buildpack.md).
@@ -506,7 +501,6 @@ Usage:
 | `<skip-layers>`          | `CNB_SKIP_LAYERS`         | `false`                  | Do not perform [layer restoration](#layer-restoration)                                            |
 | `<uid>`                  | `CNB_USER_ID`             |                          | UID of the build image `User`                                                                     |
 | `<run>`**                | `CNB_RUN_PATH`            | `/cnb/run.toml`          | Path to run file (see [`run.toml`](#runtoml-toml))                                                |
-|                          | `CNB_EXEC_ENV`            | `production`             | Target execution environment ("production", "test", "development")                                 |
 > ^ Only needed when using image extensions
 
 > \* Only needed when using image extensions to extend the build image
@@ -594,7 +588,6 @@ Usage:
 | `<plan>`*            | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                 |
 | `<platform>`         | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                      |
 | `<uid>`*             | `CNB_USER_ID`          |                          | UID of the build image `User`                                                                   |
-|                      | `CNB_EXEC_ENV`         | `production`             | Target execution environment ("production", "test", "development")                               |
 
 > \* Only needed when extending the build image
 
@@ -668,7 +661,6 @@ Usage:
 | `<log-level>`    | `CNB_LOG_LEVEL`        | `info`                   | Log Level                                                                                      |
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`     | Path to resolved build plan (see [`plan.toml`](#plantoml-toml))                                |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`              | Path to platform directory                                                                     |
-|                  | `CNB_EXEC_ENV`         | `production`             | Target execution environment ("production", "test", "development")                              |
 
 ##### Outputs
 
@@ -1336,7 +1328,6 @@ command = ["<command>"]
 args = ["<arguments>"]
 direct = false
 working-dir = "<working directory>"
-exec-env = ["<execution environment>"]
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -1345,8 +1336,6 @@ paths = ["<app sub-path glob>"]
 Where:
 - `id`, `version`, and `api` MUST be present for each buildpack
 - `processes` contains the complete set of processes contributed by all buildpacks
-  - `exec-env` field MUST be set to `["*"]` if the process applies to all execution environments
-  - `exec-env` field MUST contain specific execution environment values if the process is restricted to certain environments
 - `slices` contains the complete set of slices defined by all buildpacks
 
 #### `order.toml` (TOML)
@@ -1459,7 +1448,6 @@ Where:
       ],
       "direct": false,
       "working-dir": "<working-dir>",
-      "exec-env": ["<execution-environment>"],
       "buildpackID": "<buildpack ID>"
     }
   ],
