@@ -446,7 +446,9 @@ Usage:
 
 When `<system>` is provided (optional), the lifecycle:
 - SHALL merge the `system.pre.buildpacks` group with each group from `<order>` such that the `pre` buildpacks are placed at the beginning of each order group before running detection.
+  - System buildpacks in `pre` SHALL NOT be merged if the group already contains a buildpack with the same ID.
 - SHALL merge the `system.post.buildpacks` group with each group from `<order>` such that the `post` buildpacks are placed at the end of each order group before running detection.
+  - System buildpacks in `post` SHALL NOT be merged if the group already contains a buildpack with the same ID.
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
