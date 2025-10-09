@@ -1448,10 +1448,12 @@ Where:
 [[system.pre.buildpacks]]
   id = "<buildpack ID>"
   version = "<buildpack version>"
+  optional = false
 
 [[system.post.buildpacks]]
   id = "<buildpack ID>"
   version = "<buildpack version>"
+  optional = false
 ```
 
 Where:
@@ -1459,6 +1461,7 @@ Where:
 - `system.pre.buildpacks` MAY contain a list of buildpacks to insert at the beginning of every order group before detection.
 - `system.post.buildpacks` MAY contain a list of buildpacks to insert at the end of every order group before detection.
 - Both `id` and `version` MUST be present for each buildpack object in `system.pre.buildpacks` and `system.post.buildpacks`.
+- The value of `optional` MUST default to `false` if not specified.
 
 ### Labels
 
