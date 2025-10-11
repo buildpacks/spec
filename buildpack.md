@@ -816,7 +816,7 @@ The following additional environment variables MUST NOT be overridden by the lif
 | `HOME`                 | Current user's home directory                     | [x]    | [x]   | [x]    |
 
 During the detection and build phases, the lifecycle MUST provide as environment variables any user-provided files in `<platform>/env/` with environment variable names and contents matching the file names and contents.
-During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `CNB_PLATFORM_DIR/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
+During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `<platform>/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
 
 When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`. The user-provided files in `<platform>/env/` contents will still be available.
 
