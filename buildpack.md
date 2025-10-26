@@ -190,7 +190,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | `$0`                     |            | Absolute path of `/bin/detect` executable         |
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
-| `$CNB_EXEC_ENV`          |            | Target execution environment ("production", "test", "development") |
+| `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development") |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
@@ -212,7 +212,7 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
-| `$CNB_EXEC_ENV`          |            | Target execution environment ("production", "test", "development")            |
+| `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development")            |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
@@ -962,6 +962,7 @@ For each process, the buildpack:
   - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
+- MAY specify an `exec-env` array to restrict the process to specific execution environments. If `exec-env` is not specified, the process applies to all execution environments.
 
 [^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied together with any user-provided arguments.
 In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
@@ -1056,6 +1057,7 @@ For a given layer, the buildpack MAY specify:
 
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
+- An `exec-env` array in the `[metadata]` section to restrict the layer to specific execution environments. If `exec-env` is not specified, the layer applies to all execution environments.
 
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
