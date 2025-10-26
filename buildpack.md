@@ -1077,17 +1077,20 @@ sbom-formats = [ "<string>" ]
 type = "<string>"
 uri = "<uri>"
 
+[[buildpack.exec-env]]
+name = "<execution environment>"
+
 [[order]]
 [[order.group]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
+exec-env = ["<execution environment>"]
 
 [[targets]]
 os = "<OS name>"
 arch = "<architecture>"
 variant = "<architecture variant>"
-exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
 [[targets.distros]]
 name = "<OS distribution name>"
 version = "<OS distribution version>"
@@ -1124,6 +1127,12 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 - `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
 - `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
+**The buildpack execution environments:**
+
+The `[[buildpack.exec-env]]` table is optional and MAY contain a list of execution environments that the buildpack supports where:
+
+- `name` - This MUST specify an execution environment name (e.g., "production", "test", "development").
+
 **The buildpack SBOM:**
 
 *Key: `sbom-formats = [ "<string>" ]`*
@@ -1136,7 +1145,6 @@ A buildpack descriptor SHOULD specify `targets`.
 Each target in `targets`:
 - MUST identify a compatible runtime environment:
    - `os`, `arch`, and `variant` if provided MUST be valid identifiers as defined in the [OCI Image Specification](https://github.com/opencontainers/image-spec/blob/main/config.md)
-   - `exec-env` if provided MUST specify one or more execution environments for which the buildpack is compatible (e.g., "production", "test", "development")
    - `distros` if provided MUST describe the OS distributions supported by the buildpack
      - For Linux-based images, `distros.name` and `distros.version` SHOULD contain the values specified in `/etc/os-release` (`$ID` and `$VERSION_ID`), as the `os.version` field in an image config may contain combined distribution and version information
      - For Windows-based images, `distros.name` SHOULD be empty; `distros.version` SHOULD contain the value of `os.version` in the image config (e.g., `10.0.14393.1066`)
@@ -1152,6 +1160,8 @@ Metadata specified in `[[targets]]` is validated against the runtime and build-t
 #### Order
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`. The `order` MUST include only buildpacks and MUST NOT include image extensions.
+
+A buildpack reference inside of a `group` MAY contain an `exec-env` array to specify the execution environments for which the buildpack applies.
 
 ### Exec.d Output (TOML)
 ```
