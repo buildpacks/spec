@@ -88,6 +88,7 @@ Examples of a platform might include:
       - [`project-metadata.toml` (TOML)](#project-metadatatoml-toml)
       - [`report.toml` (TOML)](#reporttoml-toml)
       - [`run.toml` (TOML)](#runtoml-toml)
+      - [`system.toml` (TOML)](#systemtoml-toml)
     - [Labels](#labels)
       - [`io.buildpacks.build.metadata` (JSON)](#iobuildpacksbuildmetadata-json)
       - [`io.buildpacks.lifecycle.metadata` (JSON)](#iobuildpackslifecyclemetadata-json)
@@ -389,7 +390,8 @@ Usage:
   [-order <order>] \
   [-plan <plan>] \
   [-platform <platform>] \
-  [-run <run> ]
+  [-run <run> ] \
+  [-system <system>]
 ```
 
 ##### Inputs
@@ -409,6 +411,7 @@ Usage:
 | `<plan>`         | `CNB_PLAN_PATH`        | `<layers>/plan.toml`                                   | Path to output resolved build plan                                                                                                                           |
 | `<platform>`     | `CNB_PLATFORM_DIR`     | `/platform`                                            | Path to platform directory                                                                                                                                   |
 | `<run>`^         | `CNB_RUN_PATH`         | `/cnb/run.toml`                                        | Path to run file (see [`run.toml`](#runtoml-toml))                                                                                                           |
+| `<system>`       | `CNB_SYSTEM_PATH`      | `/cnb/system.toml`                                     | Path to system buildpacks file (see [`system.toml`](#systemtoml-toml))                                                                                       |
 
 > ^Only needed when using image extensions
 
@@ -437,6 +440,12 @@ Usage:
 | `22-29`         | Detection-specific lifecycle errors                                               |
 | `91`            | Extension generate error                                                          |
 | `92-99`         | Generation-specific lifecycle errors                                              |
+
+When `<system>` is provided (optional), the lifecycle:
+- SHALL merge the `system.pre.buildpacks` group with each group from `<order>` such that the `pre` buildpacks are placed at the beginning of each order group before running detection.
+  - System buildpacks in `pre` SHALL NOT be merged if the group already contains a buildpack with the same ID.
+- SHALL merge the `system.post.buildpacks` group with each group from `<order>` such that the `post` buildpacks are placed at the end of each order group before running detection.
+  - System buildpacks in `post` SHALL NOT be merged if the group already contains a buildpack with the same ID.
 
 The lifecycle:
 - SHALL detect a single group from `<order>` and write it to `<group>` using the [detection process](buildpack.md#phase-1-detection) outlined in the Buildpack Interface Specification
@@ -1432,6 +1441,27 @@ Where:
 - All `image.mirrors`:
   - SHOULD reference an image with ID identical to that of `image.image`
 - `image.image` and `image.mirrors.[]` SHOULD each refer to a unique registry
+
+#### `system.toml` (TOML)
+
+```toml
+[[system.pre.buildpacks]]
+  id = "<buildpack ID>"
+  version = "<buildpack version>"
+  optional = false
+
+[[system.post.buildpacks]]
+  id = "<buildpack ID>"
+  version = "<buildpack version>"
+  optional = false
+```
+
+Where:
+
+- `system.pre.buildpacks` MAY contain a list of buildpacks to insert at the beginning of every order group before detection.
+- `system.post.buildpacks` MAY contain a list of buildpacks to insert at the end of every order group before detection.
+- Both `id` and `version` MUST be present for each buildpack object in `system.pre.buildpacks` and `system.post.buildpacks`.
+- The value of `optional` MUST default to `false` if not specified.
 
 ### Labels
 
