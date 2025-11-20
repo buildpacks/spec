@@ -191,6 +191,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
 | `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development") |
+| `$CNB_OTEL_TRACEPARENT`  | AR         | W3C Trace Context traceparent for trace correlation (optional) |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
@@ -201,6 +202,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | Standard output        | Logs (info)                                 |
 | Standard error         | Logs (warnings, errors)                     |
 | `$CNB_BUILD_PLAN_PATH` | Contributions to the the Build Plan (TOML)  |
+| `$CNB_LAYERS_DIR/tracing/buildpacks/<id>@<version>-detect.jsonl` | Buildpack telemetry in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 
 ###  Build
 
@@ -213,6 +215,7 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
 | `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development")            |
+| `$CNB_OTEL_TRACEPARENT`  | AR         | W3C Trace Context traceparent for trace correlation (optional)                |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
@@ -240,6 +243,7 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `exec.d`) for the launched process                                      |
 | `$CNB_LAYERS_DIR/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/*`                     | Other content for launch and/or subsequent buildpacks                                                            |
+| `$CNB_LAYERS_DIR/tracing/buildpacks/<id>@<version>-build.jsonl` | Buildpack telemetry in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 
 ### Exec.d
 
