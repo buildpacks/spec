@@ -100,6 +100,7 @@ Correspondingly, each `/bin/generate` executable:
   - `context.run`
   - `context.build`
 - MAY write key-value pairs to `<output>/extend-config.toml` that are provided as build args to build.Dockerfile when extending the build image.
+- MAY write telemetry data to `<layers>/tracing/extensions/<id>@<version>-detect.jsonl` or `<layers>/tracing/extensions/<id>@<version>-generate.jsonl` in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/).
 - MUST NOT write SBOM (Software-Bill-of-Materials) files as described in the [Software-Bill-of-Materials](#software-bill-of-materials) section.
 
 #### Context Folders
