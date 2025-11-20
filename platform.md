@@ -62,6 +62,11 @@ Examples of a platform might include:
     - [Run Image Resolution](#run-image-resolution)
     - [Registry Authentication](#registry-authentication)
     - [Experimental Features](#experimental-features)
+    - [Telemetry](#telemetry)
+      - [Telemetry Files](#telemetry-files)
+      - [Telemetry File Properties](#telemetry-file-properties)
+      - [Context Propagation](#context-propagation)
+      - [Telemetry Consumption](#telemetry-consumption)
   - [Buildpacks](#buildpacks)
     - [Buildpacks Directory Layout](#buildpacks-directory-layout)
   - [Image Extensions](#image-extensions)
@@ -74,6 +79,7 @@ Examples of a platform might include:
         - [POSIX Path Variables](#posix-path-variables)
         - [User-Provided Variables](#user-provided-variables)
         - [Operator-Defined Variables](#operator-defined-variables)
+        - [Platform-Provided Variables](#platform-provided-variables)
       - [Launch Environment](#launch-environment)
     - [Caching](#caching)
     - [Build Reproducibility](#build-reproducibility)
@@ -1141,6 +1147,65 @@ When an experimental feature is invoked, the lifecycle:
 - SHALL fail if `CNB_EXPERIMENTAL_MODE=error`
 - SHALL continue without warning if `CNB_EXPERIMENTAL_MODE=silent`
 
+### Telemetry
+
+The lifecycle and buildpacks MAY emit telemetry data during build operations to enable observability of build performance and behavior.
+
+#### Telemetry Files
+
+Telemetry data MUST be written using the [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) in JSONL format.
+
+Telemetry files MUST be written to the following locations under `<layers>/tracing/`:
+- Lifecycle telemetry: `<layers>/tracing/lifecycle/<phase>.jsonl`
+  - Where `<phase>` is one of: `analyze`, `detect`, `restore`, `extend`, `build`, `export`
+- Buildpack telemetry: `<layers>/tracing/buildpacks/<id>@<version>-<phase>.jsonl`
+  - Where `<id>` is the buildpack ID, `<version>` is the buildpack version, and `<phase>` is either `detect` or `build`
+- Extension telemetry: `<layers>/tracing/extensions/<id>@<version>-<phase>.jsonl`
+  - Where `<id>` is the extension ID, `<version>` is the extension version, and `<phase>` is either `detect` or `generate`
+
+Example telemetry file hierarchy:
+```
+<layers>
+└── tracing
+    ├── buildpacks
+    │   ├── example-buildpack@1.0.0-detect.jsonl
+    │   └── example-buildpack@1.0.0-build.jsonl
+    ├── extensions
+    │   └── example-extension@1.0.0-generate.jsonl
+    └── lifecycle
+        ├── analyze.jsonl
+        ├── detect.jsonl
+        ├── restore.jsonl
+        ├── build.jsonl
+        └── export.jsonl
+```
+
+#### Telemetry File Properties
+
+Telemetry files:
+- MAY be written at any point during the build to ensure telemetry is persisted in case of failures, process terminations, or crashes
+- MUST NOT be truncated or deleted during the build to allow telemetry processing by the platform during or after the build
+- MUST NOT be included in the exported app image
+- MUST be group-readable to allow analysis by the user and/or platform
+- SHOULD only be read and written by the component that created them (lifecycle or individual buildpack/extension)
+
+#### Context Propagation
+
+The platform MAY set `CNB_OTEL_TRACEPARENT` in the lifecycle execution environment to enable correlation of lifecycle and buildpack traces with platform traces.
+
+When `CNB_OTEL_TRACEPARENT` is provided:
+- The value MUST conform to the [W3C Trace Context specification for traceparent field values](https://www.w3.org/TR/trace-context/#traceparent-header-field-values)
+- The lifecycle and buildpacks SHOULD use the provided `trace-id` and `parent-id` when generating traces
+
+#### Telemetry Consumption
+
+The platform MAY read telemetry files during or after the build for observability purposes.
+
+Telemetry files:
+- MUST NOT be used as an API, contract, or communication mechanism between buildpacks or between the lifecycle and buildpacks
+- MUST NOT contain personally identifiable information (e.g., usernames, email addresses, IP addresses)
+- MUST NOT contain business-sensitive information (e.g., passwords, access keys, image names, URLs, source code repository names)
+
 ## Buildpacks
 
 ### Buildpacks Directory Layout
@@ -1219,6 +1284,16 @@ Operator-defined environment variables MAY be modified by prior buildpacks befor
 however the operator-defined value is always applied after the buildpack-provided value.
 
 The platform SHOULD NOT set operator-provided environment variables directly in the lifecycle execution environment.
+
+##### Platform-Provided Variables
+
+The platform MAY set the following environment variables in the lifecycle execution environment:
+
+| Env Variable            | Description                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------------|
+| `CNB_OTEL_TRACEPARENT`  | W3C Trace Context traceparent value for correlating lifecycle and buildpack traces with platform traces. See [Telemetry](#telemetry). |
+
+These variables SHALL be directly inherited by buildpacks without modification.
 
 #### Launch Environment
 
