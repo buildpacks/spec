@@ -410,6 +410,7 @@ The `/bin/detect` executable in each extension or buildpack, when executed:
 - MAY read the app directory.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY augment the Build Plan by writing TOML to `<plan>`.
+- MAY write telemetry data to `$CNB_OTEL_LOG_PATH` in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) when provided.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` in two sections: `requires` and `provides`.
@@ -615,6 +616,7 @@ Correspondingly, each `/bin/build` executable:
 - SHOULD write launch SBOM entries to `<layers>/launch.sbom.<ext>` describing any contributions to the application not associated with a layer.
 - SHOULD write build SBOM entries to `<layers>/build.sbom.<ext>` describing any contributions to the build environment not associated with a layer.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
+- MAY write telemetry data to `$CNB_OTEL_LOG_PATH` in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) when provided.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY modify or delete any existing `<layers>/<layer>.sbom.<ext>` files.
