@@ -1155,13 +1155,11 @@ The lifecycle and buildpacks MAY emit telemetry data during build operations to 
 
 Telemetry data MUST be written using the [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) in JSONL format.
 
-Telemetry files MUST be written to the following locations under `<layers>/tracing/`:
+The platform MUST provide `CNB_OTEL_LOG_PATH` to buildpacks and extensions when telemetry collection is desired. The value SHOULD point to a location under `<layers>/tracing/buildpacks/` for buildpacks or `<layers>/tracing/extensions/` for extensions.
+
+Lifecycle telemetry files SHOULD be written to the following locations:
 - Lifecycle telemetry: `<layers>/tracing/lifecycle/<phase>.jsonl`
   - Where `<phase>` is one of: `analyze`, `detect`, `restore`, `extend`, `build`, `export`
-- Buildpack telemetry: `<layers>/tracing/buildpacks/<id>@<version>-<phase>.jsonl`
-  - Where `<id>` is the buildpack ID, `<version>` is the buildpack version, and `<phase>` is either `detect` or `build`
-- Extension telemetry: `<layers>/tracing/extensions/<id>@<version>-<phase>.jsonl`
-  - Where `<id>` is the extension ID, `<version>` is the extension version, and `<phase>` is either `detect` or `generate`
 
 Example telemetry file hierarchy:
 ```
@@ -1292,6 +1290,7 @@ The platform MAY set the following environment variables in the lifecycle execut
 | Env Variable            | Description                                                                                           |
 |-------------------------|-------------------------------------------------------------------------------------------------------|
 | `CNB_OTEL_TRACEPARENT`  | W3C Trace Context traceparent value for correlating lifecycle and buildpack traces with platform traces. See [Telemetry](#telemetry). |
+| `CNB_OTEL_LOG_PATH`     | Path where buildpacks and extensions should write telemetry data. When provided, it SHOULD point to a location under `<layers>/tracing/buildpacks/`. See [Telemetry](#telemetry). |
 
 These variables SHALL be directly inherited by buildpacks without modification.
 
