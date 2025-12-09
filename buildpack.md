@@ -82,7 +82,7 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.10`
+This document specifies Buildpack API version `0.12`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
