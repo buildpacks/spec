@@ -103,7 +103,7 @@ A **component buildpack** is a buildpack containing `/bin/detect` and `/bin/buil
 
 A **composite buildpack** is a buildpack containing an order definition in `buildpack.toml`. Composite buildpacks do not contain `/bin/detect` or `/bin/build` executables. They MUST be [resolvable](#order-resolution) into a collection of component buildpacks.
 
-An **image extension** is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image-extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
+An **image extension** is a directory containing an `extension.toml`. Extensions generate Dockerfiles that can be used to define the runtime base image, prior to buildpack execution. Extensions implement the [Image Extension Interface](image_extension.md). Extensions are always "component": their `extension.toml` cannot contain an order definition.
 
 **Resolving an order** is the process by which an order (which may contain image extensions, component buildpacks, or composite buildpacks) is evaluated together with application source code to produce an optional group of image extensions and a required group of component buildpacks that can be used to build the application. This process is known as **detection**. During detection, the `/bin/detect` executable for each image extension (if present) and the `/bin/detect` executable for each component buildpack is invoked.
 
@@ -138,6 +138,30 @@ Any combination of the three layer types are valid for a particular layer direct
 The following specifies the interface implemented by component buildpacks.
 The lifecycle MUST invoke executables in component buildpacks as described in the Phase sections.
 
+### Execution Environments
+
+Execution environments define the context in which a buildpack-created application is intended to run. Standard values include:
+- `production`: The default environment, optimized for running applications in production.
+- `test`: Environment optimized for testing applications.
+- `development`: Environment optimized for development workflows.
+
+Buildpacks SHOULD adapt their behavior based on the `CNB_EXEC_ENV` environment variable during detection and build phases. This may include:
+- Installing different dependencies
+- Configuring different build options
+- Creating different launch processes
+- Providing environment-specific layers
+
+Buildpacks MAY optimize their output based on the execution environment:
+- A buildpack MAY mark processes as applicable only to specific execution environments
+- A buildpack MAY create layers that are specific to certain execution environments
+- A buildpack MAY use different build strategies depending on the execution environment
+
+When the `CNB_EXEC_ENV` environment variable is not set, buildpacks MUST assume the default value of `production`.
+
+The value of `CNB_EXEC_ENV` MUST NOT contain the character `/` as it is reserved for future use.
+
+When a platform builds an application with a different execution environment than was used in a previous build, the platform SHOULD NOT restore layers from the previous build's image. The lifecycle MAY ignore layer metadata from previous builds with different execution environments to ensure proper environment-specific behaviors are maintained.
+
 ### Buildpack API Compatibility
 Given a buildpack declaring `<buildpack API Version>` in its [`buildpack.toml`](#buildpacktoml-toml), the lifecycle:
 - MUST either conform to the matching version of this specification when interfacing with the buildpack or
@@ -166,6 +190,7 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | `$0`                     |            | Absolute path of `/bin/detect` executable         |
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
+| `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development") |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
@@ -187,6 +212,7 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR`        | EIC        | Absolute path of the buildpack layers directory                               |
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
+| `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development")            |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
@@ -792,9 +818,9 @@ The following additional environment variables MUST NOT be overridden by the lif
 | `HOME`                 | Current user's home directory                     | [x]    | [x]   | [x]    |
 
 During the detection and build phases, the lifecycle MUST provide as environment variables any user-provided files in `<platform>/env/` with environment variable names and contents matching the file names and contents.
-During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `<build-config>/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
+During the detection and build phases, the lifecycle MUST provide as environment variables any operator-provided files in `<platform>/env` with environment variable names and contents matching the file names and contents. This applies for all values of `clear-env` or if `clear-env` is undefined in `buildpack.toml`.
 
-When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`.
+When `clear-env` in `buildpack.toml` is set to `true` for a given buildpack, the lifecycle MUST NOT set user-provided environment variables in the environment of `/bin/detect` or `/bin/build`. The user-provided files in `<platform>/env/` contents will still be available.
 
 When `clear-env` in `buildpack.toml` is not set to `true` for a given buildpack, the lifecycle MUST set user-provided environment variables in the environment of `/bin/detect` or `/bin/build` such that:
 1. For layer path environment variables, user-provided values are prepended before any existing values and are delimited by the OS path list separator.
@@ -907,6 +933,7 @@ command = ["<command>"]
 args = ["<arguments>"]
 default = false
 working-dir = "<working directory>"
+exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
 
 [[slices]]
 paths = ["<app sub-path glob>"]
@@ -935,6 +962,7 @@ For each process, the buildpack:
   - The `args` list is a default list of arguments that may be overridden by the user [^command-args].
 - MAY specify a `default` boolean that indicates that the process type should be selected as the [buildpack-provided default](https://github.com/buildpacks/spec/blob/main/platform.md#outputs-4) during the export phase.
 - MAY specify a `working-dir` for the process. The `working-dir` defaults to the application directory if not specified.
+- MAY specify an `exec-env` array to restrict the process to specific execution environments. If `exec-env` is not specified, the process applies to all execution environments.
 
 [^command-args]: For versions of the Platform API that do not support overridable arguments, the arguments in `command` and `args` are always applied together with any user-provided arguments.
 In general, the [Platform Interface Specification](platform.md) is ultimately responsible for launching processes; consult that specification for details.
@@ -1021,13 +1049,15 @@ name = "<dependency name>"
   cache = false
 
 [metadata]
-# buildpack-specific data
+  exec-env = ["<execution environment>"] # Optional. If not specified, applies to all execution environments
+  # other buildpack-specific data
 ```
 
 For a given layer, the buildpack MAY specify:
 
 - Whether the layer is cached, intended for build, and/or intended for launch.
 - Metadata that describes the layer contents.
+- An `exec-env` array in the `[metadata]` section to restrict the layer to specific execution environments. If `exec-env` is not specified, the layer applies to all execution environments.
 
 ### buildpack.toml (TOML)
 This section describes the 'Buildpack descriptor'.
@@ -1049,11 +1079,15 @@ sbom-formats = [ "<string>" ]
 type = "<string>"
 uri = "<uri>"
 
+[[buildpack.exec-env]]
+name = "<execution environment>"
+
 [[order]]
 [[order.group]]
 id = "<buildpack ID>"
 version = "<buildpack version>"
 optional = false
+exec-env = ["<execution environment>"]
 
 [[targets]]
 os = "<OS name>"
@@ -1095,6 +1129,12 @@ The `[[buildpack.licenses]]` table is optional and MAY contain a list of buildpa
 - `type` - This MAY use the SPDX 2.1 license expression, but is not limited to identifiers in the SPDX Licenses List.
 - `uri` - If this buildpack is using a nonstandard license, then this key MAY be specified in lieu of or in addition to `type` to point to the license.
 
+**The buildpack execution environments:**
+
+The `[[buildpack.exec-env]]` table is optional and MAY contain a list of execution environments that the buildpack supports where:
+
+- `name` - This MUST specify an execution environment name (e.g., "production", "test", "development").
+
 **The buildpack SBOM:**
 
 *Key: `sbom-formats = [ "<string>" ]`*
@@ -1122,6 +1162,8 @@ Metadata specified in `[[targets]]` is validated against the runtime and build-t
 #### Order
 
 A buildpack reference inside of a `group` MUST contain an `id` and `version`. The `order` MUST include only buildpacks and MUST NOT include image extensions.
+
+A buildpack reference inside of a `group` MAY contain an `exec-env` array to specify the execution environments for which the buildpack applies.
 
 ### Exec.d Output (TOML)
 ```
