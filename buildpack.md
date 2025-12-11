@@ -82,7 +82,7 @@ This document specifies the interface between a lifecycle program and one or mor
     - [Build Plan (TOML) `requires.version` Key](#build-plan-toml-requiresversion-key)
 
 ## Buildpack API Version
-This document specifies Buildpack API version `0.10`
+This document specifies Buildpack API version `0.12`
 
 Buildpack API versions:
  - MUST be in form `<major>.<minor>` or `<major>`, where `<major>` is equivalent to `<major>.0`
@@ -250,10 +250,10 @@ OR
 Executable: `<layers>/<layer>/exec.d/<process>/<executable>`, Working Dir: `<app[AI]>`
 
 | Input                                          | Description
-|------------------------------------------------|----------------------------------------------
+|------------------------------------------------|----------------------------------------------------------------------------------
 | `$0`                                           | Absolute path of the executable
-| [†](README.md#linux-only)FD 3                  | A third open file descriptor
-| [‡](README.md#windows-only) `<handle>`         | An additional open handle
+| [†](README.md#linux-only)FD 3                  | A third open file descriptor inherited by `<executable>` from the calling process
+| [‡](README.md#windows-only) `<handle>`         | An additional open handle inherited by `<executable>` from the calling process
 | [‡](README.md#windows-only)`CNB_EXEC_D_HANDLE` | Hexidecimal number for `<handle>`
 
 | Output             | Description
@@ -277,20 +277,18 @@ The lifecycle MUST treat a layer with unset `types` as a `launch = false`, `buil
 The following table illustrates the behavior depending on the value of each flag.
 Note that the lifecycle only restores layers from the cache, never from the previous image.
 
-`build`   | `cache`  | `launch` | Metadata and SBOM** Restored | Layer Restored
-----------|----------|----------|------------------------------|---------------------
-true      | true     | true     | Yes - from the app image     | Yes* - from the cache
-true      | true     | false    | Yes - from the cache         | Yes - from the cache
-true      | false    | true     | No                           | No
-true      | false    | false    | No                           | No
-false     | true     | true     | Yes - from the app image     | Yes* - from the cache
-false     | true     | false    | Yes - from the cache         | Yes - from the cache
-false     | false    | true     | Yes - from the app image     | No
-false     | false    | false    | No                           | No
+| `build` | `cache` | `launch` | Metadata and SBOM* Restored | Layer Restored |
+| ------- | ------- | -------- | --------------------------- | -------------- |
+| true    | true    | true     | Yes                         | Yes            |
+| true    | true    | false    | Yes                         | Yes            |
+| true    | false   | true     | No                          | No             |
+| true    | false   | false    | No                          | No             |
+| false   | true    | true     | Yes                         | Yes*           |
+| false   | true    | false    | Yes                         | Yes            |
+| false   | false   | true     | Yes                         | No             |
+| false   | false   | false    | No                          | No             |
 
-\* The metadata and layer are restored only if the layer SHA recorded in the previous image matches the layer SHA recorded in the cache.
-
-\** Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
+\* Only SBOM files associated with a layer are restored. Launch-level and build-level SBOM files must be re-created on each build.
 
 Examples:
 * `build = true, cache = true, launch = true`:
@@ -948,7 +946,7 @@ For each label, the buildpack:
 
 The lifecycle MUST add each label as an image label on the created image metadata.
 
-If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label defintion ordered by buildpack execution for the image label.
+If multiple buildpacks define labels with the same key, the lifecycle MUST use the last label definition ordered by buildpack execution for the image label.
 
 For each process, the buildpack:
 
