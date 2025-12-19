@@ -191,8 +191,6 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | `$CNB_BUILD_PLAN_PATH`   | E          | Absolute path of the build plan                   |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory     |
 | `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development") |
-| `$CNB_OTEL_TRACEPARENT`  | AR         | W3C Trace Context traceparent for trace correlation (optional) |
-| `$CNB_OTEL_LOG_PATH`     | AR         | Path to write telemetry data in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory           |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build     |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                      |
@@ -203,7 +201,6 @@ Executable: `/bin/detect`, Working Dir: `<app[AR]>`
 | Standard output        | Logs (info)                                 |
 | Standard error         | Logs (warnings, errors)                     |
 | `$CNB_BUILD_PLAN_PATH` | Contributions to the the Build Plan (TOML)  |
-| `$CNB_OTEL_LOG_PATH`   | Buildpack telemetry in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 
 ###  Build
 
@@ -216,8 +213,6 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_BP_PLAN_PATH`      | ER         | Relevant [Buildpack Plan entries](#buildpack-plan-toml) from detection (TOML) |
 | `$CNB_BUILDPACK_DIR`     | ER         | Absolute path of the buildpack root directory                                 |
 | `$CNB_EXEC_ENV`          | AR         | Target execution environment ("production", "test", "development")            |
-| `$CNB_OTEL_TRACEPARENT`  | AR         | W3C Trace Context traceparent for trace correlation (optional)                |
-| `$CNB_OTEL_LOG_PATH`     | AR         | Path to write telemetry data in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 | `$CNB_PLATFORM_DIR`      | AR         | Absolute path of the platform directory                                       |
 | `$CNB_PLATFORM_DIR/env/` | AR         | User-provided environment variables for build                                 |
 | `$CNB_PLATFORM_DIR/#`    | AR         | Platform-specific extensions                                                  |
@@ -245,7 +240,6 @@ Executable: `/bin/build`, Working Dir: `<app[AI]>`
 | `$CNB_LAYERS_DIR/<layer>/env.launch/<process>/` | Env vars for launch (after `env`, before `exec.d`) for the launched process                                      |
 | `$CNB_LAYERS_DIR/<layer>/env.build/`            | Env vars for subsequent buildpacks (after `env`)                                                                 |
 | `$CNB_LAYERS_DIR/<layer>/*`                     | Other content for launch and/or subsequent buildpacks                                                            |
-| `$CNB_OTEL_LOG_PATH`                            | Buildpack telemetry in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) (optional) |
 
 ### Exec.d
 
@@ -410,7 +404,6 @@ The `/bin/detect` executable in each extension or buildpack, when executed:
 - MAY read the app directory.
 - MAY emit error, warning, or debug messages to `stderr`.
 - MAY augment the Build Plan by writing TOML to `<plan>`.
-- MAY write telemetry data to `$CNB_OTEL_LOG_PATH` in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) when provided.
 - MUST set an exit status code as described in the [Buildpack Interface](#buildpack-interface) section.
 
 In order to make contributions to the Build Plan, a `/bin/detect` executable MUST write entries to `<plan>` in two sections: `requires` and `provides`.
@@ -616,7 +609,6 @@ Correspondingly, each `/bin/build` executable:
 - SHOULD write launch SBOM entries to `<layers>/launch.sbom.<ext>` describing any contributions to the application not associated with a layer.
 - SHOULD write build SBOM entries to `<layers>/build.sbom.<ext>` describing any contributions to the build environment not associated with a layer.
 - MAY write values that should persist to subsequent builds in `<layers>/store.toml`.
-- MAY write telemetry data to `$CNB_OTEL_LOG_PATH` in [OpenTelemetry File Exporter format](https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/) when provided.
 - MAY modify or delete any existing `<layers>/<layer>` directories.
 - MAY modify or delete any existing `<layers>/<layer>.toml` files.
 - MAY modify or delete any existing `<layers>/<layer>.sbom.<ext>` files.
